@@ -52,3 +52,9 @@ class Pedido(Base):
 
     mesa = relationship("Mesa")
     usuario = relationship("Usuario")
+
+    detalles = relationship(
+    "DetallePedido",
+    back_populates="pedido",
+    cascade="all, delete-orphan"
+    )

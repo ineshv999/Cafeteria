@@ -47,6 +47,9 @@ class DetallePedido(Base):
         nullable=False
     )
 
-    pedido = relationship("Pedido")
+    pedido = relationship(
+    "Pedido",
+    back_populates="detalles"
+    )
 
     producto = relationship("Producto")

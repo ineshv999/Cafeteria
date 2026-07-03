@@ -29,3 +29,13 @@ class DetallePedidoResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+class DetallePedidoView(BaseModel):
+
+    cantidad: int
+    precio_unitario: Decimal
+    subtotal: Decimal
+
+    model_config = {
+        "from_attributes": True
+    }

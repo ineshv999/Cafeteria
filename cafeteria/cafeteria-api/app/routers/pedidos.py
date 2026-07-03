@@ -37,9 +37,7 @@ def obtener_pedido(
     id_pedido: int,
     db: Session = Depends(get_db)
 ):
-    return db.query(Pedido).filter(
-        Pedido.id_pedido == id_pedido
-    ).first()
+    return PedidoService.obtener(db, id_pedido)
 
 @router.get("/", response_model=list[PedidoResponse])
 def listar_pedidos(

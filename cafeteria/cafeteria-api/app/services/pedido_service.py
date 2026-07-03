@@ -38,41 +38,57 @@ class PedidoService:
         )
 
         db.add(pedido)
-
         db.commit()
-
         db.refresh(pedido)
 
-        @staticmethod
-        def listar(db: Session):
-            return db.query(Pedido).all()
+        return pedido
 
+    @staticmethod
+    def listar(db: Session):
+        return db.query(Pedido).all()
 
-        @staticmethod
-        def cambiar_estado(
-            db: Session,
-            id_pedido: int,
-            estado: str
-        ):
+    @staticmethod
+    def cambiar_estado(
+        db: Session,
+        id_pedido: int,
+        estado: str
+    ):
 
-            pedido = (
-                db.query(Pedido)
-                .filter(Pedido.id_pedido == id_pedido)
-                .first()
+        pedido = (
+            db.query(Pedido)
+            .filter(Pedido.id_pedido == id_pedido)
+            .first()
+        )
+
+        if not pedido:
+            raise HTTPException(
+                status_code=404,
+                detail="Pedido no encontrado."
             )
 
-            if not pedido:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Pedido no encontrado."
-                )
+        pedido.estado = estado
 
-            pedido.estado = estado
+        db.commit()
+        db.refresh(pedido)
 
-            db.commit()
+        return pedido
+    
+    @staticmethod
+    def obtener(
+        db: Session,
+        id_pedido: int
+    ):
 
-            db.refresh(pedido)
+        pedido = (
+            db.query(Pedido)
+            .filter(Pedido.id_pedido == id_pedido)
+            .first()
+        )
 
-            return pedido
+        if not pedido:
+            raise HTTPException(
+                status_code=404,
+                detail="Pedido no encontrado."
+            )
 
         return pedido

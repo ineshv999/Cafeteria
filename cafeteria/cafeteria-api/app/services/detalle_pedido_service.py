@@ -58,3 +58,16 @@ class DetallePedidoService:
         db.refresh(detalle)
 
         return detalle
+    
+    @staticmethod
+    def listar_por_pedido(
+        db: Session,
+        id_pedido: int
+    ):
+        return (
+            db.query(DetallePedido)
+            .filter(
+                DetallePedido.id_pedido == id_pedido
+            )
+            .all()
+        )
