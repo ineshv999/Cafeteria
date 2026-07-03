@@ -9,9 +9,10 @@ from app.schemas.pedido import (
     PedidoResponse
 )
 from app.services.pedido_service import PedidoService
-from app.auth.dependencies import obtener_usuario_actual
 
 from app.schemas.pedido import PedidoEstadoUpdate
+
+from app.auth.permissions import requiere_roles
 
 router = APIRouter(
     prefix="/pedidos",
@@ -22,25 +23,42 @@ router = APIRouter(
 @router.post("/", response_model=PedidoResponse)
 def crear_pedido(
     datos: PedidoCreate,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(
+        requiere_roles(
+            "administrador",
+            "mesero"
+        )
+    ),
     db: Session = Depends(get_db)
 ):
-
     return PedidoService.crear(
         db,
         datos,
         usuario["id"]
     )
 
+
 @router.get("/{id_pedido}", response_model=PedidoResponse)
 def obtener_pedido(
     id_pedido: int,
+    usuario=Depends(
+        requiere_roles(
+            "administrador",
+            "mesero"
+        )
+    ),
     db: Session = Depends(get_db)
 ):
     return PedidoService.obtener(db, id_pedido)
 
 @router.get("/", response_model=list[PedidoResponse])
 def listar_pedidos(
+    usuario=Depends(
+        requiere_roles(
+            "administrador",
+            "mesero"
+        )
+    ),
     db: Session = Depends(get_db)
 ):
     return PedidoService.listar(db)
@@ -51,7 +69,9 @@ def listar_pedidos(
 def cambiar_estado(
     id_pedido: int,
     datos: PedidoEstadoUpdate,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(
+        requiere_roles("administrador")
+    ),
     db: Session = Depends(get_db)
 ):
 
@@ -64,14 +84,15 @@ def cambiar_estado(
 @router.delete("/{id_pedido}")
 def eliminar_pedido(
     id_pedido: int,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(
+        requiere_roles(
+            "administrador",
+            "mesero"
+        )
+    ),
     db: Session = Depends(get_db)
 ):
-
-    PedidoService.eliminar(
-        db,
-        id_pedido
-    )
+    PedidoService.eliminar(db, id_pedido)
 
     return {
         "mensaje": "Pedido eliminado correctamente."

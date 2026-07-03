@@ -7,7 +7,8 @@ from app.schemas.producto import (
     ProductoResponse
 )
 from app.services.producto_service import ProductoService
-from app.auth.roles import solo_administrador
+
+from app.auth.permissions import requiere_roles
 
 router = APIRouter(
     prefix="/productos",
@@ -17,6 +18,9 @@ router = APIRouter(
 
 @router.get("/", response_model=list[ProductoResponse])
 def listar_productos(
+    usuario=Depends(
+        requiere_roles("administrador")
+    ),
     db: Session = Depends(get_db)
 ):
     return ProductoService.listar(db)
@@ -25,6 +29,9 @@ def listar_productos(
 @router.get("/{id_producto}", response_model=ProductoResponse)
 def obtener_producto(
     id_producto: int,
+    usuario=Depends(
+        requiere_roles("administrador")
+    ),
     db: Session = Depends(get_db)
 ):
     return ProductoService.obtener(db, id_producto)
@@ -33,16 +40,19 @@ def obtener_producto(
 @router.post("/", response_model=ProductoResponse)
 def crear_producto(
     datos: ProductoCreate,
-    usuario=Depends(solo_administrador),
+    usuario=Depends(
+        requiere_roles("administrador")
+    ),
     db: Session = Depends(get_db)
 ):
     return ProductoService.crear(db, datos)
 
 
-@router.delete("/{id_producto}")
 def eliminar_producto(
     id_producto: int,
-    usuario=Depends(solo_administrador),
+    usuario=Depends(
+        requiere_roles("administrador")
+    ),
     db: Session = Depends(get_db)
 ):
     ProductoService.eliminar(db, id_producto)

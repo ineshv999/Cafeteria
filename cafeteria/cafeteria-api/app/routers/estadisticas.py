@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.services.estadisticas_service import EstadisticasService
-from app.auth.dependencies import obtener_usuario_actual
+from app.auth.permissions import requiere_roles
 
 router = APIRouter(
     prefix="/estadisticas",
@@ -12,8 +12,9 @@ router = APIRouter(
 
 @router.get("/")
 def dashboard(
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(
+        requiere_roles("administrador")
+    ),
     db: Session = Depends(get_db)
 ):
-
-    return EstadisticasService.resumen(db)
+    return EstadisticasService.dashboard(db)

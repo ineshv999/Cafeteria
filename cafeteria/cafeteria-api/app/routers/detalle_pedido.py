@@ -9,9 +9,10 @@ from app.schemas.detalle_pedido import (
 from app.services.detalle_pedido_service import (
     DetallePedidoService
 )
-from app.auth.dependencies import obtener_usuario_actual
 
 from app.schemas.detalle_pedido import DetallePedidoView
+
+from app.auth.permissions import requiere_roles
 
 router = APIRouter(
     prefix="/detalle-pedido",
@@ -22,7 +23,12 @@ router = APIRouter(
 @router.post("/", response_model=DetallePedidoResponse)
 def agregar_producto(
     datos: DetallePedidoCreate,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(
+        requiere_roles(
+            "administrador",
+            "mesero"
+        )
+    ),
     db: Session = Depends(get_db)
 ):
     return DetallePedidoService.crear(
@@ -36,9 +42,14 @@ def agregar_producto(
 )
 def obtener_detalle_pedido(
     id_pedido: int,
+    usuario=Depends(
+        requiere_roles(
+            "administrador",
+            "mesero"
+        )
+    ),
     db: Session = Depends(get_db)
 ):
-
     return DetallePedidoService.listar_por_pedido(
         db,
         id_pedido
@@ -47,7 +58,12 @@ def obtener_detalle_pedido(
 @router.delete("/{id_detalle}")
 def eliminar_producto(
     id_detalle: int,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(
+        requiere_roles(
+            "administrador",
+            "mesero"
+        )
+    ),
     db: Session = Depends(get_db)
 ):
 

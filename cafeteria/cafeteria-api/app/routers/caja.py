@@ -5,19 +5,21 @@ from app.database import get_db
 from app.models.pedido import Pedido
 from app.services.caja_service import CajaService
 from app.schemas.pedido import PedidoResponse
-from app.auth.dependencies import obtener_usuario_actual
+from app.auth.permissions import requiere_roles
 
 router = APIRouter(
     prefix="/caja",
     tags=["Caja"]
 )
 
-@router.get(
-    "/pedidos",
-    response_model=list[PedidoResponse]
-)
+@router.get("/pedidos", response_model=list[PedidoResponse])
 def pedidos_listos(
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(
+        requiere_roles(
+            "administrador",
+            "caja"
+        )
+    ),
     db: Session = Depends(get_db)
 ):
     return CajaService.pedidos_listos(db)
@@ -29,10 +31,14 @@ def pedidos_listos(
 )
 def cobrar_pedido(
     id_pedido: int,
-    usuario=Depends(obtener_usuario_actual),
+    usuario=Depends(
+        requiere_roles(
+            "administrador",
+            "caja"
+        )
+    ),
     db: Session = Depends(get_db)
 ):
-
     return CajaService.cobrar(
         db,
         id_pedido

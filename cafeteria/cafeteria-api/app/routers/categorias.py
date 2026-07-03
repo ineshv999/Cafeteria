@@ -8,7 +8,8 @@ from app.schemas.categoria import (
     CategoriaUpdate
 )
 from app.services.categoria_service import CategoriaService
-from app.auth.roles import solo_administrador
+
+from app.auth.permissions import requiere_roles
 
 router = APIRouter(
     prefix="/categorias",
@@ -18,6 +19,9 @@ router = APIRouter(
 
 @router.get("/", response_model=list[CategoriaResponse])
 def listar_categorias(
+    usuario=Depends(
+        requiere_roles("administrador")
+    ),
     db: Session = Depends(get_db)
 ):
     return CategoriaService.listar(db)
@@ -26,6 +30,9 @@ def listar_categorias(
 @router.get("/{id_categoria}", response_model=CategoriaResponse)
 def obtener_categoria(
     id_categoria: int,
+    usuario=Depends(
+        requiere_roles("administrador")
+    ),
     db: Session = Depends(get_db)
 ):
     return CategoriaService.obtener(db, id_categoria)
@@ -34,7 +41,9 @@ def obtener_categoria(
 @router.post("/", response_model=CategoriaResponse)
 def crear_categoria(
     datos: CategoriaCreate,
-    usuario=Depends(solo_administrador),
+    usuario=Depends(
+        requiere_roles("administrador")
+    ),
     db: Session = Depends(get_db)
 ):
     return CategoriaService.crear(db, datos)
@@ -43,7 +52,9 @@ def crear_categoria(
 @router.delete("/{id_categoria}")
 def eliminar_categoria(
     id_categoria: int,
-    usuario=Depends(solo_administrador),
+    usuario=Depends(
+        requiere_roles("administrador")
+    ),
     db: Session = Depends(get_db)
 ):
     CategoriaService.eliminar(db, id_categoria)
