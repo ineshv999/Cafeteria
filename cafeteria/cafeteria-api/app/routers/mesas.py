@@ -10,6 +10,8 @@ from app.services.mesa_service import MesaService
 
 from app.auth.permissions import requiere_roles
 
+from app.schemas.mesa import MesaUpdate
+
 router = APIRouter(
     prefix="/mesas",
     tags=["Mesas"]
@@ -67,3 +69,22 @@ def eliminar_mesa(
     return {
         "mensaje": "Mesa eliminada correctamente"
     }
+
+@router.put(
+    "/{id_mesa}",
+    response_model=MesaResponse
+)
+def actualizar_mesa(
+    id_mesa: int,
+    datos: MesaUpdate,
+    usuario=Depends(
+        requiere_roles("administrador")
+    ),
+    db: Session = Depends(get_db)
+):
+
+    return MesaService.actualizar(
+        db,
+        id_mesa,
+        datos
+    )

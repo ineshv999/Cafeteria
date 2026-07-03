@@ -43,4 +43,33 @@ class CategoriaService:
             db.delete(categoria)
             db.commit()
 
+        return 
+    
+    @staticmethod
+    def actualizar(
+        db: Session,
+        id_categoria: int,
+        datos
+    ):
+
+        categoria = (
+            db.query(Categoria)
+            .filter(
+                Categoria.id_categoria == id_categoria
+            )
+            .first()
+        )
+
+        if not categoria:
+            raise HTTPException(
+                status_code=404,
+                detail="Categoría no encontrada."
+            )
+
+        categoria.nombre = datos.nombre
+        categoria.descripcion = datos.descripcion
+
+        db.commit()
+        db.refresh(categoria)
+
         return categoria

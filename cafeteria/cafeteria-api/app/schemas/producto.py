@@ -13,12 +13,24 @@ class ProductoBase(BaseModel):
     id_categoria: int
 
 
-class ProductoCreate(ProductoBase):
-    pass
+class ProductoCreate(BaseModel):
+    nombre: str
+    descripcion: str
+    precio: Decimal
+    stock: int
+    imagen: str
+    activo: bool
+    id_categoria: int
 
 
-class ProductoUpdate(ProductoBase):
-    pass
+class ProductoUpdate(BaseModel):
+    nombre: str
+    descripcion: str
+    precio: Decimal
+    stock: int
+    imagen: str
+    activo: bool
+    id_categoria: int
 
 
 class ProductoResponse(ProductoBase):

@@ -10,6 +10,8 @@ from app.services.producto_service import ProductoService
 
 from app.auth.permissions import requiere_roles
 
+from app.schemas.producto import ProductoUpdate
+
 router = APIRouter(
     prefix="/productos",
     tags=["Productos"]
@@ -60,3 +62,22 @@ def eliminar_producto(
     return {
         "mensaje": "Producto eliminado correctamente"
     }
+
+@router.put(
+    "/{id_producto}",
+    response_model=ProductoResponse
+)
+def actualizar_producto(
+    id_producto: int,
+    datos: ProductoUpdate,
+    usuario=Depends(
+        requiere_roles("administrador")
+    ),
+    db: Session = Depends(get_db)
+):
+
+    return ProductoService.actualizar(
+        db,
+        id_producto,
+        datos
+    )

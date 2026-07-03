@@ -7,6 +7,8 @@ from app.services.usuario_service import UsuarioService
 
 from app.auth.permissions import requiere_roles
 
+from app.schemas.usuario import UsuarioUpdate
+
 router = APIRouter(
     prefix="/usuarios",
     tags=["Usuarios"]
@@ -58,3 +60,22 @@ def eliminar_usuario(
     return {
         "mensaje": "Usuario eliminado correctamente"
     }
+
+@router.put(
+    "/{id_usuario}",
+    response_model=UsuarioResponse
+)
+def actualizar_usuario(
+    id_usuario: int,
+    datos: UsuarioUpdate,
+    usuario=Depends(
+        requiere_roles("administrador")
+    ),
+    db: Session = Depends(get_db)
+):
+
+    return UsuarioService.actualizar(
+        db,
+        id_usuario,
+        datos
+    )

@@ -11,8 +11,12 @@ class UsuarioCreate(UsuarioBase):
     password: str
 
 
-class UsuarioUpdate(UsuarioBase):
+class UsuarioUpdate(BaseModel):
+    nombre_completo: str
+    email: EmailStr
+    id_rol: int
     activo: bool
+    password: str | None = None
 
 
 class UsuarioResponse(UsuarioBase):

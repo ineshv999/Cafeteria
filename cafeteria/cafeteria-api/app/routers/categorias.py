@@ -11,6 +11,8 @@ from app.services.categoria_service import CategoriaService
 
 from app.auth.permissions import requiere_roles
 
+from app.schemas.categoria import CategoriaUpdate
+
 router = APIRouter(
     prefix="/categorias",
     tags=["Categorías"]
@@ -62,3 +64,22 @@ def eliminar_categoria(
     return {
         "mensaje": "Categoría eliminada correctamente"
     }
+
+@router.put(
+    "/{id_categoria}",
+    response_model=CategoriaResponse
+)
+def actualizar_categoria(
+    id_categoria: int,
+    datos: CategoriaUpdate,
+    usuario=Depends(
+        requiere_roles("administrador")
+    ),
+    db: Session = Depends(get_db)
+):
+
+    return CategoriaService.actualizar(
+        db,
+        id_categoria,
+        datos
+    )

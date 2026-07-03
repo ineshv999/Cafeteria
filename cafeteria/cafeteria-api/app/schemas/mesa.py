@@ -7,12 +7,16 @@ class MesaBase(BaseModel):
     estado: str = "Libre"
 
 
-class MesaCreate(MesaBase):
-    pass
+class MesaCreate(BaseModel):
+    numero: int
+    capacidad: int
+    estado: str
 
 
-class MesaUpdate(MesaBase):
-    pass
+class MesaUpdate(BaseModel):
+    numero: int
+    capacidad: int
+    estado: str
 
 
 class MesaResponse(MesaBase):

@@ -42,3 +42,31 @@ class MesaService:
             db.commit()
 
         return mesa
+    
+    @staticmethod
+    def actualizar(
+        db: Session,
+        id_mesa: int,
+        datos
+    ):
+
+        mesa = (
+            db.query(Mesa)
+            .filter(Mesa.id_mesa == id_mesa)
+            .first()
+        )
+
+        if not mesa:
+            raise HTTPException(
+                status_code=404,
+                detail="Mesa no encontrada."
+            )
+
+        mesa.numero = datos.numero
+        mesa.capacidad = datos.capacidad
+        mesa.estado = datos.estado
+
+        db.commit()
+        db.refresh(mesa)
+
+        return mesa

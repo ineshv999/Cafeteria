@@ -49,3 +49,37 @@ class ProductoService:
             db.commit()
 
         return producto
+    
+    @staticmethod
+    def actualizar(
+        db: Session,
+        id_producto: int,
+        datos
+    ):
+
+        producto = (
+            db.query(Producto)
+            .filter(
+                Producto.id_producto == id_producto
+            )
+            .first()
+        )
+
+        if not producto:
+            raise HTTPException(
+                status_code=404,
+                detail="Producto no encontrado."
+            )
+
+        producto.nombre = datos.nombre
+        producto.descripcion = datos.descripcion
+        producto.precio = datos.precio
+        producto.stock = datos.stock
+        producto.imagen = datos.imagen
+        producto.activo = datos.activo
+        producto.id_categoria = datos.id_categoria
+
+        db.commit()
+        db.refresh(producto)
+
+        return producto

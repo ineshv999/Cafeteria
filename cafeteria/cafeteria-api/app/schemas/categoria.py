@@ -5,14 +5,13 @@ class CategoriaBase(BaseModel):
     nombre: str
     descripcion: str | None = None
 
+class CategoriaCreate(BaseModel):
+    nombre: str
+    descripcion: str
 
-class CategoriaCreate(CategoriaBase):
-    pass
-
-
-class CategoriaUpdate(CategoriaBase):
-    pass
-
+class CategoriaUpdate(BaseModel):
+    nombre: str
+    descripcion: str
 
 class CategoriaResponse(CategoriaBase):
 

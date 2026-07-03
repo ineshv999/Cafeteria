@@ -41,3 +41,40 @@ class UsuarioService:
             db.commit()
 
         return usuario
+
+    @staticmethod
+    def actualizar(
+        db: Session,
+        id_usuario: int,
+        datos
+    ):
+
+        usuario = (
+            db.query(Usuario)
+            .filter(
+                Usuario.id_usuario == id_usuario
+            )
+            .first()
+        )
+
+        if not usuario:
+            raise HTTPException(
+                status_code=404,
+                detail="Usuario no encontrado."
+            )
+
+        usuario.nombre_completo = datos.nombre_completo
+        usuario.email = datos.email
+        usuario.id_rol = datos.id_rol
+        usuario.activo = datos.activo
+
+        if datos.password:
+            usuario.password_hash = bcrypt.hashpw(
+                datos.password.encode(),
+                bcrypt.gensalt()
+            ).decode()
+
+        db.commit()
+        db.refresh(usuario)
+
+        return usuario
