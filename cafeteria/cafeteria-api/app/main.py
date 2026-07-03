@@ -10,6 +10,8 @@ from app.routers import mesas
 from app.routers import pedidos
 from app.routers import detalle_pedido
 from app.routers import cocina
+from app.routers import caja
+from app.routers import estadisticas
 
 app = FastAPI(
     title="CoffeeAdmin API",
@@ -25,6 +27,8 @@ app.include_router(mesas.router)
 app.include_router(pedidos.router)
 app.include_router(detalle_pedido.router)
 app.include_router(cocina.router)
+app.include_router(caja.router)
+app.include_router(estadisticas.router)
 
 @app.get("/")
 def inicio():

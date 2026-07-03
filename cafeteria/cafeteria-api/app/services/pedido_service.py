@@ -4,6 +4,8 @@ from fastapi import HTTPException
 from app.models.pedido import Pedido
 from app.models.mesa import Mesa
 
+from app.models.detalle_pedido import DetallePedido
+
 
 class PedidoService:
 
@@ -92,3 +94,43 @@ class PedidoService:
             )
 
         return pedido
+    
+    @staticmethod
+    def eliminar(
+        db: Session,
+        id_pedido: int
+    ):
+
+        pedido = (
+            db.query(Pedido)
+            .filter(Pedido.id_pedido == id_pedido)
+            .first()
+        )
+
+        if not pedido:
+            raise HTTPException(
+                status_code=404,
+                detail="Pedido no encontrado."
+            )
+
+        mesa = (
+            db.query(Mesa)
+            .filter(Mesa.id_mesa == pedido.id_mesa)
+            .first()
+        )
+
+        detalles = (
+            db.query(DetallePedido)
+            .filter(DetallePedido.id_pedido == id_pedido)
+            .all()
+        )
+
+        for detalle in detalles:
+            db.delete(detalle)
+
+        if mesa:
+            mesa.estado = "Libre"
+
+        db.delete(pedido)
+
+        db.commit()

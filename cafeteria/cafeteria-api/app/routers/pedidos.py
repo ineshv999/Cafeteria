@@ -60,3 +60,19 @@ def cambiar_estado(
         id_pedido,
         datos.estado
     )
+
+@router.delete("/{id_pedido}")
+def eliminar_pedido(
+    id_pedido: int,
+    usuario=Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+
+    PedidoService.eliminar(
+        db,
+        id_pedido
+    )
+
+    return {
+        "mensaje": "Pedido eliminado correctamente."
+    }

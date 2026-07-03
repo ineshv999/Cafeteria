@@ -43,3 +43,20 @@ def obtener_detalle_pedido(
         db,
         id_pedido
     )
+
+@router.delete("/{id_detalle}")
+def eliminar_producto(
+    id_detalle: int,
+    usuario=Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db)
+):
+
+    pedido = DetallePedidoService.eliminar(
+        db,
+        id_detalle
+    )
+
+    return {
+        "mensaje": "Producto eliminado del pedido.",
+        "total": pedido.total
+    }

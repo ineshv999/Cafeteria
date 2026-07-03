@@ -7,6 +7,8 @@ from app.models.detalle_pedido import DetallePedido
 from app.models.pedido import Pedido
 from app.models.producto import Producto
 
+from fastapi import HTTPException
+
 
 class DetallePedidoService:
 
@@ -71,3 +73,46 @@ class DetallePedidoService:
             )
             .all()
         )
+
+    @staticmethod
+    def eliminar(
+        db: Session,
+        id_detalle: int
+    ):
+
+        detalle = (
+            db.query(DetallePedido)
+            .filter(DetallePedido.id_detalle == id_detalle)
+            .first()
+        )
+
+        if not detalle:
+            raise HTTPException(
+                status_code=404,
+                detail="Detalle no encontrado."
+            )
+
+        pedido = (
+            db.query(Pedido)
+            .filter(Pedido.id_pedido == detalle.id_pedido)
+            .first()
+        )
+
+        if not pedido:
+            raise HTTPException(
+                status_code=404,
+                detail="Pedido no encontrado."
+            )
+
+        pedido.total = max(
+            Decimal("0.00"),
+            pedido.total - detalle.subtotal
+        )
+
+        db.delete(detalle)
+
+        db.commit()
+
+        db.refresh(pedido)
+
+        return pedido
