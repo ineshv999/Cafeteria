@@ -7,8 +7,6 @@ from app.models.detalle_pedido import DetallePedido
 from app.models.pedido import Pedido
 from app.models.producto import Producto
 
-from fastapi import HTTPException
-
 
 class DetallePedidoService:
 
@@ -27,6 +25,12 @@ class DetallePedidoService:
                 detail="Pedido no encontrado."
             )
 
+        if pedido.estado in ["Pagado", "Listo"]:
+            raise HTTPException(
+                status_code=400,
+                detail="El pedido ya no puede modificarse."
+            )
+
         producto = (
             db.query(Producto)
             .filter(Producto.id_producto == datos.id_producto)
@@ -37,6 +41,18 @@ class DetallePedidoService:
             raise HTTPException(
                 status_code=404,
                 detail="Producto no encontrado."
+            )
+
+        if datos.cantidad <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="La cantidad debe ser mayor que cero."
+            )
+
+        if producto.stock < datos.cantidad:
+            raise HTTPException(
+                status_code=400,
+                detail="Stock insuficiente."
             )
 
         precio = Decimal(producto.precio)
@@ -53,6 +69,8 @@ class DetallePedidoService:
 
         db.add(detalle)
 
+        producto.stock -= datos.cantidad
+
         pedido.total += subtotal
 
         db.commit()
@@ -60,7 +78,7 @@ class DetallePedidoService:
         db.refresh(detalle)
 
         return detalle
-    
+
     @staticmethod
     def listar_por_pedido(
         db: Session,
@@ -104,10 +122,25 @@ class DetallePedidoService:
                 detail="Pedido no encontrado."
             )
 
+        if pedido.estado in ["Pagado", "Listo"]:
+            raise HTTPException(
+                status_code=400,
+                detail="El pedido ya no puede modificarse."
+            )
+
         pedido.total = max(
             Decimal("0.00"),
             pedido.total - detalle.subtotal
         )
+
+        producto = (
+            db.query(Producto)
+            .filter(Producto.id_producto == detalle.id_producto)
+            .first()
+        )
+
+        if producto:
+            producto.stock += detalle.cantidad
 
         db.delete(detalle)
 

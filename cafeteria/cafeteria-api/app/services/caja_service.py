@@ -39,7 +39,8 @@ class CajaService:
 
         pedido.estado = "Pagado"
 
-        mesa.estado = "Libre"
+        if mesa:
+            mesa.estado = "Libre"
 
         db.commit()
 

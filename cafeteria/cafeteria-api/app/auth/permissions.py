@@ -1,4 +1,5 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends
+from fastapi import HTTPException
 
 from app.auth.dependencies import obtener_usuario_actual
 
@@ -12,7 +13,7 @@ def requiere_roles(*roles):
         if usuario["rol"] not in roles:
             raise HTTPException(
                 status_code=403,
-                detail="No tienes permisos para realizar esta acción."
+                detail="No tienes permisos para acceder a este recurso."
             )
 
         return usuario

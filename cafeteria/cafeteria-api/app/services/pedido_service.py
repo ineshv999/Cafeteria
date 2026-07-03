@@ -6,6 +6,8 @@ from app.models.mesa import Mesa
 
 from app.models.detalle_pedido import DetallePedido
 
+from app.models.producto import Producto
+
 
 class PedidoService:
 
@@ -119,6 +121,9 @@ class PedidoService:
             .first()
         )
 
+        if mesa:
+            mesa.estado = "Libre"
+
         detalles = (
             db.query(DetallePedido)
             .filter(DetallePedido.id_pedido == id_pedido)
@@ -126,10 +131,19 @@ class PedidoService:
         )
 
         for detalle in detalles:
-            db.delete(detalle)
 
-        if mesa:
-            mesa.estado = "Libre"
+            producto = (
+                db.query(Producto)
+                .filter(
+                    Producto.id_producto == detalle.id_producto
+                )
+                .first()
+            )
+
+            if producto:
+                producto.stock += detalle.cantidad
+
+            db.delete(detalle)
 
         db.delete(pedido)
 
