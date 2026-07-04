@@ -26,23 +26,35 @@ def index():
 @app.route("/login", methods=["POST"])
 def login():
 
-    correo = request.form["correo"]
-    password = request.form["password"]
+    print("FORM:", request.form)
+
+    username = request.form.get("username")
+    if username is None:
+        username = request.form.get("correo")
+
+    password = request.form.get("password")
+
+    if not username or not password:
+        return render_template(
+            "login.html",
+            error="No llegaron los datos del formulario."
+        )
 
     respuesta = ApiService.login(
-        correo,
+        username,
         password
     )
 
     if respuesta is None:
-
         return render_template(
             "login.html",
             error="No se pudo conectar con la API."
         )
 
-    if respuesta.status_code != 200:
+    print("STATUS:", respuesta.status_code)
+    print("RESPUESTA:", respuesta.text)
 
+    if respuesta.status_code != 200:
         return render_template(
             "login.html",
             error="Correo o contraseña incorrectos."
@@ -51,10 +63,10 @@ def login():
     datos = respuesta.json()
 
     session["token"] = datos["access_token"]
+    session["usuario"] = datos["usuario"]
+    session["rol"] = datos["rol"]
 
-    return redirect(
-        url_for("dashboard")
-    )
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/dashboard")
@@ -63,8 +75,14 @@ def dashboard():
     if "token" not in session:
         return redirect(url_for("index"))
 
+    estadisticas = ApiService.dashboard(session["token"])
+
+    if estadisticas is None:
+        return "Error al obtener las estadísticas de la API."
+
     return render_template(
-        "dashboard.html"
+        "dashboard.html",
+        estadisticas=estadisticas
     )
 
 

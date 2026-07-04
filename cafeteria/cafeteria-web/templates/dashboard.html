@@ -1,33 +1,89 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
+{% extends "base.html" %}
 
-    <meta charset="UTF-8">
+{% block titulo %}
 
-    <title>Dashboard</title>
+Dashboard
 
-</head>
+{% endblock %}
 
-<body>
+{% block contenido %}
 
-<h1>
+<div class="page-title">
 
-Bienvenido a CoffeeAdmin
+    <h2>
 
-</h1>
+        Panel de Control General
 
-<p>
+    </h2>
 
-Login correcto.
+</div>
 
-</p>
+<section class="metrics-row">
 
-<a href="/logout">
+    <div class="metric-card">
 
-Cerrar sesión
+        <span>
 
-</a>
+            Ventas
 
-</body>
+        </span>
 
-</html>
+        <p class="metric-value positive">
+
+            ${{ estadisticas["ventas"] }}
+
+        </p>
+
+    </div>
+
+    <div class="metric-card">
+
+        <span>
+
+            Pedidos
+
+        </span>
+
+        <p class="metric-value">
+
+            {{ estadisticas["pedidos"] }}
+
+        </p>
+
+    </div>
+
+    <div class="metric-card">
+
+        <span>
+
+            Productos
+
+        </span>
+
+        <p class="metric-value">
+
+            {{ estadisticas["productos"] }}
+
+        </p>
+
+    </div>
+
+    <div class="metric-card">
+
+        <span>
+
+            Ticket promedio
+
+        </span>
+
+        <p class="metric-value">
+
+            ${{ estadisticas["ticket_promedio"] }}
+
+        </p>
+
+    </div>
+
+</section>
+
+{% endblock %}
