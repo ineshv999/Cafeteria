@@ -6,8 +6,32 @@ from app.models.mesa import Mesa
 class MesaService:
 
     @staticmethod
-    def listar(db: Session):
-        return db.query(Mesa).all()
+    def listar(
+        db: Session,
+        estado: str = None,
+        capacidad: int = None,
+        skip: int = 0,
+        limit: int = 100
+    ):
+
+        consulta = db.query(Mesa)
+
+        if estado:
+            consulta = consulta.filter(
+                Mesa.estado == estado
+            )
+
+        if capacidad:
+            consulta = consulta.filter(
+                Mesa.capacidad >= capacidad
+            )
+
+        return (
+            consulta
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     @staticmethod
     def obtener(db: Session, id_mesa: int):

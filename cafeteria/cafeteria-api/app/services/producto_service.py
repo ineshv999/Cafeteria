@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.producto import Producto
@@ -6,8 +7,44 @@ from app.models.producto import Producto
 class ProductoService:
 
     @staticmethod
-    def listar(db: Session):
-        return db.query(Producto).all()
+    def listar(
+        db: Session,
+        nombre: str = None,
+        id_categoria: int = None,
+        activo: bool = None,
+        stock_minimo: int = None,
+        skip: int = 0,
+        limit: int = 100
+        ):
+
+        consulta = db.query(Producto)
+
+        if nombre:
+            consulta = consulta.filter(
+                Producto.nombre.ilike(f"%{nombre}%")
+            )
+
+        if id_categoria:
+            consulta = consulta.filter(
+                Producto.id_categoria == id_categoria
+            )
+
+        if activo is not None:
+            consulta = consulta.filter(
+                Producto.activo == activo
+            )
+
+        if stock_minimo is not None:
+            consulta = consulta.filter(
+                Producto.stock >= stock_minimo
+            )
+
+        return (
+            consulta
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     @staticmethod
     def obtener(db: Session, id_producto: int):

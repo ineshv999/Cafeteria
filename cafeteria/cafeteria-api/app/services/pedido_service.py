@@ -8,7 +8,6 @@ from app.models.detalle_pedido import DetallePedido
 
 from app.models.producto import Producto
 
-
 class PedidoService:
 
     @staticmethod
@@ -148,3 +147,37 @@ class PedidoService:
         db.delete(pedido)
 
         db.commit()
+
+    @staticmethod
+    def listar(
+        db: Session,
+        estado: str = None,
+        id_mesa: int = None,
+        id_usuario: int = None,
+        skip: int = 0,
+        limit: int = 100
+    ):
+
+        consulta = db.query(Pedido)
+
+        if estado:
+            consulta = consulta.filter(
+                Pedido.estado == estado
+            )
+
+        if id_mesa:
+            consulta = consulta.filter(
+                Pedido.id_mesa == id_mesa
+            )
+
+        if id_usuario:
+            consulta = consulta.filter(
+                Pedido.id_usuario == id_usuario
+            )
+
+        return (
+            consulta
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )

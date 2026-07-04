@@ -13,9 +13,20 @@ from app.routers import cocina
 from app.routers import caja
 from app.routers import estadisticas
 
+from fastapi.staticfiles import StaticFiles
+import os
+
 app = FastAPI(
     title="CoffeeAdmin API",
     version="1.0.0"
+)
+
+os.makedirs("uploads", exist_ok=True)
+
+app.mount(
+    "/uploads",
+    StaticFiles(directory="uploads"),
+    name="uploads"
 )
 
 app.include_router(roles.router)

@@ -12,6 +12,8 @@ from app.auth.permissions import requiere_roles
 
 from app.schemas.mesa import MesaUpdate
 
+from typing import Optional
+
 router = APIRouter(
     prefix="/mesas",
     tags=["Mesas"]
@@ -20,6 +22,10 @@ router = APIRouter(
 
 @router.get("/", response_model=list[MesaResponse])
 def listar_mesas(
+    estado: Optional[str] = None,
+    capacidad: Optional[int] = None,
+    skip: int = 0,
+    limit: int = 100,
     usuario=Depends(
         requiere_roles(
             "administrador",
@@ -28,7 +34,14 @@ def listar_mesas(
     ),
     db: Session = Depends(get_db)
 ):
-    return MesaService.listar(db)
+
+    return MesaService.listar(
+        db,
+        estado,
+        capacidad,
+        skip,
+        limit
+    )
 
 
 @router.get("/{id_mesa}", response_model=MesaResponse)

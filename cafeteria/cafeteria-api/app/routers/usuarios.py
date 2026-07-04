@@ -9,6 +9,8 @@ from app.auth.permissions import requiere_roles
 
 from app.schemas.usuario import UsuarioUpdate
 
+from typing import Optional
+
 router = APIRouter(
     prefix="/usuarios",
     tags=["Usuarios"]
@@ -28,13 +30,25 @@ def crear_usuario(
 
 @router.get("/")
 def listar_usuarios(
+    nombre: Optional[str] = None,
+    activo: Optional[bool] = None,
+    id_rol: Optional[int] = None,
+    skip: int = 0,
+    limit: int = 100,
     usuario=Depends(
         requiere_roles("administrador")
     ),
     db: Session = Depends(get_db)
 ):
-    return UsuarioService.listar(db)
 
+    return UsuarioService.listar(
+        db,
+        nombre,
+        activo,
+        id_rol,
+        skip,
+        limit
+    )
 
 @router.get("/{id_usuario}")
 def obtener_usuario(

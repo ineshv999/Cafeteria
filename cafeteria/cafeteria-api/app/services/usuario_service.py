@@ -6,8 +6,38 @@ from app.models.usuario import Usuario
 class UsuarioService:
 
     @staticmethod
-    def listar(db: Session):
-        return db.query(Usuario).all()
+    def listar(
+        db: Session,
+        nombre: str = None,
+        activo: bool = None,
+        id_rol: int = None,
+        skip: int = 0,
+        limit: int = 100
+    ):
+
+        consulta = db.query(Usuario)
+
+        if nombre:
+            consulta = consulta.filter(
+                Usuario.nombre_completo.ilike(f"%{nombre}%")
+            )
+
+        if activo is not None:
+            consulta = consulta.filter(
+                Usuario.activo == activo
+            )
+
+        if id_rol:
+            consulta = consulta.filter(
+                Usuario.id_rol == id_rol
+            )
+
+        return (
+            consulta
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     @staticmethod
     def obtener(db: Session, id_usuario: int):

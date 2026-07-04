@@ -14,6 +14,8 @@ from app.schemas.pedido import PedidoEstadoUpdate
 
 from app.auth.permissions import requiere_roles
 
+from typing import Optional
+
 router = APIRouter(
     prefix="/pedidos",
     tags=["Pedidos"]
@@ -53,6 +55,11 @@ def obtener_pedido(
 
 @router.get("/", response_model=list[PedidoResponse])
 def listar_pedidos(
+    estado: Optional[str] = None,
+    id_mesa: Optional[int] = None,
+    id_usuario: Optional[int] = None,
+    skip: int = 0,
+    limit: int = 100,
     usuario=Depends(
         requiere_roles(
             "administrador",
@@ -61,8 +68,15 @@ def listar_pedidos(
     ),
     db: Session = Depends(get_db)
 ):
-    return PedidoService.listar(db)
 
+    return PedidoService.listar(
+        db,
+        estado,
+        id_mesa,
+        id_usuario,
+        skip,
+        limit
+    )
 
 @router.put("/{id_pedido}/estado",
             response_model=PedidoResponse)
