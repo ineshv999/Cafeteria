@@ -35,20 +35,39 @@ class ApiService:
     def dashboard(token):
 
         response = requests.get(
-            f"{Config.API_URL}/estadisticas/",
-            headers={
-                "Authorization": f"Bearer {token}"
-            }
-        )
 
-        print("=" * 50)
-        print("STATUS:", response.status_code)
-        print("HEADERS:", response.headers)
-        print("BODY:")
-        print(response.text)
-        print("=" * 50)
+            f"{Config.API_URL}/estadisticas/",
+
+            headers={
+
+                "Authorization":
+                f"Bearer {token}"
+
+            }
+
+        )
 
         if response.status_code != 200:
             return None
 
         return response.json()
+    
+    @staticmethod
+    def crear_usuario(token, datos):
+
+        response = requests.post(
+
+            f"{Config.API_URL}/usuarios/",
+
+            json=datos,
+
+            headers={
+
+                "Authorization":
+                f"Bearer {token}"
+
+            }
+
+        )
+
+        return response

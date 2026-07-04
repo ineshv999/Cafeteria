@@ -10,6 +10,7 @@ router = APIRouter(
     tags=["Estadísticas"]
 )
 
+
 @router.get("/")
 def dashboard(
     usuario=Depends(

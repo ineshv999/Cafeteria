@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block titulo %}
+Estadísticas
+{% endblock %}
+
+{% block css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/estadisticas.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block contenido %}
+
+<div class="estadisticas-container">
+
+    <div class="page-header">
+
+        <div>
+
+            <h1>Estadísticas</h1>
+
+            <p>
+                Analiza el rendimiento de la cafetería en tiempo real.
+            </p>
+
+        </div>
+
+        <button
+            class="btn-actualizar"
+            id="btnActualizar">
+
+            Actualizar estadísticas
+
+        </button>
+
+    </div>
+
+    <div class="tabs">
+
+        <button class="tab active">
+
+            Resumen
+
+        </button>
+
+        <button class="tab">
+
+            Ganancias
+
+        </button>
+
+        <button class="tab">
+
+            Productos
+
+        </button>
+
+    </div>
+
+    <div class="cards">
+
+        <div class="card">
+
+            <h3>
+
+                Ganancias Brutas
+
+            </h3>
+
+            <h2>
+
+                ${{ estadisticas["ventas"] }}
+
+            </h2>
+
+            <span class="positivo">
+
+                Ventas realizadas
+
+            </span>
+
+        </div>
+
+        <div class="card">
+
+            <h3>
+
+                Pedidos Pagados
+
+            </h3>
+
+            <h2>
+
+                {{ estadisticas["pedidos"] }}
+
+            </h2>
+
+            <span>
+
+                Pedidos completados
+
+            </span>
+
+        </div>
+
+        <div class="card">
+
+            <h3>
+
+                Productos Vendidos
+
+            </h3>
+
+            <h2>
+
+                {{ estadisticas["productos"] }}
+
+            </h2>
+
+            <span>
+
+                Productos vendidos
+
+            </span>
+
+        </div>
+
+        <div class="card">
+
+            <h3>
+
+                Ticket Promedio
+
+            </h3>
+
+            <h2>
+
+                ${{ estadisticas["ticket_promedio"] }}
+
+            </h2>
+
+            <span>
+
+                Promedio por venta
+
+            </span>
+
+        </div>
+
+    </div>
+
+    <div class="graficas">
+
+        <div class="grafica">
+
+            <h3>
+
+                Ventas
+
+            </h3>
+
+            <canvas id="ventasChart"></canvas>
+
+        </div>
+
+        <div class="grafica">
+
+            <h3>
+
+                Productos
+
+            </h3>
+
+            <canvas id="productosChart"></canvas>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const datos={{ estadisticas|tojson }};
+
+</script>
+
+<script src="{{ url_for('static',
+filename='js/estadisticas.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+{% endblock %}

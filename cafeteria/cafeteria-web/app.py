@@ -7,6 +7,8 @@ from flask import (
     session
 )
 
+from functools import wraps
+
 from config import Config
 from services.api import ApiService
 
@@ -25,6 +27,8 @@ def index():
 
 @app.route("/login", methods=["POST"])
 def login():
+    if "token" not in session:
+        return redirect(url_for("index"))
 
     print("FORM:", request.form)
 
@@ -68,23 +72,139 @@ def login():
 
     return redirect(url_for("dashboard"))
 
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+
+        if "token" not in session:
+            return redirect(url_for("login"))
+
+        return f(*args, **kwargs)
+
+    return decorated
 
 @app.route("/dashboard")
+@login_required
 def dashboard():
+
+    estadisticas = {
+        "ganancias": 45230,
+        "perdidas": 2150,
+        "ordenes": 1840,
+
+        "insumos":[
+            {
+                "producto":"Café Espresso",
+                "descripcion":"Ventas óptimas",
+                "monto":12400,
+                "tipo":"plus"
+            },
+            {
+                "producto":"Leche Caducada",
+                "descripcion":"Desperdicio",
+                "monto":450,
+                "tipo":"minus"
+            },
+            {
+                "producto":"Repostería",
+                "descripcion":"No vendida",
+                "monto":820,
+                "tipo":"minus"
+            }
+        ]
+    }
+
+    return render_template(
+        "dashboard.html",
+        usuario=session["usuario"],
+        rol=session["rol"],
+        estadisticas=estadisticas
+    )
+
+@app.route("/estadisticas")
+def estadisticas():
 
     if "token" not in session:
         return redirect(url_for("index"))
 
-    estadisticas = ApiService.dashboard(session["token"])
-
-    if estadisticas is None:
-        return "Error al obtener las estadísticas de la API."
+    estadisticas = ApiService.dashboard(
+        session["token"]
+    )
 
     return render_template(
-        "dashboard.html",
+        "estadisticas.html",
         estadisticas=estadisticas
     )
 
+@app.route("/productos")
+def productos():
+    return render_template("productos.html")
+
+@app.route("/usuarios", methods=["GET", "POST"])
+@login_required
+def usuarios():
+
+    if request.method == "POST":
+
+        nombre = request.form.get("nombre")
+        correo = request.form.get("correo")
+        password = request.form.get("password")
+        rol = request.form.get("rol")
+
+        print("Nuevo usuario:")
+        print(nombre)
+        print(correo)
+        print(password)
+        print(rol)
+
+        datos = {
+
+            "nombre": nombre,
+            "correo": correo,
+            "password": password,
+            "rol": rol
+
+        }
+
+        ApiService.crear_usuario(
+            session["token"],
+            datos
+        )
+
+    lista_usuarios = [
+
+        {
+            "nombre":"Sofía Martínez",
+            "correo":"sofia@coffeeadmin.com",
+            "rol":"Administrador",
+            "estado":True,
+            "ultimo_acceso":"Hoy 08:30"
+        },
+
+        {
+            "nombre":"Alejandro Ruiz",
+            "correo":"alejandro@coffeeadmin.com",
+            "rol":"Barista",
+            "estado":True,
+            "ultimo_acceso":"Hoy 07:15"
+        },
+
+        {
+            "nombre":"Carlos Gómez",
+            "correo":"carlos@coffeeadmin.com",
+            "rol":"Barista",
+            "estado":False,
+            "ultimo_acceso":"Ayer 19:20"
+        }
+
+    ]
+
+    return render_template(
+        "usuarios.html",
+        usuarios=lista_usuarios,
+        usuario=session["usuario"],
+        rol=session["rol"]
+    )
 
 @app.route("/logout")
 def logout():
@@ -96,3 +216,5 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+    
