@@ -221,9 +221,13 @@ href="{{ url_for('static', filename='css/usuarios.css') }}">
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <button class="btn-action-icon edit">
-                                ✏️
-                            </button>
+                            <a
+                            href="{{ url_for('editar_usuario', id=u.id_usuario) }}"
+                            class="btn-action-icon edit">
+
+                            Editar
+
+                            </a>
                             <a
                             href="{{ url_for('eliminar_usuario', id=u.id_usuario) }}"
                             class="btn-action-icon delete"

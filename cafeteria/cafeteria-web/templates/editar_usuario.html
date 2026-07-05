@@ -1,0 +1,66 @@
+<h2>Editar Usuario</h2>
+
+<form method="POST">
+
+<input
+type="text"
+name="nombre_completo"
+value="{{ usuario_editar.nombre_completo }}">
+
+<input
+type="email"
+name="email"
+value="{{ usuario_editar.email }}">
+
+<select name="id_rol">
+
+<option
+value="1"
+{% if usuario_editar.id_rol==1 %}selected{% endif %}>
+
+Administrador
+
+</option>
+
+<option
+value="2"
+{% if usuario_editar.id_rol==2 %}selected{% endif %}>
+
+Barista
+
+</option>
+
+</select>
+
+<select name="activo">
+
+<option
+value="true"
+{% if usuario_editar.activo %}selected{% endif %}>
+
+Activo
+
+</option>
+
+<option
+value="false"
+{% if not usuario_editar.activo %}selected{% endif %}>
+
+Inactivo
+
+</option>
+
+</select>
+
+<input
+type="password"
+name="password"
+placeholder="Nueva contraseña">
+
+<button>
+
+Actualizar
+
+</button>
+
+</form>

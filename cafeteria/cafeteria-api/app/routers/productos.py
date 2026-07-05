@@ -118,21 +118,37 @@ def eliminar_producto(
         "mensaje":"Producto eliminado"
     }
 
-@router.put(
-    "/{id_producto}",
-    response_model=ProductoResponse
-)
+@router.put("/{id_producto}")
 def actualizar_producto(
-    id_producto: int,
-    datos: ProductoUpdate,
-    usuario=Depends(
-        requiere_roles("administrador")
-    ),
-    db: Session = Depends(get_db)
-):
 
-    return ProductoService.actualizar(
-        db,
-        id_producto,
-        datos
-    )
+    id_producto:int,
+
+    nombre:str = Form(...),
+    descripcion:str = Form(...),
+    precio:float = Form(...),
+    stock:int = Form(...),
+    activo:bool = Form(...),
+    id_categoria:int = Form(...),
+
+    imagen: UploadFile | None = File(None),
+
+    ruta = None
+
+    if imagen:
+
+        os.makedirs("uploads", exist_ok=True)
+
+        ruta = f"uploads/{imagen.filename}"
+
+        with open(ruta, "wb") as buffer:
+
+            shutil.copyfileobj(
+                imagen.file,
+                buffer
+            )
+
+    usuario=Depends(requiere_roles("administrador")),
+
+    db:Session=Depends(get_db)
+
+):

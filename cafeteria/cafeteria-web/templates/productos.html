@@ -229,6 +229,13 @@ Guardar
 
     </td>
     <td>
+        <a
+        href="{{ url_for('editar_producto', id_producto=producto.id_producto) }}"
+        class="btn-editar">
+
+        Editar
+
+        </a>
 
         <a
         href="{{ url_for('eliminar_producto', id_producto=producto.id_producto) }}"

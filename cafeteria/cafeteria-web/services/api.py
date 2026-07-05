@@ -289,3 +289,57 @@ class ApiService:
             return None
 
         return response.json()
+    
+    @staticmethod
+    def obtener_usuario(token, id_usuario):
+
+        response = requests.get(
+            f"{Config.API_URL}/usuarios/{id_usuario}",
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+        )
+
+        if response.status_code != 200:
+            return None
+
+        return response.json()
+
+
+    @staticmethod
+    def actualizar_usuario(token, id_usuario, datos):
+
+        return requests.put(
+            f"{Config.API_URL}/usuarios/{id_usuario}",
+            json=datos,
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+        )
+    
+    @staticmethod
+    def obtener_producto(token, id_producto):
+
+        response = requests.get(
+            f"{Config.API_URL}/productos/{id_producto}",
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+        )
+
+        if response.status_code != 200:
+            return None
+
+        return response.json()
+
+
+    @staticmethod
+    def actualizar_producto(token, id_producto, datos):
+
+        return requests.put(
+            f"{Config.API_URL}/productos/{id_producto}",
+            json=datos,
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+        )

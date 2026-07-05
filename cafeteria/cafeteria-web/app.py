@@ -183,6 +183,40 @@ def eliminar_usuario(id):
 
     return redirect(url_for("usuarios"))
 
+@app.route("/usuarios/editar/<int:id>", methods=["GET","POST"])
+@login_required
+def editar_usuario(id):
+
+    if request.method == "POST":
+
+        datos = {
+
+            "nombre_completo": request.form["nombre_completo"],
+            "email": request.form["email"],
+            "id_rol": int(request.form["id_rol"]),
+            "activo": request.form.get("activo") == "true",
+            "password": request.form["password"]
+
+        }
+
+        ApiService.actualizar_usuario(
+            session["token"],
+            id,
+            datos
+        )
+
+        return redirect(url_for("usuarios"))
+
+    usuario = ApiService.obtener_usuario(
+        session["token"],
+        id
+    )
+
+    return render_template(
+        "editar_usuario.html",
+        usuario_editar=usuario
+    )
+
 @app.route("/productos", methods=["GET", "POST"])
 @login_required
 def productos():
@@ -240,6 +274,56 @@ def productos():
 
         error=error
 
+    )
+
+@app.route("/productos/editar/<int:id_producto>", methods=["GET","POST"])
+@login_required
+def editar_producto(id_producto):
+
+    if request.method == "POST":
+
+        datos = {
+
+            "nombre": request.form["nombre"],
+            "descripcion": request.form["descripcion"],
+            "precio": float(request.form["precio"]),
+            "stock": int(request.form["stock"]),
+            "imagen": request.form["imagen"],
+            "activo": request.form["activo"] == "true",
+            "id_categoria": int(request.form["id_categoria"])
+
+        }
+
+        ruta = producto.imagen
+
+        if imagen:
+
+            ruta = f"uploads/{imagen.filename}"
+
+            with open(ruta,"wb") as buffer:
+                shutil.copyfileobj(imagen.file,buffer)
+
+        ApiService.actualizar_producto(
+            session["token"],
+            id_producto,
+            datos
+        )
+
+        return redirect(url_for("productos"))
+
+    producto = ApiService.obtener_producto(
+        session["token"],
+        id_producto
+    )
+
+    categorias = ApiService.obtener_categorias(
+        session["token"]
+    )
+
+    return render_template(
+        "editar_producto.html",
+        producto=producto,
+        categorias=categorias
     )
 
 @app.route("/productos/eliminar/<int:id_producto>")
@@ -358,6 +442,26 @@ def eliminar_pedido(id_pedido):
     )
 
     return redirect(url_for("pedidos"))
+
+@app.route("/reportes")
+@login_required
+def reportes():
+
+    dashboard = ApiService.obtener_dashboard(
+        session["token"]
+    )
+
+    return render_template(
+
+        "reportes.html",
+
+        datos=dashboard,
+
+        usuario=session["usuario"],
+
+        rol=session["rol"]
+
+    )
 
 @app.route("/logout")
 def logout():

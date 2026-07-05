@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Reportes</title>
+
+</head>
+
+<body>
+
+<h1>Reportes</h1>
+
+<hr>
+
+<h3>Usuarios</h3>
+
+{{ datos.usuarios }}
+
+<h3>Productos</h3>
+
+{{ datos.productos }}
+
+<h3>Pedidos</h3>
+
+{{ datos.pedidos }}
+
+<h3>Categorías</h3>
+
+{{ datos.categorias }}
+
+<h3>Ventas Totales</h3>
+
+${{ datos.ventas }}
+
+<br><br>
+
+<a href="{{ url_for('exportar_pdf') }}">
+
+<button>
+
+Exportar PDF
+
+</button>
+
+</a>
+
+<a href="{{ url_for('exportar_excel') }}">
+
+<button>
+
+Exportar Excel
+
+</button>
+
+</a>
+
+</body>
+
+</html>
