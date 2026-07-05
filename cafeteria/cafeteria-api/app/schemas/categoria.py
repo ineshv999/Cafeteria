@@ -20,3 +20,12 @@ class CategoriaResponse(CategoriaBase):
     model_config = {
         "from_attributes": True
     }
+
+class CategoriaSimple(BaseModel):
+
+    id_categoria: int
+    nombre: str
+
+    model_config = {
+        "from_attributes": True
+    }

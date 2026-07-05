@@ -2,6 +2,8 @@ from sqlalchemy.orm import Session
 
 from app.models.categoria import Categoria
 
+from fastapi import HTTPException
+
 
 class CategoriaService:
 

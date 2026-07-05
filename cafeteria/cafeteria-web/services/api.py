@@ -94,3 +94,113 @@ class ApiService:
             return response.json()
 
         return []
+
+
+    @staticmethod
+    def eliminar_usuario(token, id_usuario):
+
+        return requests.delete(
+            f"{Config.API_URL}/usuarios/{id_usuario}",
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+        )
+    
+    @staticmethod
+    def obtener_productos(token):
+
+        response = requests.get(
+
+            f"{Config.API_URL}/productos/",
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+
+        if response.status_code != 200:
+            return []
+
+        return response.json()
+    
+    @staticmethod
+    def crear_producto(token, datos, imagen):
+
+        files = {
+
+            "imagen": (
+
+                imagen.filename,
+
+                imagen.stream,
+
+                imagen.mimetype
+
+            )
+
+        }
+
+        response = requests.post(
+
+            f"{Config.API_URL}/productos/",
+
+            headers={
+
+                "Authorization": f"Bearer {token}"
+
+            },
+
+            data=datos,
+
+            files=files
+
+        )
+
+        return response
+    
+    @staticmethod
+    def eliminar_producto(token, id_producto):
+
+        return requests.delete(
+
+            f"{Config.API_URL}/productos/{id_producto}",
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+    
+    @staticmethod
+    def actualizar_producto(token, id_producto, datos):
+
+        return requests.put(
+
+            f"{Config.API_URL}/productos/{id_producto}",
+
+            json=datos,
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+    
+    @staticmethod
+    def obtener_categorias(token):
+
+        response = requests.get(
+
+            f"{Config.API_URL}/categorias/",
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+
+        if response.status_code != 200:
+            return []
+
+        return response.json()

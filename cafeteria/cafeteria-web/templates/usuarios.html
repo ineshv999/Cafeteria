@@ -177,8 +177,6 @@ href="{{ url_for('static', filename='css/usuarios.css') }}">
                 <tr>
                     <th>Usuario</th>
                     <th>Rol</th>
-                    <th>Estado</th>
-                    <th>Último Acceso</th>
                     <th>Acciones</th>
                 </tr>
               </thead>
@@ -188,13 +186,13 @@ href="{{ url_for('static', filename='css/usuarios.css') }}">
                 <tr>
                     <td>
                         <div class="user-meta">
-                            <p>{{ u.nombre }}</p>
-                            <span>{{ u.correo }}</span>
+                            <p>{{u.nombre_completo}}</p>
+                            <span>{{ u.email }}</span>
                         </div>
                     </td>
                     <td>
                         <span class="badge-role">
-                            {{ u.rol }}
+                            {{ u.id_rol }}
                         </span>
                     </td>
                                         <td>
@@ -226,9 +224,14 @@ href="{{ url_for('static', filename='css/usuarios.css') }}">
                             <button class="btn-action-icon edit">
                                 ✏️
                             </button>
-                            <button class="btn-action-icon delete">
-                                🗑️
-                            </button>
+                            <a
+                            href="{{ url_for('eliminar_usuario', id=u.id_usuario) }}"
+                            class="btn-action-icon delete"
+                            onclick="return confirm('¿Eliminar usuario?')">
+
+                            Eliminar
+
+                            </a>
                         </div>
                     </td>
                 </tr>

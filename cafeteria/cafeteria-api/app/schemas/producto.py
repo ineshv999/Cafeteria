@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel
 
+from app.schemas.categoria import CategoriaSimple
 
 class ProductoBase(BaseModel):
     nombre: str
@@ -34,7 +35,10 @@ class ProductoUpdate(BaseModel):
 
 
 class ProductoResponse(ProductoBase):
+
     id_producto: int
+
+    categoria: CategoriaSimple
 
     model_config = {
         "from_attributes": True
