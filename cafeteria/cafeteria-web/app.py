@@ -265,6 +265,78 @@ def productos():
 
     )
 
+@app.route("/productos/eliminar/<int:id_producto>")
+@login_required
+def eliminar_producto(id_producto):
+
+    ApiService.eliminar_producto(
+
+        session["token"],
+        id_producto
+
+    )
+
+    return redirect(url_for("productos"))
+
+@app.route("/categorias", methods=["GET", "POST"])
+@login_required
+def categorias():
+
+    error = None
+
+    if request.method == "POST":
+
+        datos = {
+
+            "nombre": request.form["nombre"],
+            "descripcion": request.form["descripcion"]
+
+        }
+
+        respuesta = ApiService.crear_categoria(
+
+            session["token"],
+            datos
+
+        )
+
+        if respuesta.status_code == 200:
+
+            return redirect(url_for("categorias"))
+
+        error = respuesta.text
+
+    categorias = ApiService.obtener_categorias(
+        session["token"]
+    )
+
+    return render_template(
+
+        "categorias.html",
+
+        categorias=categorias,
+
+        usuario=session["usuario"],
+
+        rol=session["rol"],
+
+        error=error
+
+    )
+
+@app.route("/categorias/eliminar/<int:id_categoria>")
+@login_required
+def eliminar_categoria(id_categoria):
+
+    ApiService.eliminar_categoria(
+
+        session["token"],
+        id_categoria
+
+    )
+
+    return redirect(url_for("categorias"))
+
 @app.route("/logout")
 def logout():
 

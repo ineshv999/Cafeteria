@@ -103,6 +103,7 @@ def crear_producto(
     )
 
 
+@router.delete("/{id_producto}")
 def eliminar_producto(
     id_producto: int,
     usuario=Depends(
@@ -110,10 +111,11 @@ def eliminar_producto(
     ),
     db: Session = Depends(get_db)
 ):
+
     ProductoService.eliminar(db, id_producto)
 
     return {
-        "mensaje": "Producto eliminado correctamente"
+        "mensaje":"Producto eliminado"
     }
 
 @router.put(

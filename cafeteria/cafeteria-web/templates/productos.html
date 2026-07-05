@@ -196,8 +196,12 @@ Guardar
                 <table>
               <thead>
                 <tr>
-                    <th>Usuario</th>
-                    <th>Rol</th>
+                    <th>Producto</th>
+                    <th>Descripción</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Categoría</th>
+                    <th>Imagen</th>
                     <th>Acciones</th>
                 </tr>
               </thead>
@@ -222,6 +226,18 @@ Guardar
         <img
             src="http://127.0.0.1:8000/{{ producto.imagen }}"
             width="70">
+
+    </td>
+    <td>
+
+        <a
+        href="{{ url_for('eliminar_producto', id_producto=producto.id_producto) }}"
+        onclick="return confirm('¿Eliminar este producto?')"
+        class="btn-eliminar">
+
+        Eliminar
+
+        </a>
 
     </td>
 

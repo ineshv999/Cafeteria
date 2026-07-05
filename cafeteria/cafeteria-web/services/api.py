@@ -204,3 +204,32 @@ class ApiService:
             return []
 
         return response.json()
+    
+    @staticmethod
+    def crear_categoria(token, datos):
+
+        return requests.post(
+
+            f"{Config.API_URL}/categorias/",
+
+            json=datos,
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+
+
+    @staticmethod
+    def eliminar_categoria(token, id_categoria):
+
+        return requests.delete(
+
+            f"{Config.API_URL}/categorias/{id_categoria}",
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
