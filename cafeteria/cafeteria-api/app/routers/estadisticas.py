@@ -17,4 +17,4 @@ def dashboard(
     ),
     db: Session = Depends(get_db)
 ):
-    return EstadisticasService.dashboard(db)
+    return EstadisticasService.resumen(db)

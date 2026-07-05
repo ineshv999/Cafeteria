@@ -103,6 +103,7 @@ def crear_producto(
     )
 
 
+@router.delete("/{id_producto}")
 def eliminar_producto(
     id_producto: int,
     usuario=Depends(
