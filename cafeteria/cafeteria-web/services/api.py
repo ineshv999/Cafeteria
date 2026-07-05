@@ -271,3 +271,21 @@ class ApiService:
                 "Authorization": f"Bearer {token}"
             }
         )
+    
+    @staticmethod
+    def obtener_dashboard(token):
+
+        response = requests.get(
+
+            f"{Config.API_URL}/dashboard/",
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+
+        if response.status_code != 200:
+            return None
+
+        return response.json()

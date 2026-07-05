@@ -85,24 +85,72 @@ href="{{ url_for('static', filename='css/dashboard.css') }}">
 
       <!-- Tarjetas de Métricas Directas -->
       <section class="metrics-row">
-        <div class="metric-card">
-          <span>Ganancias netas (Mes)</span>
-          <p class="metric-value positive">
-              ${{ "{:,.2f}".format(estadisticas.ganancias) }}
-          </p>
-        </div>
-        <div class="metric-card">
-          <span>Pérdidas registradas</span>
-          <p class="metric-value negative">
-              -${{ "{:,.2f}".format(estadisticas.perdidas) }}
-          </p>
-        </div>
-        <div class="metric-card">
-          <span>Órdenes completadas</span>
-          <p class="metric-value">
-              {{ estadisticas.ordenes }} tickets
-          </p>
-        </div>
+        <section class="metrics-row">
+
+    <div class="metric-card">
+        <span>Usuarios</span>
+
+        <p class="metric-value positive">
+            {{ estadisticas.usuarios }}
+        </p>
+
+    </div>
+
+    <div class="metric-card">
+        <span>Productos</span>
+
+        <p class="metric-value">
+            {{ estadisticas.productos }}
+        </p>
+
+    </div>
+
+    <div class="metric-card">
+        <span>Categorías</span>
+
+        <p class="metric-value">
+            {{ estadisticas.categorias }}
+        </p>
+
+    </div>
+
+    <div class="metric-card">
+        <span>Stock bajo</span>
+
+        <p class="metric-value">
+            {{ estadisticas.productos_stock_bajo }}
+        </p>
+
+    </div>
+
+    <div class="metric-card">
+        <span>Pedidos</span>
+
+        <p class="metric-value">
+            {{ estadisticas.pedidos }}
+        </p>
+
+    </div>
+
+    <div class="metric-card">
+        <span>Ventas</span>
+
+        <p class="metric-value">
+            {{ estadisticas.ventas }}
+        </p>
+
+    </div>
+
+    <div class="metric-card">
+        <span>Mesas Ocupadas</span>
+
+        <p class="metric-value">
+            {{ estadisticas.mesas_ocupadas }}
+        </p>
+
+    </div>
+
+</section>
       </section>
 
       <!-- RF-01 Sección de Gráficas de Análisis -->

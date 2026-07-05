@@ -87,32 +87,9 @@ def login_required(f):
 @login_required
 def dashboard():
 
-    estadisticas = {
-        "ganancias": 45230,
-        "perdidas": 2150,
-        "ordenes": 1840,
-
-        "insumos":[
-            {
-                "producto":"Café Espresso",
-                "descripcion":"Ventas óptimas",
-                "monto":12400,
-                "tipo":"plus"
-            },
-            {
-                "producto":"Leche Caducada",
-                "descripcion":"Desperdicio",
-                "monto":450,
-                "tipo":"minus"
-            },
-            {
-                "producto":"Repostería",
-                "descripcion":"No vendida",
-                "monto":820,
-                "tipo":"minus"
-            }
-        ]
-    }
+    estadisticas = ApiService.obtener_dashboard(
+        session["token"]
+    )
 
     return render_template(
         "dashboard.html",
