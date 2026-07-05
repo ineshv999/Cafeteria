@@ -1,56 +1,116 @@
-<form method="POST">
+<form method="POST" enctype="multipart/form-data">
 
-<input
-name="nombre"
-value="{{ producto.nombre }}">
+    <label>Nombre</label>
+    <input
+        type="text"
+        name="nombre"
+        value="{{ producto.nombre }}"
+        required>
 
-<input
-name="descripcion"
-value="{{ producto.descripcion }}">
+    <label>Descripción</label>
+    <input
+        type="text"
+        name="descripcion"
+        value="{{ producto.descripcion }}">
 
-<input
-type="number"
-step="0.01"
-name="precio"
-value="{{ producto.precio }}">
+    <label>Precio</label>
+    <input
+        type="number"
+        step="0.01"
+        name="precio"
+        value="{{ producto.precio }}"
+        required>
 
-<input
-type="number"
-name="stock"
-value="{{ producto.stock }}">
+    <label>Stock</label>
+    <input
+        type="number"
+        name="stock"
+        value="{{ producto.stock }}"
+        required>
 
-<input
-name="imagen"
-value="{{ producto.imagen }}">
+    <label>Categoría</label>
+    <select name="id_categoria">
 
-<select name="id_categoria">
+        {% for c in categorias %}
 
-{% for c in categorias %}
+        <option
+            value="{{ c.id_categoria }}"
+            {% if c.id_categoria == producto.id_categoria %}selected{% endif %}>
 
-<option
-value="{{ c.id_categoria }}"
-{% if c.id_categoria == producto.id_categoria %}selected{% endif %}>
+            {{ c.nombre }}
 
-{{ c.nombre }}
+        </option>
 
-</option>
+        {% endfor %}
 
-{% endfor %}
+    </select>
 
-</select>
+    <label>Estado</label>
+    <select name="activo">
 
-<select name="activo">
+        <option
+            value="true"
+            {% if producto.activo %}selected{% endif %}>
+            Activo
+        </option>
 
-<option value="true">Activo</option>
+        <option
+            value="false"
+            {% if not producto.activo %}selected{% endif %}>
+            Inactivo
+        </option>
 
-<option value="false">Inactivo</option>
+    </select>
 
-</select>
+    <br><br>
 
-<button>
+    <label>Imagen actual</label>
 
-Actualizar
+    <br>
 
-</button>
+    <img
+        src="http://127.0.0.1:8000/{{ producto.imagen }}"
+        width="180"
+        id="preview">
+
+    <br><br>
+
+    <label>Nueva imagen (opcional)</label>
+
+    <input
+        type="file"
+        name="imagen"
+        id="imagen"
+        accept="image/*">
+
+    <br><br>
+
+    <button type="submit">
+
+        Actualizar
+
+    </button>
 
 </form>
+
+<script>
+
+document.getElementById("imagen").addEventListener("change", function(e){
+
+    const archivo = e.target.files[0];
+
+    if(!archivo) return;
+
+    const lector = new FileReader();
+
+    lector.onload = function(ev){
+
+        document.getElementById("preview").src = ev.target.result;
+
+    }
+
+    lector.readAsDataURL(archivo);
+
+});
+
+</script>

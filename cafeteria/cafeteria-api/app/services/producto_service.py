@@ -112,9 +112,12 @@ class ProductoService:
         producto.descripcion = datos.descripcion
         producto.precio = datos.precio
         producto.stock = datos.stock
-        producto.imagen = datos.imagen
         producto.activo = datos.activo
         producto.id_categoria = datos.id_categoria
+
+        # Solo cambiar la imagen si se subió una nueva
+        if datos.imagen is not None:
+            producto.imagen = datos.imagen
 
         db.commit()
         db.refresh(producto)

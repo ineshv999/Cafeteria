@@ -13,6 +13,8 @@ from app.schemas.producto import ProductoUpdate
 
 from typing import Optional
 
+from fastapi import HTTPException
+
 import os
 import shutil
 
@@ -118,37 +120,67 @@ def eliminar_producto(
         "mensaje":"Producto eliminado"
     }
 
-@router.put("/{id_producto}")
+@router.put("/{id_producto}", response_model=ProductoResponse)
 def actualizar_producto(
 
-    id_producto:int,
+    id_producto: int,
 
-    nombre:str = Form(...),
-    descripcion:str = Form(...),
-    precio:float = Form(...),
-    stock:int = Form(...),
-    activo:bool = Form(...),
-    id_categoria:int = Form(...),
+    nombre: str = Form(...),
+    descripcion: str = Form(...),
+    precio: float = Form(...),
+    stock: int = Form(...),
+    activo: bool = Form(...),
+    id_categoria: int = Form(...),
 
     imagen: UploadFile | None = File(None),
 
-    ruta = None
+    usuario=Depends(requiere_roles("administrador")),
 
-    if imagen:
+    db: Session = Depends(get_db)
+
+):
+
+    producto = ProductoService.obtener(
+        db,
+        id_producto
+    )
+
+    if not producto:
+        raise HTTPException(
+            status_code=404,
+            detail="Producto no encontrado."
+        )
+
+    # Conservar la imagen actual
+    ruta = producto.imagen
+
+    # Si el usuario seleccionó otra imagen, reemplazarla
+    if imagen and imagen.filename != "":
 
         os.makedirs("uploads", exist_ok=True)
 
         ruta = f"uploads/{imagen.filename}"
 
         with open(ruta, "wb") as buffer:
-
             shutil.copyfileobj(
                 imagen.file,
                 buffer
             )
 
-    usuario=Depends(requiere_roles("administrador")),
+    datos = ProductoUpdate(
 
-    db:Session=Depends(get_db)
+        nombre=nombre,
+        descripcion=descripcion,
+        precio=precio,
+        stock=stock,
+        imagen=ruta,
+        activo=activo,
+        id_categoria=id_categoria
 
-):
+    )
+
+    return ProductoService.actualizar(
+        db,
+        id_producto,
+        datos
+    )
