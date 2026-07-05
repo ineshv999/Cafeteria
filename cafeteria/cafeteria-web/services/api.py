@@ -233,3 +233,41 @@ class ApiService:
             }
 
         )
+    
+    @staticmethod
+    def obtener_pedidos(token):
+
+        response = requests.get(
+            f"{Config.API_URL}/pedidos/",
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+        )
+
+        if response.status_code != 200:
+            return []
+
+        return response.json()
+
+
+    @staticmethod
+    def crear_pedido(token, datos):
+
+        return requests.post(
+            f"{Config.API_URL}/pedidos/",
+            json=datos,
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+        )
+
+
+    @staticmethod
+    def eliminar_pedido(token, id_pedido):
+
+        return requests.delete(
+            f"{Config.API_URL}/pedidos/{id_pedido}",
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+        )

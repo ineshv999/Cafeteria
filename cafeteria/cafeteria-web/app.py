@@ -337,6 +337,51 @@ def eliminar_categoria(id_categoria):
 
     return redirect(url_for("categorias"))
 
+@app.route("/pedidos", methods=["GET", "POST"])
+@login_required
+def pedidos():
+
+    error = None
+
+    if request.method == "POST":
+
+        datos = {
+            "id_mesa": int(request.form.get("id_mesa"))
+        }
+
+        respuesta = ApiService.crear_pedido(
+            session["token"],
+            datos
+        )
+
+        if respuesta.status_code != 200:
+            error = respuesta.text
+        else:
+            return redirect(url_for("pedidos"))
+
+    pedidos = ApiService.obtener_pedidos(
+        session["token"]
+    )
+
+    return render_template(
+        "pedidos.html",
+        pedidos=pedidos,
+        usuario=session["usuario"],
+        rol=session["rol"],
+        error=error
+    )
+
+@app.route("/pedidos/eliminar/<int:id_pedido>")
+@login_required
+def eliminar_pedido(id_pedido):
+
+    ApiService.eliminar_pedido(
+        session["token"],
+        id_pedido
+    )
+
+    return redirect(url_for("pedidos"))
+
 @app.route("/logout")
 def logout():
 
