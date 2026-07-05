@@ -123,7 +123,17 @@ href="{{ url_for('static', filename='css/usuarios.css') }}">
                 + Nuevo Usuario
             </button>
 
-                <div class="user-form-card">
+                <div class="user-form-card" id="formUsuario">
+
+                    {% if error %}
+
+                    <div class="alert-error">
+
+                        {{ error }}
+
+                    </div>
+
+                    {% endif %}
 
                     <h3>Registrar Usuario</h3>
 
@@ -131,12 +141,12 @@ href="{{ url_for('static', filename='css/usuarios.css') }}">
 
                         <div class="form-group">
                             <label>Nombre</label>
-                            <input type="text" name="nombre">
+                            <input type="text" name="nombre_completo">
                         </div>
 
                         <div class="form-group">
                             <label>Correo</label>
-                            <input type="email" name="correo">
+                            <input type="email" name="email">
                         </div>
 
                         <div class="form-group">
@@ -147,14 +157,10 @@ href="{{ url_for('static', filename='css/usuarios.css') }}">
                         <div class="form-group">
                             <label>Rol</label>
 
-                            <select name="rol">
-
-                                <option>Administrador</option>
-
-                                <option>Barista</option>
-
+                            <select name="id_rol">
+                                <option value="1">Administrador</option>
+                                <option value="2">Barista</option>
                             </select>
-
                         </div>
 
                         <button type="submit" class="btn-primary">

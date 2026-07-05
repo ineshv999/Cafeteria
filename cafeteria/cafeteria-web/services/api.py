@@ -55,19 +55,42 @@ class ApiService:
     @staticmethod
     def crear_usuario(token, datos):
 
-        response = requests.post(
+        try:
 
+            response = requests.post(
+
+                f"{Config.API_URL}/usuarios/",
+
+                json=datos,
+
+                headers={
+
+                    "Authorization": f"Bearer {token}"
+
+                }
+
+            )
+
+            print(response.status_code)
+            print(response.text)
+
+            return response
+
+        except requests.exceptions.ConnectionError:
+
+            return None
+        
+    @staticmethod
+    def obtener_usuarios(token):
+
+        response = requests.get(
             f"{Config.API_URL}/usuarios/",
-
-            json=datos,
-
             headers={
-
-                "Authorization":
-                f"Bearer {token}"
-
+                "Authorization": f"Bearer {token}"
             }
-
         )
 
-        return response
+        if response.status_code == 200:
+            return response.json()
+
+        return []

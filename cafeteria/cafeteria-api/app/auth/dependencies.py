@@ -6,13 +6,16 @@ from app.config import SECRET_KEY, ALGORITHM
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
+from jose import JWTError
 
 def obtener_usuario_actual(
     token: str = Depends(oauth2_scheme)
 ):
-    print("TOKEN RECIBIDO:", token)
+
+    print("TOKEN:", token)
 
     try:
+
         payload = jwt.decode(
             token,
             SECRET_KEY,
@@ -23,8 +26,9 @@ def obtener_usuario_actual(
 
         return payload
 
-    except JWTError:
-        raise HTTPException(
-            status_code=401,
-            detail="Token inválido"
-        )
+    except Exception as e:
+
+        print(type(e))
+        print(e)
+
+        raise

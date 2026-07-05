@@ -408,4 +408,12 @@
     .user-form-card{
         display:none;
     }
+
+    .alert-error{
+        background:#fee2e2;
+        color:#b91c1c;
+        padding:12px;
+        border-radius:10px;
+        margin-bottom:20px;
+    }
     

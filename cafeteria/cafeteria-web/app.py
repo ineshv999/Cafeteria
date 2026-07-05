@@ -27,8 +27,8 @@ def index():
 
 @app.route("/login", methods=["POST"])
 def login():
-    if "token" not in session:
-        return redirect(url_for("index"))
+    if "token" in session:
+        return redirect(url_for("dashboard"))
 
     print("FORM:", request.form)
 
@@ -143,68 +143,61 @@ def productos():
 @app.route("/usuarios", methods=["GET", "POST"])
 @login_required
 def usuarios():
+    error = None
 
     if request.method == "POST":
 
-        nombre = request.form.get("nombre")
-        correo = request.form.get("correo")
+        nombre = request.form.get("nombre_completo")
+        email = request.form.get("email")
         password = request.form.get("password")
-        rol = request.form.get("rol")
+        id_rol = int(request.form.get("id_rol"))
 
         print("Nuevo usuario:")
         print(nombre)
-        print(correo)
+        print(email)
         print(password)
-        print(rol)
+        print(id_rol)
 
         datos = {
 
-            "nombre": nombre,
-            "correo": correo,
+            "nombre_completo": nombre,
+            "email": email,
             "password": password,
-            "rol": rol
+            "id_rol": id_rol
 
         }
 
-        ApiService.crear_usuario(
+        respuesta = ApiService.crear_usuario(
             session["token"],
             datos
         )
 
-    lista_usuarios = [
+        print(respuesta.status_code)
+        print(respuesta.text)
 
-        {
-            "nombre":"Sofía Martínez",
-            "correo":"sofia@coffeeadmin.com",
-            "rol":"Administrador",
-            "estado":True,
-            "ultimo_acceso":"Hoy 08:30"
-        },
+        if respuesta is not None:
 
-        {
-            "nombre":"Alejandro Ruiz",
-            "correo":"alejandro@coffeeadmin.com",
-            "rol":"Barista",
-            "estado":True,
-            "ultimo_acceso":"Hoy 07:15"
-        },
+            if respuesta.status_code == 200:
 
-        {
-            "nombre":"Carlos Gómez",
-            "correo":"carlos@coffeeadmin.com",
-            "rol":"Barista",
-            "estado":False,
-            "ultimo_acceso":"Ayer 19:20"
-        }
+                return redirect(url_for("usuarios"))
 
-    ]
+            error = respuesta.text
+
+        else:
+
+            error = "No se pudo conectar con la API."
+
+    lista_usuarios = ApiService.obtener_usuarios(
+        session["token"]
+    )
 
     return render_template(
-        "usuarios.html",
-        usuarios=lista_usuarios,
-        usuario=session["usuario"],
-        rol=session["rol"]
-    )
+            "usuarios.html",
+            usuarios=lista_usuarios,
+            usuario=session["usuario"],
+            rol=session["rol"],
+            error=error
+        )
 
 @app.route("/logout")
 def logout():
