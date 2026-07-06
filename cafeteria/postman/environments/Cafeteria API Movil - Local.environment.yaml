@@ -24,6 +24,12 @@ values:
     value: '3'
   - key: id_producto
     value: '3'
+  - key: id_ingrediente
+    value: '1'
+  - key: id_compra
+    value: ''
+  - key: id_gasto
+    value: ''
   - key: id_pedido
     value: ''
   - key: id_detalle

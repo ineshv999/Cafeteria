@@ -26,6 +26,7 @@ uvicorn app.main:app --reload
 - Un usuario activo para cada rol.
 - Al menos una mesa libre.
 - Al menos un producto activo con stock disponible.
+- Al menos un suministro activo para compras de caja.
 
 Para Neon ya se dejo un proyecto `cafeteria` configurado en `.env` con
 `DATABASE_URL`. Tambien se agrego un seed de datos demo:
@@ -50,6 +51,7 @@ Variables demo:
 | --- | --- |
 | `id_mesa` | `3` |
 | `id_producto` | `3` |
+| `id_ingrediente` | `1` |
 
 3. Importar en Postman:
 
@@ -66,6 +68,7 @@ Variables demo:
 - `password_caja`
 - `id_mesa`
 - `id_producto`
+- `id_ingrediente`
 
 ## Flujo recomendado
 
@@ -84,10 +87,20 @@ Variables demo:
    - Ver detalle del pedido.
    - Marcar pedido en preparacion.
    - Marcar pedido listo.
+   - Listar menu productos.
+   - Listar categorias de menu.
+   - Listar suministros.
+   - Crear suministro.
 6. Ejecutar carpeta `Caja` en orden:
    - Listar pedidos listos.
    - Ver detalle del pedido.
    - Cobrar pedido.
+   - Listar suministros para compra.
+   - Registrar compra de suministro.
+   - Listar compras.
+   - Registrar gasto.
+   - Listar gastos.
 
 La coleccion guarda automaticamente `token_mesero`, `token_cocina`, `token_caja`,
-`id_pedido` e `id_detalle` cuando las respuestas son correctas.
+`id_pedido`, `id_detalle`, `id_ingrediente`, `id_compra` e `id_gasto` cuando las
+respuestas son correctas.

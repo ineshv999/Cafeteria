@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{base_url}}/caja/gastos"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "concepto": "Bolsa de servilletas",
+      "categoria": "Insumos",
+      "monto": 45.00,
+      "descripcion": "Gasto demo para pruebas moviles"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_caja}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Gasto registrado', function () {
+        pm.response.to.have.status(200);
+      });
+      const data = pm.response.json();
+      pm.environment.set('id_gasto', data.id_gasto);
+    language: text/javascript
+order: 4300

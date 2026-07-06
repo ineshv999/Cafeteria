@@ -5,3 +5,7 @@ from .producto import Producto
 from .mesa import Mesa
 from .pedido import Pedido
 from .detalle_pedido import DetallePedido
+from .ingrediente import Ingrediente
+from .compra import Compra
+from .detalle_compra import DetalleCompra
+from .gasto import Gasto

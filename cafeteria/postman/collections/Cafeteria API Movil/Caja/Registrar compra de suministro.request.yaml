@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{base_url}}/caja/compras"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "proveedor": "Proveedor demo",
+      "detalles": [
+        {
+          "id_ingrediente": {{id_ingrediente}},
+          "cantidad": 3,
+          "costo_unitario": 18.50
+        }
+      ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{token_caja}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Compra de suministro registrada', function () {
+        pm.response.to.have.status(200);
+      });
+      const data = pm.response.json();
+      pm.environment.set('id_compra', data.id_compra);
+    language: text/javascript
+order: 4100

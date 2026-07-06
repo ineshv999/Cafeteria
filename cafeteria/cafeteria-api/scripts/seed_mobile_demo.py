@@ -6,7 +6,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from app.auth.security import hash_password
 from app.database import Base, SessionLocal, engine
-from app.models import Categoria, Mesa, Producto, Rol, Usuario
+from app.models import Categoria, Ingrediente, Mesa, Producto, Rol, Usuario
 
 
 DEMO_USERS = [
@@ -113,6 +113,32 @@ def get_or_create_product(db, categoria):
     return producto
 
 
+def get_or_create_ingredient(db):
+    ingrediente = (
+        db.query(Ingrediente)
+        .filter(Ingrediente.nombre == "Cafe molido")
+        .first()
+    )
+
+    if ingrediente:
+        ingrediente.unidad_medida = "kg"
+        ingrediente.stock = Decimal("8.00")
+        ingrediente.stock_minimo = Decimal("2.00")
+        ingrediente.activo = True
+        return ingrediente
+
+    ingrediente = Ingrediente(
+        nombre="Cafe molido",
+        unidad_medida="kg",
+        stock=Decimal("8.00"),
+        stock_minimo=Decimal("2.00"),
+        activo=True
+    )
+    db.add(ingrediente)
+    db.flush()
+    return ingrediente
+
+
 def get_or_create_users(db, roles_by_name):
     for demo_user in DEMO_USERS:
         usuario = (
@@ -170,6 +196,7 @@ def main():
         categoria = get_or_create_category(db)
         mesa = get_or_create_table(db)
         producto = get_or_create_product(db, categoria)
+        ingrediente = get_or_create_ingredient(db)
         get_or_create_users(db, roles_by_name)
 
         db.commit()
@@ -177,6 +204,7 @@ def main():
         print("Datos demo listos para Postman.")
         print(f"id_mesa={mesa.id_mesa}")
         print(f"id_producto={producto.id_producto}")
+        print(f"id_ingrediente={ingrediente.id_ingrediente}")
         print("mesero=mesero@cafeteria.local / Mesero123!")
         print("cocina=cocina@cafeteria.local / Cocina123!")
         print("caja=caja@cafeteria.local / Caja123!")
