@@ -5,7 +5,9 @@ from sqlalchemy import or_
 from app.database import get_db
 from app.models.pedido import Pedido
 from app.schemas.pedido import PedidoResponse
+from app.schemas.detalle_pedido import DetallePedidoResponse
 from app.services.pedido_service import PedidoService
+from app.services.detalle_pedido_service import DetallePedidoService
 
 from app.auth.permissions import requiere_roles
 
@@ -38,6 +40,27 @@ def listar_pedidos_cocina(
             )
         )
         .all()
+    )
+
+
+@router.get(
+    "/pedidos/{id_pedido}/detalle",
+    response_model=list[DetallePedidoResponse]
+)
+def obtener_detalle_pedido_cocina(
+    id_pedido: int,
+    usuario=Depends(
+        requiere_roles(
+            "administrador",
+            "cocina"
+        )
+    ),
+    db: Session = Depends(get_db)
+):
+
+    return DetallePedidoService.listar_por_pedido(
+        db,
+        id_pedido
     )
 
 

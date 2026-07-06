@@ -1,4 +1,6 @@
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
+
 from app.auth.security import hash_password
 
 from app.models.usuario import Usuario
@@ -99,10 +101,7 @@ class UsuarioService:
         usuario.activo = datos.activo
 
         if datos.password:
-            usuario.password_hash = bcrypt.hashpw(
-                datos.password.encode(),
-                bcrypt.gensalt()
-            ).decode()
+            usuario.password_hash = hash_password(datos.password)
 
         db.commit()
         db.refresh(usuario)

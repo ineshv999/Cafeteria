@@ -1,0 +1,12 @@
+$kind: http-request
+name: http://127.0.0.1:8000/auth/login
+description: 2. Login Cocina prueba
+url: http://127.0.0.1:8000/auth/login
+method: POST
+body:
+  type: urlencoded
+  content:
+    grant_type: password
+    username: cocina@cafeteria.local
+    password: Cocina123!
+order: 3107014786945105
