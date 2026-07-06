@@ -4,12 +4,622 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CoffeeAdmin - Dashboard General</title>
-  <link rel="stylesheet"
-href="{{ url_for('static', filename='css/dashboard.css') }}">
-    <link rel="stylesheet"
-href="{{ url_for('static', filename='css/usuarios.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/usuarios.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Estilos mejorados para la gestión de pedidos */
+    :root {
+      --primary: #6C3B2A;
+      --primary-light: #8B5A3C;
+      --primary-dark: #4A261A;
+      --secondary: #D4A574;
+      --accent: #C38D5E;
+      --success: #2E7D32;
+      --warning: #F57C00;
+      --danger: #C62828;
+      --info: #1565C0;
+      --bg-light: #F8F5F0;
+      --bg-card: #FFFFFF;
+      --text-primary: #2D1B0F;
+      --text-secondary: #5D4037;
+      --text-muted: #8D6E63;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.15);
+      --radius: 16px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-light);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* Sidebar mejorado */
+    aside {
+      width: 280px;
+      height: 100vh;
+      background: linear-gradient(180deg, var(--primary-dark) 0%, var(--primary) 100%);
+      position: fixed;
+      left: 0;
+      top: 0;
+      padding: 24px 20px;
+      overflow-y: auto;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+      z-index: 1000;
+      transition: var(--transition);
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .sidebar-logo svg {
+      width: 32px;
+      height: 32px;
+      color: var(--secondary);
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo h1 {
+      color: #FFFFFF;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+    }
+
+    .sidebar-item {
+      margin-bottom: 6px;
+    }
+
+    .sidebar-item a {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      border-radius: 12px;
+      transition: var(--transition);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .sidebar-item a:hover {
+      background: rgba(255,255,255,0.1);
+      color: #FFFFFF;
+      transform: translateX(4px);
+    }
+
+    .sidebar-item.active a {
+      background: rgba(212, 165, 116, 0.2);
+      color: var(--secondary);
+      box-shadow: 0 0 20px rgba(212, 165, 116, 0.1);
+    }
+
+    .sidebar-item a svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    /* Main Wrapper */
+    .main-wrapper {
+      margin-left: 280px;
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    /* Header mejorado */
+    header {
+      background: var(--bg-card);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .menu-toggle {
+      background: none;
+      border: none;
+      padding: 8px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: var(--transition);
+      border-radius: 8px;
+    }
+
+    .menu-toggle:hover {
+      background: var(--bg-light);
+      color: var(--primary);
+    }
+
+    .menu-toggle svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .user-profile-badge {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 16px 8px 20px;
+      background: var(--bg-light);
+      border-radius: 50px;
+      transition: var(--transition);
+    }
+
+    .user-profile-badge:hover {
+      background: #EDE7E0;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .user-profile-badge span {
+      text-align: right;
+      line-height: 1.4;
+    }
+
+    .user-profile-badge strong {
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .user-profile-badge small {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--secondary), var(--accent));
+      flex-shrink: 0;
+      border: 2px solid var(--bg-card);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Content Body */
+    .content-body {
+      padding: 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .page-title {
+      margin-bottom: 32px;
+    }
+
+    .page-title h2 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+    }
+
+    .page-title h2::after {
+      content: '';
+      display: block;
+      width: 60px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--secondary), var(--primary));
+      margin-top: 8px;
+      border-radius: 2px;
+    }
+
+    /* Panel Card mejorado */
+    .panel-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid rgba(0,0,0,0.04);
+      transition: var(--transition);
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    .panel-card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    /* Botón primario mejorado */
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #FFFFFF;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Inter', sans-serif;
+      text-decoration: none;
+      margin-bottom: 16px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      filter: brightness(1.05);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    /* Formulario mejorado */
+    .user-form-card {
+      background: var(--bg-light);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 2px dashed var(--secondary);
+      transition: var(--transition);
+      display: none;
+    }
+
+    .user-form-card.active {
+      display: block;
+      animation: slideDown 0.4s ease-out;
+    }
+
+    .user-form-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: var(--text-primary);
+    }
+
+    .user-form-card form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 600px;
+    }
+
+    .user-form-card form label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .user-form-card form input,
+    .user-form-card form select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid rgba(0,0,0,0.08);
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      transition: var(--transition);
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+
+    .user-form-card form input:focus,
+    .user-form-card form select:focus {
+      outline: none;
+      border-color: var(--secondary);
+      box-shadow: 0 0 0 4px rgba(212, 165, 116, 0.15);
+    }
+
+    .user-form-card form button {
+      grid-column: 1 / -1;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--secondary), var(--accent));
+      color: #FFFFFF;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .user-form-card form button:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      filter: brightness(1.05);
+    }
+
+    /* Alertas */
+    .alert-error {
+      grid-column: 1 / -1;
+      padding: 12px 16px;
+      background: #FFEBEE;
+      color: var(--danger);
+      border-radius: 10px;
+      border-left: 4px solid var(--danger);
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+
+    /* Tabla mejorada */
+    .table-container {
+      overflow-x: auto;
+      border-radius: var(--radius);
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    table thead {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #FFFFFF;
+    }
+
+    table thead th {
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    table tbody tr {
+      border-bottom: 1px solid rgba(0,0,0,0.04);
+      transition: var(--transition);
+    }
+
+    table tbody tr:hover {
+      background: var(--bg-light);
+    }
+
+    table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    table tbody td {
+      padding: 14px 16px;
+      color: var(--text-secondary);
+      vertical-align: middle;
+    }
+
+    /* Badge de estado */
+    .badge-estado {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-estado.pendiente {
+      background: #FFF3E0;
+      color: var(--warning);
+      border: 1px solid rgba(245, 124, 0, 0.2);
+    }
+
+    .badge-estado.en-proceso {
+      background: #E3F2FD;
+      color: var(--info);
+      border: 1px solid rgba(21, 101, 192, 0.2);
+    }
+
+    .badge-estado.completado {
+      background: #E8F5E9;
+      color: var(--success);
+      border: 1px solid rgba(46, 125, 50, 0.2);
+    }
+
+    .badge-estado.cancelado {
+      background: #FFEBEE;
+      color: var(--danger);
+      border: 1px solid rgba(198, 40, 40, 0.2);
+    }
+
+    /* Badge de mesa */
+    .badge-mesa {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 13px;
+      background: rgba(212, 165, 116, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(212, 165, 116, 0.2);
+    }
+
+    /* Total */
+    .total-amount {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--success);
+    }
+
+    /* Botones de acción en tabla */
+    .btn-action {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: var(--transition);
+      display: inline-block;
+      cursor: pointer;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      margin-right: 4px;
+    }
+
+    .btn-action.view {
+      background: linear-gradient(135deg, var(--secondary), var(--accent));
+      color: #FFFFFF;
+    }
+
+    .btn-action.view:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+      filter: brightness(1.1);
+    }
+
+    .btn-action.delete {
+      background: linear-gradient(135deg, #EF5350, #C62828);
+      color: #FFFFFF;
+    }
+
+    .btn-action.delete:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+      filter: brightness(1.1);
+    }
+
+    .btn-action.edit {
+      background: linear-gradient(135deg, #2196F3, #1565C0);
+      color: #FFFFFF;
+    }
+
+    .btn-action.edit:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+      filter: brightness(1.1);
+    }
+
+    /* Animaciones */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      aside {
+        transform: translateX(-100%);
+        width: 280px;
+      }
+
+      aside.active {
+        transform: translateX(0);
+      }
+
+      .main-wrapper {
+        margin-left: 0;
+      }
+
+      header {
+        padding: 12px 16px;
+      }
+
+      .content-body {
+        padding: 16px;
+      }
+
+      .page-title h2 {
+        font-size: 22px;
+      }
+
+      .user-form-card form {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      table thead th,
+      table tbody td {
+        padding: 10px 12px;
+      }
+
+      .btn-action {
+        font-size: 11px;
+        padding: 4px 10px;
+        margin-bottom: 4px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .user-profile-badge span {
+        display: none;
+      }
+    }
+
+    /* Scrollbar personalizado */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-light);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--secondary);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent);
+    }
+  </style>
 </head>
 <body>
 
@@ -47,17 +657,17 @@ href="{{ url_for('static', filename='css/usuarios.css') }}">
           Categorias
         </a>
       </li>
-    <li class="sidebar-item">
-        <a href="{{ url_for('productos') }}">
+      <li class="sidebar-item">
+        <a href="{{ url_for('usuarios') }}">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
           Módulo de Usuario
         </a>
-    </li>
+      </li>
       <li class="sidebar-item">
-          <a href="{{ url_for('reportes') }}">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2" /></svg>
-              Reportes
-          </a>
+        <a href="{{ url_for('reportes') }}">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2" /></svg>
+          Reportes
+        </a>
       </li>
     </ul>
   </aside>
@@ -67,7 +677,7 @@ href="{{ url_for('static', filename='css/usuarios.css') }}">
     
     <!-- Encabezado de control superior (RF-02 Menú Hamburguesa) -->
     <header>
-      <button class="menu-toggle">
+      <button class="menu-toggle" onclick="document.querySelector('aside').classList.toggle('active')">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
       </button>
 
@@ -83,124 +693,84 @@ href="{{ url_for('static', filename='css/usuarios.css') }}">
     <main class="content-body">
       
       <div class="page-title">
-        <h2>Panel de Control General</h2>
+        <h2>📋 Panel de Control - Pedidos</h2>
       </div>
 
-<section class="content-layout-row">
+      <section class="content-layout-row">
         
         <div class="panel-card">
-          <h3 class="panel-title">Productos Registrados</h3>
+          <h3 class="panel-title">📋 Pedidos Registrados</h3>
           <div class="table-container">
-            <button class="btn-primary" type="button">
-                + Nuevo Usuario
+            <button class="btn-primary" type="button" onclick="toggleForm()">
+              ➕ Nuevo Pedido
             </button>
 
-                <div class="user-form-card" id="formUsuario">
-
-                    {% if error %}
-
-                    <div class="alert-error">
-
-                        {{ error }}
-
-                    </div>
-
-                    {% endif %}
-
-                    <h3>Registrar Producto</h3>
-<h3>Nuevo Pedido</h3>
-
-<form method="POST">
-
-<label>Mesa</label>
-
-<input
-type="number"
-name="id_mesa"
-required>
-
-<button class="btn-primary">
-
-Crear Pedido
-
-</button>
-
-</form>
-
+            <div class="user-form-card" id="formPedido">
+              {% if error %}
+                <div class="alert-error">
+                  ⚠️ {{ error }}
                 </div>
-                <table>
+              {% endif %}
 
-<thead>
+              <h3>🛒 Nuevo Pedido</h3>
 
-<tr>
+              <form method="POST" id="pedidoForm">
+                <div>
+                  <label>Mesa <span style="color: var(--danger);">*</span></label>
+                  <input type="number" name="id_mesa" placeholder="Ej: 1" min="1" required>
+                </div>
 
-<th>ID</th>
+                <button class="btn-primary" type="submit" style="width: 100%; justify-content: center;">
+                  ✅ Crear Pedido
+                </button>
+              </form>
+            </div>
 
-<th>Mesa</th>
-
-<th>Estado</th>
-
-<th>Total</th>
-
-<th>Acciones</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-{% for pedido in pedidos %}
-
-<tr>
-
-<td>{{ pedido.id_pedido }}</td>
-
-<td>{{ pedido.id_mesa }}</td>
-
-<td>{{ pedido.estado }}</td>
-
-<td>${{ pedido.total }}</td>
-
-<td>
-
-<a
-href="{{ url_for('eliminar_pedido',
-id_pedido=pedido.id_pedido) }}"
-onclick="return confirm('¿Eliminar pedido?')">
-
-Eliminar
-
-</a>
-
-<a href="{{ url_for('detalle_pedido', id_pedido=pedido.id_pedido) }}"
-class="btn-primary">
-
-Abrir
-
-</a>
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-          </div>
-        </div>
-
-        <div class="panel-card">
-          <h3 class="panel-title">Pedidos por Turno</h3>
-          
-          <div class="chart-container"><canvas id="usuariosChart"></canvas></div>
-          
-          <div class="shift-label-container">
-            <div class="shift-label">Matutino</div>
-            <div class="shift-label">Intermedio</div>
-            <div class="shift-label">Vespertino</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Mesa</th>
+                  <th>Estado</th>
+                  <th>Total</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for pedido in pedidos %}
+                  <tr>
+                    <td><strong>#{{ pedido.id_pedido }}</strong></td>
+                    <td><span class="badge-mesa">🪑 Mesa {{ pedido.id_mesa }}</span></td>
+                    <td>
+                      <span class="badge-estado {% if pedido.estado == 'pendiente' %}pendiente{% elif pedido.estado == 'en-proceso' %}en-proceso{% elif pedido.estado == 'completado' %}completado{% else %}cancelado{% endif %}">
+                        {% if pedido.estado == 'pendiente' %}
+                          ⏳ Pendiente
+                        {% elif pedido.estado == 'en-proceso' %}
+                          🔄 En Proceso
+                        {% elif pedido.estado == 'completado' %}
+                          ✅ Completado
+                        {% else %}
+                          ❌ Cancelado
+                        {% endif %}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="total-amount">
+                        ${% if pedido.total %}{{ "%.2f"|format(pedido.total|float) }}{% else %}0.00{% endif %}
+                      </span>
+                    </td>
+                    <td>
+                      <a href="{{ url_for('eliminar_pedido', id_pedido=pedido.id_pedido) }}" class="btn-action delete" onclick="return confirm('¿Eliminar pedido #{{ pedido.id_pedido }}?')">
+                        🗑️ Eliminar
+                      </a>
+                      <a href="{{ url_for('detalle_pedido', id_pedido=pedido.id_pedido) }}" class="btn-action view">
+                        👁️ Abrir
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -208,8 +778,60 @@ Abrir
     </main>
   </div>
 
+  <script>
+    // Toggle del formulario
+    function toggleForm() {
+      const form = document.getElementById('formPedido');
+      const btn = document.querySelector('.btn-primary');
+      
+      form.classList.toggle('active');
+      
+      if (form.classList.contains('active')) {
+        btn.innerHTML = '✕ Cerrar Formulario';
+        btn.style.background = 'linear-gradient(135deg, #EF5350, #C62828)';
+        setTimeout(() => {
+          form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          const firstInput = form.querySelector('input');
+          if (firstInput) firstInput.focus();
+        }, 100);
+      } else {
+        btn.innerHTML = '➕ Nuevo Pedido';
+        btn.style.background = '';
+      }
+    }
 
-<script src="{{ url_for('static',
-filename='js/usuarios.js') }}"></script>
+    // Cerrar sidebar al hacer clic fuera en móvil
+    document.addEventListener('click', function(e) {
+      const aside = document.querySelector('aside');
+      const toggle = document.querySelector('.menu-toggle');
+      if (window.innerWidth <= 768 && 
+          aside && 
+          !aside.contains(e.target) && 
+          !toggle.contains(e.target) &&
+          aside.classList.contains('active')) {
+        aside.classList.remove('active');
+      }
+    });
+
+    // Mostrar formulario si hay error
+    {% if error %}
+      document.addEventListener('DOMContentLoaded', function() {
+        toggleForm();
+      });
+    {% endif %}
+
+    // Validar que el campo mesa no esté vacío
+    document.getElementById('pedidoForm')?.addEventListener('submit', function(e) {
+      const mesa = this.querySelector('input[name="id_mesa"]');
+      if (!mesa.value.trim() || parseInt(mesa.value) < 1) {
+        e.preventDefault();
+        mesa.classList.add('error');
+        alert('Por favor, ingresa un número de mesa válido');
+        return false;
+      }
+    });
+  </script>
+
+  <script src="{{ url_for('static', filename='js/usuarios.js') }}"></script>
 </body>
 </html>
