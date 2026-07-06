@@ -47,10 +47,6 @@ class PedidoService:
         return pedido
 
     @staticmethod
-    def listar(db: Session):
-        return db.query(Pedido).all()
-
-    @staticmethod
     def cambiar_estado(
         db: Session,
         id_pedido: int,
@@ -71,16 +67,34 @@ class PedidoService:
 
         pedido.estado = estado
 
+        if estado == "Pagado":
+
+            mesa = (
+
+                db.query(Mesa)
+
+                .filter(
+
+                    Mesa.id_mesa == pedido.id_mesa
+
+                )
+
+                .first()
+
+            )
+
+            if mesa:
+
+                mesa.estado = "Libre"
+
         db.commit()
+
         db.refresh(pedido)
 
         return pedido
     
     @staticmethod
-    def obtener(
-        db: Session,
-        id_pedido: int
-    ):
+    def obtener(db: Session, id_pedido: int):
 
         pedido = (
             db.query(Pedido)

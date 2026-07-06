@@ -891,6 +891,104 @@ def exportar_excel():
         download_name=f"reporte_cafeteria_{fecha_actual}.xlsx"
     )
 
+
+@app.route("/pedidos/<int:id_pedido>", methods=["GET","POST"])
+@login_required
+def detalle_pedido(id_pedido):
+
+    error = None
+
+    if request.method == "POST":
+
+        # Cambiar estado
+        if request.form.get("accion") == "estado":
+
+            ApiService.cambiar_estado_pedido(
+
+                session["token"],
+                id_pedido,
+                request.form["estado"]
+
+            )
+
+            return redirect(
+                url_for(
+                    "detalle_pedido",
+                    id_pedido=id_pedido
+                )
+            )
+
+        # Agregar producto
+        elif request.form.get("accion") == "producto":
+
+            datos = {
+
+                "id_pedido": id_pedido,
+
+                "id_producto": int(request.form["id_producto"]),
+
+                "cantidad": int(request.form["cantidad"])
+
+            }
+
+            respuesta = ApiService.agregar_producto_pedido(
+
+                session["token"],
+                datos
+
+            )
+
+            if respuesta.status_code != 200:
+
+                error = respuesta.text
+
+            else:
+
+                return redirect(
+                    url_for(
+                        "detalle_pedido",
+                        id_pedido=id_pedido
+                    )
+                )
+
+    detalle = ApiService.obtener_detalle_pedido(
+        session["token"],
+        id_pedido
+    )
+
+    productos = ApiService.obtener_productos(
+        session["token"]
+    )
+
+    pedido = ApiService.obtener_pedido(
+        session["token"],
+        id_pedido
+    )
+
+    return render_template(
+        "detalle_pedido.html",
+        pedido=pedido,
+        detalle=detalle,
+        productos=productos,
+        error=error
+    )
+
+@app.route("/detalle/eliminar/<int:id_detalle>/<int:id_pedido>")
+@login_required
+def eliminar_detalle(id_detalle,id_pedido):
+
+    ApiService.eliminar_detalle(
+        session["token"],
+        id_detalle
+    )
+
+    return redirect(
+        url_for(
+            "detalle_pedido",
+            id_pedido=id_pedido
+        )
+    )
+
 @app.route("/logout")
 def logout():
 

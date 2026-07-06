@@ -51,7 +51,8 @@ def obtener_pedido(
     ),
     db: Session = Depends(get_db)
 ):
-    return PedidoService.obtener(db, id_pedido)
+
+    return PedidoService.obtener(db,id_pedido)
 
 @router.get("/", response_model=list[PedidoResponse])
 def listar_pedidos(

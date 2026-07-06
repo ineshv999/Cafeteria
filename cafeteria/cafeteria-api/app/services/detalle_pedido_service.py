@@ -84,13 +84,34 @@ class DetallePedidoService:
         db: Session,
         id_pedido: int
     ):
-        return (
+
+        detalles = (
             db.query(DetallePedido)
             .filter(
                 DetallePedido.id_pedido == id_pedido
             )
             .all()
         )
+
+        resultado = []
+
+        for d in detalles:
+
+            resultado.append({
+
+                "id_detalle": d.id_detalle,
+
+                "cantidad": d.cantidad,
+
+                "precio_unitario": d.precio_unitario,
+
+                "subtotal": d.subtotal,
+
+                "producto": d.producto.nombre
+
+            })
+
+        return resultado
 
     @staticmethod
     def eliminar(

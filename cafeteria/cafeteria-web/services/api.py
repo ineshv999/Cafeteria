@@ -233,6 +233,24 @@ class ApiService:
             return []
 
         return response.json()
+    
+    @staticmethod
+    def obtener_pedido(token, id_pedido):
+
+        response = requests.get(
+
+            f"{Config.API_URL}/pedidos/{id_pedido}",
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+
+        if response.status_code != 200:
+            return None
+
+        return response.json()
 
 
     @staticmethod
@@ -369,3 +387,68 @@ class ApiService:
             return None
 
         return response.json()
+    
+    @staticmethod
+    def obtener_detalle_pedido(token, id_pedido):
+
+        response = requests.get(
+
+            f"{Config.API_URL}/detalle-pedido/pedido/{id_pedido}",
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+
+        if response.status_code != 200:
+            return []
+
+        return response.json()
+
+
+    @staticmethod
+    def agregar_producto_pedido(token, datos):
+
+        return requests.post(
+
+            f"{Config.API_URL}/detalle-pedido/",
+
+            json=datos,
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+
+
+    @staticmethod
+    def eliminar_detalle(token, id_detalle):
+
+        return requests.delete(
+
+            f"{Config.API_URL}/detalle-pedido/{id_detalle}",
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+    
+    @staticmethod
+    def cambiar_estado_pedido(token, id_pedido, estado):
+
+        return requests.put(
+
+            f"{Config.API_URL}/pedidos/{id_pedido}/estado",
+
+            json={
+                "estado": estado
+            },
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )

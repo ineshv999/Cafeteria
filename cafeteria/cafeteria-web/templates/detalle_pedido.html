@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+
+<title>Detalle del Pedido</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/dashboard.css') }}">
+
+</head>
+
+<body>
+
+<div class="main-wrapper">
+
+<h2>
+
+Pedido #{{ pedido.id_pedido }}
+
+</h2>
+
+<p>
+
+<b>Mesa:</b>
+
+{{ pedido.id_mesa }}
+
+</p>
+
+<p>
+
+<b>Estado:</b>
+
+{{ pedido.estado }}
+
+</p>
+
+<form method="POST">
+
+
+<input
+type="hidden"
+name="accion"
+value="estado">
+
+<select name="estado">
+
+<option
+value="Pendiente"
+{% if pedido.estado=="Pendiente" %}selected{% endif %}>
+
+Pendiente
+
+</option>
+
+<option
+value="Preparando"
+{% if pedido.estado=="Preparando" %}selected{% endif %}>
+
+Preparando
+
+</option>
+
+<option
+value="Listo"
+{% if pedido.estado=="Listo" %}selected{% endif %}>
+
+Listo
+
+</option>
+
+<option
+value="Pagado"
+{% if pedido.estado=="Pagado" %}selected{% endif %}>
+
+Pagado
+
+</option>
+
+</select>
+
+<button>
+
+Actualizar Estado
+
+</button>
+
+</form>
+
+<p>
+
+<b>Total:</b>
+
+<strong>
+
+${{ pedido.total }}
+
+</strong>
+
+</p>
+
+<hr>
+
+{% if error %}
+
+<p style="color:red;">
+
+{{ error }}
+
+</p>
+
+{% endif %}
+
+<h3>
+
+Agregar Producto
+
+</h3>
+
+<form method="POST">
+
+    <input
+type="hidden"
+name="accion"
+value="producto">
+
+<select
+name="id_producto"
+required>
+
+{% for producto in productos %}
+
+<option
+value="{{ producto.id_producto }}">
+
+{{ producto.nombre }}
+
+(${{ producto.precio }})
+
+Stock:
+
+{{ producto.stock }}
+
+</option>
+
+{% endfor %}
+
+</select>
+
+<input
+type="number"
+name="cantidad"
+value="1"
+min="1"
+required>
+
+<button>
+
+Agregar
+
+</button>
+
+</form>
+
+<hr>
+
+<h3>
+
+Productos del Pedido
+
+</h3>
+
+<table border="1"
+cellpadding="10">
+
+<thead>
+
+<tr>
+
+<th>
+
+Producto
+
+</th>
+
+<th>
+
+Cantidad
+
+</th>
+
+<th>
+
+Precio
+
+</th>
+
+<th>
+
+Subtotal
+
+</th>
+
+<th>
+
+Acción
+
+</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for d in detalle %}
+
+<tr>
+
+<td>
+
+{{ d.producto }}
+
+</td>
+
+<td>
+
+{{ d.cantidad }}
+
+</td>
+
+<td>
+
+${{ d.precio_unitario }}
+
+</td>
+
+<td>
+
+${{ d.subtotal }}
+
+</td>
+
+<td>
+
+<a
+href="{{ url_for('eliminar_detalle',
+id_detalle=d.id_detalle,
+id_pedido=pedido.id_pedido) }}"
+
+onclick="return confirm('¿Eliminar producto?')">
+
+Eliminar
+
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+<br>
+
+<a
+href="{{ url_for('pedidos') }}">
+
+← Volver
+
+</a>
+
+</div>
+
+</body>
+
+</html>
