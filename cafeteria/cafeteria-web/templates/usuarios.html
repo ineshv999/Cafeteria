@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CoffeeAdmin - Usuarios</title>
+  <title>CoffeeAdmin - Dashboard General</title>
+  <link rel="stylesheet"
+href="{{ url_for('static', filename='css/dashboard.css') }}">
     <link rel="stylesheet"
 href="{{ url_for('static', filename='css/usuarios.css') }}">
 
@@ -11,108 +13,78 @@ href="{{ url_for('static', filename='css/usuarios.css') }}">
 </head>
 <body>
 
+  <!-- Sidebar Fijo Izquierdo (Módulo de Usuario, Estadísticas, Dashboard) -->
   <aside>
-    <div class="sidebar-header">
-      <div class="sidebar-brand">
-        <svg fill="currentColor" viewBox="0 0 24 24"><path d="M2 21h18v-2H2v2M20 8h-2V5h2v3M4 19h12v-4H4v4m0-6h12V9H4v4m0-6h12V5H4v4m16 5h-2v-4h2v4m0 5h-2v-3h2v3M22 3H2v14h20V3z"/></svg>
-        CoffeeAdmin
-      </div>
-      <button class="sidebar-close">
-        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
+    <div class="sidebar-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3" />
+      </svg>
+      <h1>CoffeeAdmin</h1>
     </div>
+
     <ul class="sidebar-menu">
       <li class="sidebar-item">
         <a href="{{ url_for('dashboard') }}">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" /></svg>
           Dashboard
         </a>
       </li>
       <li class="sidebar-item">
-        <a href="{{ url_for('estadisticas') }}">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2"/></svg>
-          Estadísticas
+        <a href="{{ url_for('productos') }}">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+          Productos / Insumos
+        </a>
+      </li>
+      <li class="sidebar-item">
+        <a href="{{ url_for('pedidos') }}">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+            Pedidos
+        </a>
+    </li>
+      <li class="sidebar-item">
+        <a href="{{ url_for('categorias') }}">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2" /></svg>
+          Categorias
         </a>
       </li>
       <li class="sidebar-item active">
-        <a href="{{ url_for('usuarios') }}">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-          Usuarios
+        <a href="#">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+          Módulo de Usuario
         </a>
+      </li>
+      <li class="sidebar-item">
+          <a href="{{ url_for('reportes') }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2" /></svg>
+              Reportes
+          </a>
       </li>
     </ul>
   </aside>
 
-  <div class="main-content">
+  <!-- Envoltura derecha -->
+  <div class="main-wrapper">
     
+    <!-- Encabezado de control superior (RF-02 Menú Hamburguesa) -->
     <header>
-      <div class="header-left">
-        <button class="header-toggle">
-          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-        </button>
-        <div class="header-logo-area">
-          <div class="logo-circle">
-            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M2 21h18v-2H2v2M20 8h-2V5h2v3M4 19h12v-4H4v4m0-6h12V9H4v4m0-6h12V5H4v4m16 5h-2v-4h2v4m0 5h-2v-3h2v3M22 3H2v14h20V3z"/></svg>
-          </div>
-          CoffeeAdmin
-        </div>
-      </div>
-      
-      <nav class="header-nav">
-        <button class="nav-btn">Dashboard</button>
-        <button class="nav-btn">Estadísticas</button>
-        <button class="nav-btn active">Usuarios</button>
-      </nav>
+      <button class="menu-toggle">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+      </button>
 
       <div class="user-profile-badge">
-            <div>
-                <strong>{{ usuario }}</strong>
-                <br>
-                <small>{{ rol }}</small>
-            </div>
-            <div class="user-avatar"></div>
-        </div>
+        <span><strong>{{ session["usuario"] }}</strong>
+        <br>
+        <small>{{ session["rol"] }}</small></span>
+        <div class="user-avatar"></div>
+      </div>
     </header>
 
-    <div class="module-sub-bar">
-      <a href="#" class="sub-tab-btn active">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-        Gestionar Usuarios
-      </a>
-      <a href="#" class="sub-tab-btn">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-        Registrar Usuario
-      </a>
-    </div>
-
-    <main class="dashboard-body">
+    <!-- Cuerpo del Dashboard -->
+    <main class="content-body">
       
-      <section class="kpi-grid">
-        <div class="kpi-card">
-          <p class="kpi-title">Ventas del día</p>
-          <p class="kpi-value">$12,450</p>
-          <span class="kpi-badge">▲ +12.5%</span>
-          <div class="kpi-icon">
-            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
-          </div>
-        </div>
-        <div class="kpi-card">
-          <p class="kpi-title">Pedidos hoy</p>
-          <p class="kpi-value">84</p>
-          <span class="kpi-badge">▲ +8.2%</span>
-          <div class="kpi-icon">
-            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
-          </div>
-        </div>
-        <div class="kpi-card">
-          <p class="kpi-title">Ganancias acumuladas</p>
-          <p class="kpi-value">$4,820</p>
-          <span class="kpi-badge">▲ +4.1%</span>
-          <div class="kpi-icon">
-            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M10 20h4v-4h-4v4zm0-6h4v-4h-4v4zm0-6h4V4h-4v4z"/></svg>
-          </div>
-        </div>
-      </section>
+      <div class="page-title">
+        <h2>Panel de Control General</h2>
+      </div>
 
       <section class="content-layout-row">
         
@@ -247,23 +219,13 @@ href="{{ url_for('static', filename='css/usuarios.css') }}">
           </div>
         </div>
 
-        <div class="panel-card">
-          <h3 class="panel-title">Pedidos por Turno</h3>
-          
-          <div class="chart-container"><canvas id="usuariosChart"></canvas></div>
-          
-          <div class="shift-label-container">
-            <div class="shift-label">Matutino</div>
-            <div class="shift-label">Intermedio</div>
-            <div class="shift-label">Vespertino</div>
-          </div>
-        </div>
-
       </section>
 
     </main>
   </div>
 
-<script src="{{ url_for('static',filename='js/usuarios.js') }}"></script>
+
+<script src="{{ url_for('static',
+filename='js/usuarios.js') }}"></script>
 </body>
 </html>
