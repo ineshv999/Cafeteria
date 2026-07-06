@@ -1,0 +1,685 @@
+import { StyleSheet, Text, View } from 'react-native';
+
+import AppHeader from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
+import CustomerTabs from '../components/CustomerTabs';
+import MockStatusBar from '../components/MockStatusBar';
+import ModuleCard from '../components/ModuleCard';
+import ScreenBackground from '../components/ScreenBackground';
+import SectionTitle from '../components/SectionTitle';
+import StatCard from '../components/StatCard';
+import SummaryCard from '../components/SummaryCard';
+import { customerModules, customerMovements, customerStats } from '../data/appData';
+
+const orderStates = [
+  { label: 'Pendientes', value: 4, color: '#f59e0b' },
+  { label: 'En cocina', value: 6, color: '#d97706' },
+  { label: 'Listos', value: 3, color: '#16a34a' },
+  { label: 'Entregados', value: 11, color: '#2563eb' },
+];
+
+const tableStates = [
+  { label: 'Ocupadas', value: 6, detail: 'Mesas con consumo' },
+  { label: 'Libres', value: 4, detail: 'Disponibles ahora' },
+  { label: 'Por pagar', value: 2, detail: 'Esperando caja' },
+];
+
+const hourlyOrders = [
+  { label: '8-10', value: 3 },
+  { label: '10-12', value: 6 },
+  { label: '12-14', value: 9 },
+  { label: '14-16', value: 5 },
+  { label: '16-18', value: 8 },
+];
+
+const favoriteProducts = [
+  { icon: '☕', label: 'Café americano', value: 18 },
+  { icon: '🥐', label: 'Pan dulce', value: 14 },
+  { icon: '🥤', label: 'Frappé', value: 9 },
+  { icon: '⭐', label: 'Combo desayuno', value: 7 },
+];
+
+const promoStats = [
+  { label: 'Sugeridas', value: 12 },
+  { label: 'Aceptadas', value: 8 },
+  { label: 'Rechazadas', value: 4 },
+];
+
+export default function CustomerScreen({ goBack, isDarkMode, setIsDarkMode, theme, navigate }) {
+  const maxOrderState = Math.max(...orderStates.map((state) => state.value));
+  const maxHourlyOrders = Math.max(...hourlyOrders.map((hour) => hour.value));
+  const maxFavoriteProduct = Math.max(...favoriteProducts.map((product) => product.value));
+  const maxPromoStat = Math.max(...promoStats.map((promo) => promo.value));
+
+  return (
+    <ScreenBackground isDarkMode={isDarkMode} theme={theme} contentStyle={styles.screen}>
+      <View style={styles.content}>
+        <MockStatusBar isDarkMode={isDarkMode} navigate={navigate} onBack={goBack} setIsDarkMode={setIsDarkMode} showBack theme={theme} />
+
+        <AppHeader
+          eyebrow="Módulo"
+          title="Cliente / Mesero"
+          subtitle="Pedidos, mesas y promociones"
+          icon="🧍"
+          isDarkMode={isDarkMode}
+          theme={theme}
+          titleSize={24}
+        />
+
+        <CustomerTabs active="customer" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
+
+        <SummaryCard
+          title="Pedidos levantados"
+          amount="15 pedidos"
+          subtitle="Pedidos registrados durante el día"
+          icon="🧾"
+          isDarkMode={isDarkMode}
+          theme={theme}
+        />
+
+        <View style={styles.statsRow}>
+          {customerStats.map((stat) => (
+            <StatCard key={stat.label} {...stat} compact theme={theme} />
+          ))}
+        </View>
+
+        <SectionTitle title="Accesos rápidos" subtitle="Gestiona pedidos y atención al cliente" compact theme={theme} />
+
+        <View style={styles.modulesGrid}>
+          {customerModules.map((module) => (
+            <ModuleCard
+              key={module.title}
+              item={module}
+              isDarkMode={isDarkMode}
+              onPress={() => {
+                if (module.target) {
+                  navigate(module.target);
+                }
+              }}
+              theme={theme}
+            />
+          ))}
+        </View>
+
+        <AnalyticsCard isDarkMode={isDarkMode} theme={theme} title="Pedidos por estado">
+          <View style={styles.metricList}>
+            {orderStates.map((state) => (
+              <HorizontalMetric
+                key={state.label}
+                color={state.color}
+                label={state.label}
+                max={maxOrderState}
+                theme={theme}
+                value={state.value}
+              />
+            ))}
+          </View>
+        </AnalyticsCard>
+
+        <AnalyticsCard isDarkMode={isDarkMode} theme={theme} title="Mesas activas">
+          <View style={styles.tableGrid}>
+            {tableStates.map((table) => (
+              <View
+                key={table.label}
+                style={[
+                  styles.tableCard,
+                  {
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(255, 255, 255, 0.72)',
+                  },
+                ]}
+              >
+                <Text selectable style={[styles.tableValue, { color: theme.title }]}>
+                  {table.value}
+                </Text>
+                <Text selectable style={[styles.tableLabel, { color: theme.title }]}>
+                  {table.label}
+                </Text>
+                <Text selectable style={[styles.tableDetail, { color: theme.muted }]}>
+                  {table.detail}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </AnalyticsCard>
+
+        <AnalyticsCard isDarkMode={isDarkMode} theme={theme} title="Pedidos por hora">
+          <View style={styles.hourGrid}>
+            {hourlyOrders.map((hour) => (
+              <View key={hour.label} style={styles.hourItem}>
+                <View
+                  style={[
+                    styles.hourBarTrack,
+                    {
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(120, 53, 15, 0.08)',
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.hourBarFill,
+                      {
+                        height: `${Math.max(22, (hour.value / maxHourlyOrders) * 100)}%`,
+                        backgroundColor: isDarkMode ? '#d97706' : theme.accentAlt,
+                      },
+                    ]}
+                  />
+                </View>
+                <Text selectable style={[styles.hourValue, { color: theme.title }]}>
+                  {hour.value}
+                </Text>
+                <Text selectable style={[styles.hourLabel, { color: theme.muted }]}>
+                  {hour.label}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </AnalyticsCard>
+
+        <AnalyticsCard isDarkMode={isDarkMode} theme={theme} title="Productos más pedidos">
+          <View style={styles.metricList}>
+            {favoriteProducts.map((product) => (
+              <HorizontalMetric
+                key={product.label}
+                color={isDarkMode ? '#d97706' : theme.accentAlt}
+                icon={product.icon}
+                label={product.label}
+                max={maxFavoriteProduct}
+                theme={theme}
+                value={product.value}
+                valueSuffix="u"
+              />
+            ))}
+          </View>
+        </AnalyticsCard>
+
+        <AnalyticsCard isDarkMode={isDarkMode} theme={theme} title="Promociones aceptadas">
+          <View style={styles.metricList}>
+            {promoStats.map((promo) => (
+              <HorizontalMetric
+                key={promo.label}
+                color={promo.label === 'Aceptadas' ? '#16a34a' : promo.label === 'Rechazadas' ? '#dc2626' : theme.accentAlt}
+                label={promo.label}
+                max={maxPromoStat}
+                theme={theme}
+                value={promo.value}
+              />
+            ))}
+          </View>
+          <Text selectable style={[styles.acceptanceText, { color: theme.muted }]}>
+            67% de aceptación en sugerencias del día
+          </Text>
+        </AnalyticsCard>
+
+        <View
+          style={[
+            styles.ticketCard,
+            {
+              backgroundColor: isDarkMode ? 'rgba(217, 119, 6, 0.16)' : 'rgba(120, 53, 15, 0.10)',
+              borderColor: isDarkMode ? 'rgba(245, 158, 11, 0.18)' : 'rgba(120, 53, 15, 0.08)',
+            },
+          ]}
+        >
+          <View>
+            <Text selectable style={[styles.ticketLabel, { color: theme.muted }]}>
+              Ticket promedio por mesa
+            </Text>
+            <Text selectable style={[styles.ticketValue, { color: theme.title }]}>
+              $145.00
+            </Text>
+            <Text selectable style={[styles.ticketDetail, { color: theme.muted }]}>
+              3.2 productos por pedido
+            </Text>
+          </View>
+          <View style={[styles.ticketIconWrap, { backgroundColor: isDarkMode ? 'rgba(245,158,11,0.14)' : '#ffffff' }]}>
+            <Text style={styles.ticketIcon}>🧾</Text>
+          </View>
+        </View>
+
+        <View
+          style={[
+            styles.timeCard,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.surfaceBorder,
+              boxShadow: theme.cardShadow,
+            },
+          ]}
+        >
+          <View>
+            <Text selectable style={[styles.timeTitle, { color: theme.title }]}>
+              Tiempo promedio de atención
+            </Text>
+            <Text selectable style={[styles.timeSubtitle, { color: theme.muted }]}>
+              Pedido a entrega
+            </Text>
+          </View>
+          <Text selectable style={[styles.timeValue, { color: theme.amber }]}>
+            14 min
+          </Text>
+        </View>
+
+        <InfoCard
+          badge="Activa"
+          icon="⭐"
+          isDarkMode={isDarkMode}
+          subtitle="Café americano + pan dulce por $55.00"
+          theme={theme}
+          title="Promoción del día"
+          value="Combo desayuno"
+          variant="marketing"
+        />
+
+        <InfoCard
+          badge="En cocina"
+          isDarkMode={isDarkMode}
+          subtitle="Mesa 2 · En preparación"
+          theme={theme}
+          title="Pedido reciente"
+          value="Pedido #31"
+          amount="$145"
+        />
+
+        <View
+          style={[
+            styles.movementCard,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.surfaceBorder,
+              boxShadow: theme.cardShadow,
+            },
+          ]}
+        >
+          <View style={styles.movementHeader}>
+            <Text selectable style={[styles.movementTitle, { color: theme.title }]}>
+              Últimos movimientos
+            </Text>
+            <View style={[styles.todayBadge, { backgroundColor: theme.actionSoft }]}>
+              <Text style={[styles.todayText, { color: theme.amber }]}>Hoy</Text>
+            </View>
+          </View>
+
+          {customerMovements.map((movement) => (
+            <View key={movement.text} style={styles.movementItem}>
+              <Text style={styles.movementIcon}>{movement.icon}</Text>
+              <Text selectable style={[styles.movementCopy, { color: theme.muted }]}>
+                {movement.text}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <BottomNav active="customer" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
+    </ScreenBackground>
+  );
+}
+
+function InfoCard({ amount, badge, icon, isDarkMode, subtitle, theme, title, value, variant }) {
+  const isMarketing = variant === 'marketing';
+
+  return (
+    <View
+      style={[
+        styles.infoCard,
+        {
+          backgroundColor: isMarketing
+            ? isDarkMode
+              ? theme.surfaceAlt
+              : '#fef3c7'
+            : isDarkMode
+              ? theme.surface
+              : theme.surfaceAlt,
+          borderColor: isDarkMode ? theme.surfaceBorder : 'transparent',
+          boxShadow: !isMarketing && !isDarkMode ? 'none' : theme.cardShadow,
+        },
+      ]}
+    >
+      <View style={styles.infoHeader}>
+        <Text selectable style={[styles.infoTitle, { color: theme.title }]}>
+          {title}
+        </Text>
+        <View
+          style={[
+            styles.infoBadge,
+            {
+              backgroundColor: isDarkMode ? 'rgba(245, 158, 11, 0.12)' : '#ffffff',
+            },
+          ]}
+        >
+          <Text style={[styles.infoBadgeText, { color: theme.amber }]}>{badge}</Text>
+        </View>
+      </View>
+
+      <View style={styles.infoBody}>
+        <View style={styles.infoCopy}>
+          <Text selectable style={[styles.infoValue, { color: theme.title }]}>
+            {value}
+          </Text>
+          <Text selectable style={[styles.infoSubtitle, { color: theme.muted }]}>
+            {subtitle}
+          </Text>
+        </View>
+        <Text selectable style={[styles.infoStrong, { color: theme.amber }]}>
+          {icon || amount}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function AnalyticsCard({ children, isDarkMode, theme, title }) {
+  return (
+    <View
+      style={[
+        styles.analyticsCard,
+        {
+          backgroundColor: isDarkMode ? 'rgba(87, 53, 34, 0.50)' : 'rgba(120, 53, 15, 0.08)',
+          borderColor: isDarkMode ? 'rgba(245, 158, 11, 0.14)' : 'rgba(120, 53, 15, 0.06)',
+        },
+      ]}
+    >
+      <Text selectable style={[styles.analyticsTitle, { color: theme.title }]}>
+        {title}
+      </Text>
+      {children}
+    </View>
+  );
+}
+
+function HorizontalMetric({ color, icon, label, max, theme, value, valueSuffix = '' }) {
+  return (
+    <View style={styles.horizontalMetric}>
+      <View style={styles.metricHeader}>
+        <Text selectable style={[styles.metricLabel, { color: theme.title }]}>
+          {icon ? `${icon} ` : ''}
+          {label}
+        </Text>
+        <Text selectable style={[styles.metricValue, { color: theme.amber }]}>
+          {value}
+          {valueSuffix}
+        </Text>
+      </View>
+      <View style={styles.metricTrack}>
+        <View style={[styles.metricFill, { backgroundColor: color, width: `${Math.max(8, (value / max) * 100)}%` }]} />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    minHeight: 1720,
+    paddingBottom: 104,
+  },
+  content: {
+    flex: 1,
+    paddingBottom: 22,
+    paddingHorizontal: 31,
+    paddingTop: 31,
+    position: 'relative',
+    zIndex: 1,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 14,
+  },
+  modulesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    paddingTop: 12,
+  },
+  analyticsCard: {
+    borderCurve: 'continuous',
+    borderRadius: 22,
+    borderWidth: 1,
+    marginTop: 14,
+    padding: 15,
+  },
+  analyticsTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  metricList: {
+    gap: 12,
+    paddingTop: 14,
+  },
+  horizontalMetric: {
+    gap: 7,
+  },
+  metricHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'space-between',
+  },
+  metricLabel: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  metricValue: {
+    fontSize: 12,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '900',
+  },
+  metricTrack: {
+    backgroundColor: 'rgba(120, 53, 15, 0.12)',
+    borderCurve: 'continuous',
+    borderRadius: 999,
+    height: 9,
+    overflow: 'hidden',
+  },
+  metricFill: {
+    borderCurve: 'continuous',
+    borderRadius: 999,
+    height: '100%',
+  },
+  tableGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingTop: 14,
+  },
+  tableCard: {
+    borderCurve: 'continuous',
+    borderRadius: 16,
+    flex: 1,
+    padding: 11,
+  },
+  tableValue: {
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  tableLabel: {
+    fontSize: 11,
+    fontWeight: '900',
+    paddingTop: 5,
+  },
+  tableDetail: {
+    fontSize: 9,
+    lineHeight: 12,
+    paddingTop: 4,
+  },
+  hourGrid: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'space-between',
+    minHeight: 128,
+    paddingTop: 14,
+  },
+  hourItem: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  hourBarTrack: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 14,
+    height: 72,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+    width: 24,
+  },
+  hourBarFill: {
+    borderCurve: 'continuous',
+    borderRadius: 14,
+    width: '100%',
+  },
+  hourValue: {
+    fontSize: 11,
+    fontWeight: '900',
+    paddingTop: 7,
+  },
+  hourLabel: {
+    fontSize: 10,
+    paddingTop: 3,
+  },
+  acceptanceText: {
+    fontSize: 11,
+    paddingTop: 12,
+  },
+  ticketCard: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 22,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 14,
+    padding: 16,
+  },
+  ticketLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  ticketValue: {
+    fontSize: 25,
+    fontWeight: '900',
+    paddingTop: 4,
+  },
+  ticketDetail: {
+    fontSize: 11,
+    paddingTop: 4,
+  },
+  ticketIconWrap: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 18,
+    height: 54,
+    justifyContent: 'center',
+    width: 54,
+  },
+  ticketIcon: {
+    fontSize: 25,
+  },
+  timeCard: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 22,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 14,
+    padding: 15,
+  },
+  timeTitle: {
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  timeSubtitle: {
+    fontSize: 11,
+    paddingTop: 4,
+  },
+  timeValue: {
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  infoCard: {
+    borderCurve: 'continuous',
+    borderRadius: 22,
+    borderWidth: 1,
+    marginTop: 12,
+    padding: 14,
+  },
+  infoHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  infoTitle: {
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  infoBadge: {
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  infoBadgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  infoBody: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 11,
+  },
+  infoCopy: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  infoValue: {
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  infoSubtitle: {
+    fontSize: 11,
+    paddingTop: 3,
+  },
+  infoStrong: {
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  movementCard: {
+    borderCurve: 'continuous',
+    borderRadius: 22,
+    borderWidth: 1,
+    marginTop: 12,
+    padding: 14,
+  },
+  movementHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  movementTitle: {
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  todayBadge: {
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  todayText: {
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  movementItem: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 9,
+  },
+  movementIcon: {
+    fontSize: 14,
+  },
+  movementCopy: {
+    flex: 1,
+    fontSize: 11,
+  },
+});
