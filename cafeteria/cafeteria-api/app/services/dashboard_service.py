@@ -3,8 +3,8 @@ from sqlalchemy import func
 
 from app.models.usuario import Usuario
 from app.models.producto import Producto
-from app.models.categoria import Categoria
 from app.models.pedido import Pedido
+from app.models.categoria import Categoria
 from app.models.mesa import Mesa
 
 
@@ -13,26 +13,73 @@ class DashboardService:
     @staticmethod
     def obtener(db: Session):
 
+        ventas = db.query(
+            func.sum(Pedido.total)
+        ).scalar() or 0
+
+        pedidos = db.query(Pedido).count()
+
+        usuarios = db.query(Usuario).count()
+
+        productos = db.query(Producto).count()
+
+        categorias = db.query(Categoria).count()
+
+        mesas_ocupadas = db.query(Mesa).filter(
+            Mesa.estado == "Ocupada"
+        ).count()
+
+        stock_bajo = db.query(Producto).filter(
+            Producto.stock <= 5
+        ).count()
+
+        maximo = max(
+                    ventas,
+                    pedidos,
+                    productos,
+                    usuarios,
+                    categorias,
+                    1
+                )
+
+        productos_stock = (
+            db.query(Producto)
+            .filter(Producto.stock <= 5)
+            .all()
+        )
+
+        insumos = []
+
+        for p in productos_stock:
+            insumos.append({
+                "producto": p.nombre,
+                "descripcion": f"Stock: {p.stock}",
+                "monto": p.stock,
+                "tipo": "minus"
+            })
+
+
         return {
 
-            "usuarios": db.query(Usuario).count(),
+            "ganancias": float(ventas),
 
-            "productos": db.query(Producto).count(),
+            "ordenes": pedidos,
 
-            "categorias": db.query(Categoria).count(),
+            "usuarios": usuarios,
 
-            "pedidos": db.query(Pedido).count(),
+            "productos": productos,
 
-            "mesas_ocupadas": db.query(Mesa).filter(
-                Mesa.estado == "Ocupada"
-            ).count(),
+            "categorias": categorias,
 
-            "productos_stock_bajo": db.query(Producto).filter(
-                Producto.stock <= 5
-            ).count(),
+            "mesas_ocupadas": mesas_ocupadas,
+            
+            "stock_bajo": stock_bajo,
 
-            "ventas": db.query(
-                func.coalesce(func.sum(Pedido.total), 0)
-            ).scalar()
+            "ventas_barra": ventas / maximo * 100,
+            "pedidos_barra": pedidos / maximo * 100,
+            "productos_barra": productos / maximo * 100,
+            "usuarios_barra": usuarios / maximo * 100,
+
+            "insumos": insumos,
 
         }

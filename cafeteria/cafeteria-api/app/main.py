@@ -13,6 +13,7 @@ from app.routers import cocina
 from app.routers import caja
 from app.routers import estadisticas
 from app.routers import dashboard
+from app.routers import reportes
 
 from fastapi.staticfiles import StaticFiles
 import os
@@ -42,6 +43,7 @@ app.include_router(cocina.router)
 app.include_router(caja.router)
 app.include_router(estadisticas.router)
 app.include_router(dashboard.router)
+app.include_router(reportes.router)
 
 @app.get("/")
 def inicio():

@@ -173,21 +173,6 @@ class ApiService:
         )
     
     @staticmethod
-    def actualizar_producto(token, id_producto, datos):
-
-        return requests.put(
-
-            f"{Config.API_URL}/productos/{id_producto}",
-
-            json=datos,
-
-            headers={
-                "Authorization": f"Bearer {token}"
-            }
-
-        )
-    
-    @staticmethod
     def obtener_categorias(token):
 
         response = requests.get(
@@ -334,12 +319,53 @@ class ApiService:
 
 
     @staticmethod
-    def actualizar_producto(token, id_producto, datos):
+    def actualizar_producto(token, id_producto, datos, imagen=None):
 
-        return requests.put(
-            f"{Config.API_URL}/productos/{id_producto}",
-            json=datos,
+        headers = {
+            "Authorization": f"Bearer {token}"
+        }
+
+        if imagen and imagen.filename:
+
+            files = {
+                "imagen": (
+                    imagen.filename,
+                    imagen.stream,
+                    imagen.content_type
+                )
+            }
+
+            response = requests.put(
+                f"{Config.API_URL}/productos/{id_producto}",
+                headers=headers,
+                data=datos,
+                files=files
+            )
+
+        else:
+
+            response = requests.put(
+                f"{Config.API_URL}/productos/{id_producto}",
+                headers=headers,
+                data=datos
+            )
+
+        return response
+    
+    @staticmethod
+    def obtener_reportes(token):
+
+        response = requests.get(
+
+            f"{Config.API_URL}/reportes/",
+
             headers={
                 "Authorization": f"Bearer {token}"
             }
+
         )
+
+        if response.status_code != 200:
+            return None
+
+        return response.json()

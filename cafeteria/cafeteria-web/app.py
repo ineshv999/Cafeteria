@@ -7,6 +7,12 @@ from flask import (
     session
 )
 
+from flask import send_file
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib import colors
+
+from openpyxl import Workbook
+
 from functools import wraps
 
 from config import Config
@@ -276,37 +282,36 @@ def productos():
 
     )
 
-@app.route("/productos/editar/<int:id_producto>", methods=["GET","POST"])
+@app.route("/productos/editar/<int:id_producto>", methods=["GET", "POST"])
 @login_required
 def editar_producto(id_producto):
 
     if request.method == "POST":
 
+        # Obtener el producto actual
+        producto = ApiService.obtener_producto(
+            session["token"],
+            id_producto
+        )
+
+        imagen = request.files.get("imagen")
+
         datos = {
 
             "nombre": request.form["nombre"],
             "descripcion": request.form["descripcion"],
-            "precio": float(request.form["precio"]),
-            "stock": int(request.form["stock"]),
-            "imagen": request.form["imagen"],
-            "activo": request.form["activo"] == "true",
-            "id_categoria": int(request.form["id_categoria"])
+            "precio": request.form["precio"],
+            "stock": request.form["stock"],
+            "activo": request.form["activo"],
+            "id_categoria": request.form["id_categoria"]
 
         }
-
-        ruta = producto.imagen
-
-        if imagen:
-
-            ruta = f"uploads/{imagen.filename}"
-
-            with open(ruta,"wb") as buffer:
-                shutil.copyfileobj(imagen.file,buffer)
 
         ApiService.actualizar_producto(
             session["token"],
             id_producto,
-            datos
+            datos,
+            imagen
         )
 
         return redirect(url_for("productos"))
@@ -447,7 +452,7 @@ def eliminar_pedido(id_pedido):
 @login_required
 def reportes():
 
-    dashboard = ApiService.obtener_dashboard(
+    datos = ApiService.obtener_reportes(
         session["token"]
     )
 
@@ -455,12 +460,101 @@ def reportes():
 
         "reportes.html",
 
-        datos=dashboard,
+        reporte=datos,
 
         usuario=session["usuario"],
 
         rol=session["rol"]
 
+    )
+
+@app.route("/reportes/pdf")
+@login_required
+def exportar_pdf():
+
+    datos = ApiService.obtener_reportes(
+        session["token"]
+    )
+
+    archivo = "reporte_cafeteria.pdf"
+
+    pdf = SimpleDocTemplate(archivo)
+
+    tabla = [
+
+        ["Concepto", "Cantidad"],
+
+        ["Usuarios", datos["usuarios"]],
+
+        ["Productos", datos["productos"]],
+
+        ["Categorías", datos["categorias"]],
+
+        ["Pedidos", datos["pedidos"]],
+
+        ["Ventas", f"${datos['ventas']}"],
+
+        ["Productos con poco stock", datos["poco_stock"]]
+
+    ]
+
+    t = Table(tabla)
+
+    t.setStyle(
+
+        TableStyle([
+
+            ("BACKGROUND",(0,0),(-1,0),colors.darkblue),
+
+            ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+
+            ("GRID",(0,0),(-1,-1),1,colors.black),
+
+            ("BACKGROUND",(0,1),(-1,-1),colors.beige),
+
+            ("BOTTOMPADDING",(0,0),(-1,0),12)
+
+        ])
+
+    )
+
+    pdf.build([t])
+
+    return send_file(
+        archivo,
+        as_attachment=True
+    )
+
+@app.route("/reportes/excel")
+@login_required
+def exportar_excel():
+
+    datos = ApiService.obtener_reportes(
+        session["token"]
+    )
+
+    wb = Workbook()
+
+    ws = wb.active
+
+    ws.title = "Reporte"
+
+    ws.append(["Concepto", "Cantidad"])
+
+    ws.append(["Usuarios", datos["usuarios"]])
+    ws.append(["Productos", datos["productos"]])
+    ws.append(["Categorías", datos["categorias"]])
+    ws.append(["Pedidos", datos["pedidos"]])
+    ws.append(["Ventas", datos["ventas"]])
+    ws.append(["Productos con poco stock", datos["poco_stock"]])
+
+    archivo = "reporte_cafeteria.xlsx"
+
+    wb.save(archivo)
+
+    return send_file(
+        archivo,
+        as_attachment=True
     )
 
 @app.route("/logout")

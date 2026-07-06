@@ -34,13 +34,8 @@ href="{{ url_for('static', filename='css/dashboard.css') }}">
         </a>
       </li>
       <li class="sidebar-item">
-        <a href="#">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2" /></svg>
-          Estadísticas Avanzadas
-        </a>
-      </li>
-      <li class="sidebar-item">
         <a href="{{ url_for('pedidos') }}">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
             Pedidos
         </a>
     </li>
@@ -58,6 +53,7 @@ href="{{ url_for('static', filename='css/dashboard.css') }}">
       </li>
       <li class="sidebar-item">
           <a href="{{ url_for('reportes') }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2" /></svg>
               Reportes
           </a>
       </li>
@@ -102,13 +98,16 @@ href="{{ url_for('static', filename='css/dashboard.css') }}">
     </div>
 
     <div class="metric-card">
-        <span>Productos</span>
 
-        <p class="metric-value">
-            {{ estadisticas.productos }}
-        </p>
+      <span>Productos</span>
 
-    </div>
+      <p class="metric-value">
+
+      {{ estadisticas.productos }}
+
+      </p>
+
+      </div>
 
     <div class="metric-card">
         <span>Categorías</span>
@@ -123,7 +122,15 @@ href="{{ url_for('static', filename='css/dashboard.css') }}">
         <span>Stock bajo</span>
 
         <p class="metric-value">
-            {{ estadisticas.productos_stock_bajo }}
+            {{ estadisticas.stock_bajo }}
+        </p>
+
+    </div>
+    <div class="metric-card">
+        <span>Ganancias</span>
+
+        <p class="metric-value">
+            ${{ "{:,.2f}".format(estadisticas.ganancias) }}
         </p>
 
     </div>
@@ -132,16 +139,7 @@ href="{{ url_for('static', filename='css/dashboard.css') }}">
         <span>Pedidos</span>
 
         <p class="metric-value">
-            {{ estadisticas.pedidos }}
-        </p>
-
-    </div>
-
-    <div class="metric-card">
-        <span>Ventas</span>
-
-        <p class="metric-value">
-            {{ estadisticas.ventas }}
+            {{ estadisticas.ordenes }}
         </p>
 
     </div>
@@ -173,41 +171,56 @@ href="{{ url_for('static', filename='css/dashboard.css') }}">
 
           <!-- Estructura visual simulando barras de datos -->
           <div class="bar-chart-mock">
-            <div class="bar-group">
+          <div class="bar-group">
               <div class="bars-container">
-                <div class="bar ganancia" style="height: 65%;"></div>
-                <div class="bar perdida" style="height: 12%;"></div>
+                  <div class="bar ganancia"
+                      style="height: {{ estadisticas.ganancias / 100 }}%;"></div>
+
+                  <div class="bar perdida"
+                      style="height: {{ estadisticas.stock_bajo * 10 }}%;"></div>
               </div>
-              <span class="bar-label">Lun</span>
-            </div>
-            <div class="bar-group">
+
+              <span class="bar-label">Ventas</span>
+          </div>
+          <div class="bar-group">
               <div class="bars-container">
-                <div class="bar ganancia" style="height: 80%;"></div>
-                <div class="bar perdida" style="height: 8%;"></div>
+
+                  <div class="bar ganancia"
+                      style="height: {{ estadisticas.ordenes * 15 }}%;"></div>
+
+                  <div class="bar perdida"
+                      style="height: {{ estadisticas.mesas_ocupadas * 20 }}%;"></div>
+
               </div>
-              <span class="bar-label">Mar</span>
-            </div>
-            <div class="bar-group">
+
+              <span class="bar-label">Pedidos</span>
+          </div>
+          <div class="bar-group">
               <div class="bars-container">
-                <div class="bar ganancia" style="height: 50%;"></div>
-                <div class="bar perdida" style="height: 25%;"></div>
+
+                  <div class="bar ganancia"
+                      style="height: {{ estadisticas.productos * 10 }}%;"></div>
+
+                  <div class="bar perdida"
+                      style="height: {{ estadisticas.categorias * 20 }}%;"></div>
+
               </div>
-              <span class="bar-label">Mié</span>
-            </div>
-            <div class="bar-group">
+
+              <span class="bar-label">Inventario</span>
+          </div>
+          <div class="bar-group">
               <div class="bars-container">
-                <div class="bar ganancia" style="height: 95%;"></div>
-                <div class="bar perdida" style="height: 5%;"></div>
+
+                  <div class="bar ganancia"
+                      style="height: {{ estadisticas.usuarios * 20 }}%;"></div>
+
+                  <div class="bar perdida"
+                      style="height: {{ estadisticas.stock_bajo * 15 }}%;"></div>
+
               </div>
-              <span class="bar-label">Jue</span>
-            </div>
-            <div class="bar-group">
-              <div class="bars-container">
-                <div class="bar ganancia" style="height: 85%;"></div>
-                <div class="bar perdida" style="height: 18%;"></div>
-              </div>
-              <span class="bar-label">Vie</span>
-            </div>
+
+              <span class="bar-label">Usuarios</span>
+          </div>
           </div>
         </div>
 
@@ -256,6 +269,53 @@ href="{{ url_for('static', filename='css/dashboard.css') }}">
 
 const dashboardData = {{ estadisticas|tojson }};
 
+const datos = {
+
+labels: [
+
+"Productos",
+
+"Usuarios",
+
+"Pedidos",
+
+"Categorías"
+
+],
+
+datasets:[{
+
+label:"Sistema",
+
+data:[
+
+dashboardData.productos,
+
+dashboardData.usuarios,
+
+dashboardData.ordenes,
+
+dashboardData.categorias
+
+]
+
+}]
+
+};
+
+new Chart(
+
+document.getElementById("graficaDashboard"),
+
+{
+
+type:"bar",
+
+data:datos
+
+}
+
+);
 </script>
 
 <script src="{{ url_for('static',
