@@ -471,90 +471,424 @@ def reportes():
 @app.route("/reportes/pdf")
 @login_required
 def exportar_pdf():
-
-    datos = ApiService.obtener_reportes(
-        session["token"]
+    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.lib.units import inch, cm
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+    from reportlab.lib.fonts import addMapping
+    import os
+    from datetime import datetime
+    
+    datos = ApiService.obtener_reportes(session["token"])
+    
+    # Crear nombre de archivo con fecha
+    fecha_actual = datetime.now().strftime("%Y%m%d_%H%M%S")
+    archivo = f"reporte_cafeteria_{fecha_actual}.pdf"
+    
+    # Crear el documento con márgenes
+    pdf = SimpleDocTemplate(
+        archivo,
+        pagesize=A4,
+        rightMargin=72,
+        leftMargin=72,
+        topMargin=72,
+        bottomMargin=72
     )
-
-    archivo = "reporte_cafeteria.pdf"
-
-    pdf = SimpleDocTemplate(archivo)
-
-    tabla = [
-
-        ["Concepto", "Cantidad"],
-
-        ["Usuarios", datos["usuarios"]],
-
-        ["Productos", datos["productos"]],
-
-        ["Categorías", datos["categorias"]],
-
-        ["Pedidos", datos["pedidos"]],
-
-        ["Ventas", f"${datos['ventas']}"],
-
-        ["Productos con poco stock", datos["poco_stock"]]
-
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    
+    # Estilo para título principal
+    titulo_style = ParagraphStyle(
+        'TituloStyle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#6C3B2A'),
+        alignment=TA_CENTER,
+        spaceAfter=30,
+        fontName='Helvetica-Bold'
+    )
+    
+    # Estilo para subtítulo
+    subtitulo_style = ParagraphStyle(
+        'SubtituloStyle',
+        parent=styles['Heading2'],
+        fontSize=14,
+        textColor=colors.HexColor('#5D4037'),
+        alignment=TA_CENTER,
+        spaceAfter=20,
+        fontName='Helvetica'
+    )
+    
+    # Estilo para fecha
+    fecha_style = ParagraphStyle(
+        'FechaStyle',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.HexColor('#8D6E63'),
+        alignment=TA_RIGHT,
+        spaceAfter=20,
+        fontName='Helvetica'
+    )
+    
+    # Estilo para encabezados de tabla
+    header_style = ParagraphStyle(
+        'HeaderStyle',
+        parent=styles['Normal'],
+        fontSize=12,
+        textColor=colors.white,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    # Estilo para celdas de datos
+    data_style = ParagraphStyle(
+        'DataStyle',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=colors.HexColor('#2D1B0F'),
+        alignment=TA_LEFT,
+        fontName='Helvetica'
+    )
+    
+    # Estilo para valores monetarios
+    money_style = ParagraphStyle(
+        'MoneyStyle',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=colors.HexColor('#2E7D32'),
+        alignment=TA_RIGHT,
+        fontName='Helvetica-Bold'
+    )
+    
+    # Estilo para valores negativos (stock bajo)
+    warning_style = ParagraphStyle(
+        'WarningStyle',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=colors.HexColor('#C62828'),
+        alignment=TA_LEFT,
+        fontName='Helvetica-Bold'
+    )
+    
+    # Elementos del PDF
+    elementos = []
+    
+    # Logo o título principal
+    elementos.append(Paragraph("☕ CoffeeAdmin", titulo_style))
+    elementos.append(Paragraph("Reporte General del Sistema", subtitulo_style))
+    elementos.append(Paragraph(f"Fecha de generación: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}", fecha_style))
+    elementos.append(Spacer(1, 0.3*inch))
+    
+    # Línea decorativa
+    linea_data = [
+        ["", ""],
+        ["", ""]
     ]
-
-    t = Table(tabla)
-
-    t.setStyle(
-
-        TableStyle([
-
-            ("BACKGROUND",(0,0),(-1,0),colors.darkblue),
-
-            ("TEXTCOLOR",(0,0),(-1,0),colors.white),
-
-            ("GRID",(0,0),(-1,-1),1,colors.black),
-
-            ("BACKGROUND",(0,1),(-1,-1),colors.beige),
-
-            ("BOTTOMPADDING",(0,0),(-1,0),12)
-
-        ])
-
+    linea_tabla = Table(linea_data, colWidths=[4*inch, 2*inch])
+    linea_tabla.setStyle(TableStyle([
+        ('LINEABOVE', (0,0), (-1,0), 2, colors.HexColor('#D4A574')),
+        ('LINEABOVE', (0,1), (-1,1), 1, colors.HexColor('#D4A574')),
+    ]))
+    elementos.append(linea_tabla)
+    elementos.append(Spacer(1, 0.2*inch))
+    
+    # Datos principales
+    datos_tabla = [
+        [
+            Paragraph("📊 Concepto", header_style),
+            Paragraph("📈 Cantidad", header_style)
+        ],
+        [
+            Paragraph("👥 Usuarios", data_style),
+            Paragraph(str(datos["usuarios"]), data_style)
+        ],
+        [
+            Paragraph("📦 Productos", data_style),
+            Paragraph(str(datos["productos"]), data_style)
+        ],
+        [
+            Paragraph("🏷️ Categorías", data_style),
+            Paragraph(str(datos["categorias"]), data_style)
+        ],
+        [
+            Paragraph("📋 Pedidos", data_style),
+            Paragraph(str(datos["pedidos"]), data_style)
+        ],
+        [
+            Paragraph("💰 Ventas", data_style),
+            Paragraph(f"${'{:,.2f}'.format(datos['ventas'])}", money_style)
+        ],
+        [
+            Paragraph("⚠️ Productos con poco stock", warning_style),
+            Paragraph(str(datos["poco_stock"]), warning_style)
+        ]
+    ]
+    
+    # Crear tabla con mejor estilo
+    tabla = Table(datos_tabla, colWidths=[4*inch, 2*inch])
+    tabla.setStyle(TableStyle([
+        # Encabezado
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#6C3B2A')),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 12),
+        ('ALIGN', (0,0), (-1,0), 'CENTER'),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        ('TOPPADDING', (0,0), (-1,0), 12),
+        
+        # Filas de datos (alternando colores)
+        ('BACKGROUND', (0,1), (-1,1), colors.HexColor('#F8F5F0')),
+        ('BACKGROUND', (0,2), (-1,2), colors.HexColor('#FFFFFF')),
+        ('BACKGROUND', (0,3), (-1,3), colors.HexColor('#F8F5F0')),
+        ('BACKGROUND', (0,4), (-1,4), colors.HexColor('#FFFFFF')),
+        ('BACKGROUND', (0,5), (-1,5), colors.HexColor('#F8F5F0')),
+        ('BACKGROUND', (0,6), (-1,6), colors.HexColor('#FFFFFF')),
+        
+        # Bordes y espaciado
+        ('GRID', (0,0), (-1,-1), 1, colors.HexColor('#D4A574')),
+        ('BOX', (0,0), (-1,-1), 2, colors.HexColor('#6C3B2A')),
+        ('TOPPADDING', (0,1), (-1,-1), 8),
+        ('BOTTOMPADDING', (0,1), (-1,-1), 8),
+        ('LEFTPADDING', (0,0), (-1,-1), 12),
+        ('RIGHTPADDING', (0,0), (-1,-1), 12),
+        
+        # Alineación
+        ('ALIGN', (0,1), (0,-1), 'LEFT'),
+        ('ALIGN', (1,1), (1,-1), 'RIGHT'),
+        
+        # Estilo para la última fila (stock bajo)
+        ('FONTNAME', (0,6), (1,6), 'Helvetica-Bold'),
+    ]))
+    
+    elementos.append(tabla)
+    elementos.append(Spacer(1, 0.3*inch))
+    
+    # Resumen adicional
+    resumen_style = ParagraphStyle(
+        'ResumenStyle',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.HexColor('#5D4037'),
+        alignment=TA_CENTER,
+        fontName='Helvetica'
     )
-
-    pdf.build([t])
-
+    
+    # Calcular algunos datos adicionales
+    ticket_promedio = datos['ventas'] / datos['pedidos'] if datos['pedidos'] > 0 else 0
+    stock_bajo_porcentaje = (datos['poco_stock'] / datos['productos'] * 100) if datos['productos'] > 0 else 0
+    
+    resumen = [
+        f"📊 Ticket promedio: ${'{:,.2f}'.format(ticket_promedio)}",
+        f"⚠️ {datos['poco_stock']} productos con stock bajo ({'{:.1f}'.format(stock_bajo_porcentaje)}% del total)",
+        f"📦 {datos['productos']} productos en {datos['categorias']} categorías"
+    ]
+    
+    for linea in resumen:
+        elementos.append(Paragraph(linea, resumen_style))
+        elementos.append(Spacer(1, 0.1*inch))
+    
+    elementos.append(Spacer(1, 0.3*inch))
+    
+    # Línea final
+    linea_final_data = [[""]]
+    linea_final = Table(linea_final_data, colWidths=[6*inch])
+    linea_final.setStyle(TableStyle([
+        ('LINEABOVE', (0,0), (-1,0), 1, colors.HexColor('#D4A574')),
+    ]))
+    elementos.append(linea_final)
+    elementos.append(Spacer(1, 0.2*inch))
+    
+    # Pie de página
+    pie_style = ParagraphStyle(
+        'PieStyle',
+        parent=styles['Normal'],
+        fontSize=8,
+        textColor=colors.HexColor('#8D6E63'),
+        alignment=TA_CENTER,
+        fontName='Helvetica'
+    )
+    elementos.append(Paragraph("CoffeeAdmin - Sistema de Gestión para Cafeterías", pie_style))
+    elementos.append(Paragraph(f"Reporte generado el {datetime.now().strftime('%d/%m/%Y')}", pie_style))
+    
+    # Construir el PDF
+    pdf.build(elementos)
+    
     return send_file(
         archivo,
-        as_attachment=True
+        as_attachment=True,
+        download_name=f"reporte_cafeteria_{fecha_actual}.pdf"
     )
+
 
 @app.route("/reportes/excel")
 @login_required
 def exportar_excel():
-
-    datos = ApiService.obtener_reportes(
-        session["token"]
-    )
-
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, numbers
+    from openpyxl.utils import get_column_letter
+    from datetime import datetime
+    import os
+    
+    datos = ApiService.obtener_reportes(session["token"])
+    
+    # Crear nombre de archivo con fecha
+    fecha_actual = datetime.now().strftime("%Y%m%d_%H%M%S")
+    archivo = f"reporte_cafeteria_{fecha_actual}.xlsx"
+    
     wb = Workbook()
-
     ws = wb.active
-
-    ws.title = "Reporte"
-
-    ws.append(["Concepto", "Cantidad"])
-
-    ws.append(["Usuarios", datos["usuarios"]])
-    ws.append(["Productos", datos["productos"]])
-    ws.append(["Categorías", datos["categorias"]])
-    ws.append(["Pedidos", datos["pedidos"]])
-    ws.append(["Ventas", datos["ventas"]])
-    ws.append(["Productos con poco stock", datos["poco_stock"]])
-
-    archivo = "reporte_cafeteria.xlsx"
-
+    ws.title = "Reporte General"
+    
+    # Estilos
+    header_font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
+    header_fill = PatternFill(start_color='6C3B2A', end_color='6C3B2A', fill_type='solid')
+    header_alignment = Alignment(horizontal='center', vertical='center')
+    
+    subheader_font = Font(name='Arial', size=12, bold=True, color='5D4037')
+    subheader_fill = PatternFill(start_color='F8F5F0', end_color='F8F5F0', fill_type='solid')
+    
+    data_font = Font(name='Arial', size=11)
+    data_alignment = Alignment(horizontal='left', vertical='center')
+    
+    money_font = Font(name='Arial', size=11, bold=True, color='2E7D32')
+    money_alignment = Alignment(horizontal='right', vertical='center')
+    
+    warning_font = Font(name='Arial', size=11, bold=True, color='C62828')
+    
+    border = Border(
+        left=Side(style='thin', color='D4A574'),
+        right=Side(style='thin', color='D4A574'),
+        top=Side(style='thin', color='D4A574'),
+        bottom=Side(style='thin', color='D4A574')
+    )
+    
+    thick_border = Border(
+        left=Side(style='medium', color='6C3B2A'),
+        right=Side(style='medium', color='6C3B2A'),
+        top=Side(style='medium', color='6C3B2A'),
+        bottom=Side(style='medium', color='6C3B2A')
+    )
+    
+    # Título
+    ws.merge_cells('A1:B1')
+    titulo_cell = ws['A1']
+    titulo_cell.value = "☕ CoffeeAdmin - Reporte General"
+    titulo_cell.font = Font(name='Arial', size=20, bold=True, color='6C3B2A')
+    titulo_cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # Fecha
+    ws.merge_cells('A2:B2')
+    fecha_cell = ws['A2']
+    fecha_cell.value = f"Fecha de generación: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
+    fecha_cell.font = Font(name='Arial', size=10, color='8D6E63')
+    fecha_cell.alignment = Alignment(horizontal='right', vertical='center')
+    
+    # Espacio
+    ws.row_dimensions[3].height = 10
+    
+    # Encabezados de tabla
+    headers = ["📊 Concepto", "📈 Cantidad"]
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=4, column=col)
+        cell.value = header
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = thick_border
+    
+    # Datos
+    datos_lista = [
+        ("👥 Usuarios", datos["usuarios"], 'normal'),
+        ("📦 Productos", datos["productos"], 'normal'),
+        ("🏷️ Categorías", datos["categorias"], 'normal'),
+        ("📋 Pedidos", datos["pedidos"], 'normal'),
+        ("💰 Ventas", f"${'{:,.2f}'.format(datos['ventas'])}", 'money'),
+        ("⚠️ Productos con poco stock", datos["poco_stock"], 'warning')
+    ]
+    
+    for idx, (concepto, valor, tipo) in enumerate(datos_lista, 5):
+        # Concepto
+        cell_concepto = ws.cell(row=idx, column=1)
+        cell_concepto.value = concepto
+        cell_concepto.font = Font(name='Arial', size=11, bold=True if tipo == 'warning' else False)
+        cell_concepto.alignment = Alignment(horizontal='left', vertical='center')
+        cell_concepto.border = border
+        
+        # Valor
+        cell_valor = ws.cell(row=idx, column=2)
+        cell_valor.value = valor
+        cell_valor.alignment = Alignment(horizontal='right', vertical='center')
+        cell_valor.border = border
+        
+        if tipo == 'money':
+            cell_valor.font = money_font
+        elif tipo == 'warning':
+            cell_valor.font = warning_font
+            cell_concepto.font = warning_font
+        else:
+            cell_valor.font = data_font
+        
+        # Color de fondo alternado
+        if idx % 2 == 0:
+            for col in range(1, 3):
+                ws.cell(row=idx, column=col).fill = PatternFill(start_color='F8F5F0', end_color='F8F5F0', fill_type='solid')
+    
+    # Ajustar ancho de columnas
+    ws.column_dimensions['A'].width = 30
+    ws.column_dimensions['B'].width = 20
+    
+    # Agregar resumen
+    fila_resumen = len(datos_lista) + 6
+    
+    # Calcular datos adicionales
+    ticket_promedio = datos['ventas'] / datos['pedidos'] if datos['pedidos'] > 0 else 0
+    stock_bajo_porcentaje = (datos['poco_stock'] / datos['productos'] * 100) if datos['productos'] > 0 else 0
+    
+    resumen_datos = [
+        ("📊 Ticket promedio", f"${'{:,.2f}'.format(ticket_promedio)}"),
+        ("⚠️ Productos con stock bajo", f"{datos['poco_stock']} ({'{:.1f}'.format(stock_bajo_porcentaje)}%)"),
+        ("📦 Resumen", f"{datos['productos']} productos en {datos['categorias']} categorías")
+    ]
+    
+    # Espacio
+    ws.row_dimensions[fila_resumen - 1].height = 10
+    
+    for idx, (concepto, valor) in enumerate(resumen_datos, fila_resumen):
+        cell_concepto = ws.cell(row=idx, column=1)
+        cell_concepto.value = concepto
+        cell_concepto.font = Font(name='Arial', size=11, bold=True, color='5D4037')
+        cell_concepto.alignment = Alignment(horizontal='left', vertical='center')
+        
+        cell_valor = ws.cell(row=idx, column=2)
+        cell_valor.value = valor
+        cell_valor.font = Font(name='Arial', size=11, bold=True, color='5D4037')
+        cell_valor.alignment = Alignment(horizontal='right', vertical='center')
+    
+    # Pie de página
+    fila_pie = fila_resumen + len(resumen_datos) + 2
+    
+    ws.merge_cells(f'A{fila_pie}:B{fila_pie}')
+    pie_cell = ws.cell(row=fila_pie, column=1)
+    pie_cell.value = "CoffeeAdmin - Sistema de Gestión para Cafeterías"
+    pie_cell.font = Font(name='Arial', size=9, color='8D6E63')
+    pie_cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    ws.merge_cells(f'A{fila_pie + 1}:B{fila_pie + 1}')
+    pie_fecha = ws.cell(row=fila_pie + 1, column=1)
+    pie_fecha.value = f"Reporte generado el {datetime.now().strftime('%d/%m/%Y')}"
+    pie_fecha.font = Font(name='Arial', size=9, color='8D6E63')
+    pie_fecha.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # Guardar
     wb.save(archivo)
-
+    
     return send_file(
         archivo,
-        as_attachment=True
+        as_attachment=True,
+        download_name=f"reporte_cafeteria_{fecha_actual}.xlsx"
     )
 
 @app.route("/logout")
