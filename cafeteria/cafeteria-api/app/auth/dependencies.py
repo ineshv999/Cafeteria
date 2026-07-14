@@ -1,18 +1,17 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
+from jose import JWTError, ExpiredSignatureError, jwt
 
 from app.config import SECRET_KEY, ALGORITHM
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/auth/login"
+)
 
-from jose import JWTError
 
 def obtener_usuario_actual(
     token: str = Depends(oauth2_scheme)
 ):
-
-    print("TOKEN:", token)
 
     try:
 
@@ -22,13 +21,24 @@ def obtener_usuario_actual(
             algorithms=[ALGORITHM]
         )
 
-        print("PAYLOAD:", payload)
-
         return payload
 
-    except Exception as e:
+    except ExpiredSignatureError:
 
-        print(type(e))
-        print(e)
+        raise HTTPException(
 
-        raise
+            status_code=status.HTTP_401_UNAUTHORIZED,
+
+            detail="Token expirado"
+
+        )
+
+    except JWTError:
+
+        raise HTTPException(
+
+            status_code=status.HTTP_401_UNAUTHORIZED,
+
+            detail="Token inválido"
+
+        )

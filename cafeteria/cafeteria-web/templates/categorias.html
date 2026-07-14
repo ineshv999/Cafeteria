@@ -235,6 +235,33 @@
       border-radius: 2px;
     }
 
+    /* Alertas flash */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-weight: 500;
+      margin-bottom: 20px;
+      border-left: 4px solid;
+    }
+
+    .alert-success {
+      background: #E8F5E9;
+      color: var(--success);
+      border-left-color: var(--success);
+    }
+
+    .alert-error {
+      background: #FFEBEE;
+      color: var(--danger);
+      border-left-color: var(--danger);
+    }
+
+    .alert-warning {
+      background: #FFF3E0;
+      color: var(--warning);
+      border-left-color: var(--warning);
+    }
+
     /* Panel Card mejorado */
     .panel-card {
       background: var(--bg-card);
@@ -328,6 +355,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 16px;
+      max-width: 600px;
     }
 
     .user-form-card form .full-width {
@@ -514,6 +542,7 @@
       transition: var(--transition);
       display: inline-block;
       cursor: pointer;
+      font-family: 'Inter', sans-serif;
     }
 
     .btn-editar:hover {
@@ -534,6 +563,7 @@
       transition: var(--transition);
       display: inline-block;
       cursor: pointer;
+      font-family: 'Inter', sans-serif;
     }
 
     .btn-eliminar:hover {
@@ -542,45 +572,170 @@
       filter: brightness(1.1);
     }
 
-    .btn-ver-productos {
-      padding: 6px 14px;
+    /* Modal mejorado */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .modal-content {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 32px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: var(--shadow-lg);
+      animation: slideUp 0.3s ease-out;
+      position: relative;
+    }
+
+    .modal-content .modal-close {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .modal-content .modal-close:hover {
+      color: var(--danger);
+      transform: rotate(90deg);
+    }
+
+    .modal-content h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-content h2::after {
+      content: '';
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, var(--secondary), transparent);
+    }
+
+    .modal-content form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-content form label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .modal-content form label .required {
+      color: var(--danger);
+      margin-left: 4px;
+    }
+
+    .modal-content form input,
+    .modal-content form textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid rgba(0,0,0,0.08);
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      transition: var(--transition);
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+
+    .modal-content form input:focus,
+    .modal-content form textarea:focus {
+      outline: none;
+      border-color: var(--secondary);
+      box-shadow: 0 0 0 4px rgba(212, 165, 116, 0.15);
+    }
+
+    .modal-content form textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .modal-buttons button {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: 'Inter', sans-serif;
+      flex: 1;
+    }
+
+    .modal-buttons button[type="submit"] {
       background: linear-gradient(135deg, var(--secondary), var(--accent));
       color: #FFFFFF;
-      border: none;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      text-decoration: none;
-      transition: var(--transition);
-      display: inline-block;
-      cursor: pointer;
     }
 
-    .btn-ver-productos:hover {
+    .modal-buttons button[type="submit"]:hover {
       transform: translateY(-2px);
-      box-shadow: var(--shadow-sm);
-      filter: brightness(1.1);
+      box-shadow: var(--shadow-md);
+      filter: brightness(1.05);
     }
 
-    /* Status badge */
-    .status-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    .modal-buttons button[type="button"] {
+      background: var(--bg-light);
+      color: var(--text-secondary);
     }
 
-    .status-badge.active {
-      background: #E8F5E9;
-      color: var(--success);
+    .modal-buttons button[type="button"]:hover {
+      background: #EDE7E0;
+      transform: translateY(-2px);
     }
 
-    .status-badge.inactive {
-      background: #F5F5F5;
-      color: var(--text-muted);
+    /* Animaciones del modal */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
     /* Tarjetas de métricas para categorías */
@@ -734,8 +889,7 @@
       }
 
       .btn-editar,
-      .btn-eliminar,
-      .btn-ver-productos {
+      .btn-eliminar {
         text-align: center;
         font-size: 11px;
         padding: 4px 10px;
@@ -743,6 +897,15 @@
 
       .metrics-row {
         grid-template-columns: repeat(2, 1fr);
+      }
+
+      .modal-content {
+        padding: 24px;
+        width: 95%;
+      }
+
+      .modal-buttons {
+        flex-direction: column;
       }
     }
 
@@ -759,6 +922,10 @@
 
       .metrics-row {
         grid-template-columns: 1fr;
+      }
+
+      .modal-content h2 {
+        font-size: 18px;
       }
     }
 
@@ -779,6 +946,133 @@
 
     ::-webkit-scrollbar-thumb:hover {
       background: var(--accent);
+    }
+    /* --- Estilo principal del botón --- */
+    .btn-logout-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 24px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 40px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.25);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .btn-logout-btn:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(220, 53, 69, 0.35);
+    }
+
+    .btn-logout-btn:active {
+        transform: translateY(0px);
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+    }
+
+    /* --- Variante pequeña (para espacios reducidos) --- */
+    .btn-logout-btn.small {
+        padding: 6px 16px;
+        font-size: 12px;
+        border-radius: 30px;
+    }
+
+    /* --- Variante sin fondo (outline) --- */
+    .btn-logout-btn.outline {
+        background: transparent;
+        color: #dc3545;
+        border: 2px solid #dc3545;
+        box-shadow: none;
+    }
+
+    .btn-logout-btn.outline:hover {
+        background: #dc3545;
+        color: white;
+    }
+
+    /* --- Variante solo icono --- */
+    .btn-logout-btn.icon-only {
+        padding: 10px 12px;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+    }
+
+    /* --- Enlace sin subrayado --- */
+    a.btn-logout {
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    /* ==========================================
+       EJEMPLOS DE UBICACIÓN
+       ========================================== */
+
+    /* 1. En el header (barra superior) */
+    .header-logout {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-left: auto;
+    }
+
+    /* 2. En el sidebar (menú lateral) */
+    .sidebar-logout {
+        margin-top: auto;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .sidebar-logout .btn-logout-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* 3. En el perfil de usuario (avatar + nombre + botón) */
+    .user-profile-logout {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 40px;
+    }
+
+    .user-profile-logout .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #6b4423;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .user-profile-logout .user-name {
+        color: #6b4423;
+        font-weight: 500;
+        font-size: 14px;
+        margin-right: 8px;
+    }
+
+    /* Estilos para dark mode o sidebar oscuro */
+    .sidebar-dark .btn-logout-btn {
+        background: rgba(220, 53, 69, 0.85);
+    }
+
+    .sidebar-dark .btn-logout-btn:hover {
+        background: #dc3545;
     }
   </style>
 </head>
@@ -845,6 +1139,11 @@
       </button>
 
       <div class="user-profile-badge">
+              <a href="{{ url_for('logout') }}" class="btn-logout">
+                  <button type="button" class="btn-logout-btn">
+                      🚪 Cerrar sesión
+                  </button>
+              </a>
         <span>
           <strong>{{ session["usuario"] }}</strong>
           <br>
@@ -861,47 +1160,24 @@
         <h2>🏷️ Gestión de Categorías</h2>
       </div>
 
+      <!-- Mensajes flash -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for categoria, mensaje in messages %}
+            <div class="alert alert-{{ categoria }}">
+              {% if categoria == 'success' %}✅{% elif categoria == 'error' %}⚠️{% else %}ℹ️{% endif %}
+              {{ mensaje }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
       <!-- Tarjetas de Métricas -->
       <section class="metrics-row">
         <div class="metric-card">
           <div class="metric-icon">📂</div>
           <span>Total Categorías</span>
           <p class="metric-value">{{ categorias|length }}</p>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon">📦</div>
-          <span>Productos Asociados</span>
-          <p class="metric-value">
-            {% set total_productos = 0 %}
-            {% for c in categorias %}
-              {% set total_productos = total_productos + c.productos|length %}
-            {% endfor %}
-            {{ total_productos }}
-          </p>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon">📊</div>
-          <span>Promedio por Categoría</span>
-          <p class="metric-value">
-            {% if categorias|length > 0 %}
-              {{ (total_productos / categorias|length)|round(1) }}
-            {% else %}
-              0
-            {% endif %}
-          </p>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon">✅</div>
-          <span>Categorías Activas</span>
-          <p class="metric-value">
-            {% set activas = 0 %}
-            {% for c in categorias %}
-              {% if c.activo|default(true) %}
-                {% set activas = activas + 1 %}
-              {% endif %}
-            {% endfor %}
-            {{ activas }}
-          </p>
         </div>
       </section>
 
@@ -963,7 +1239,6 @@
                 <th>Nombre</th>
                 <th>Descripción</th>
                 <th>Productos</th>
-                <th>Estado</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -982,27 +1257,24 @@
                       {% endif %}
                     </td>
                     <td>
-                      <span class="product-count">{{ categoria.productos|length }} productos</span>
-                    </td>
-                    <td>
-                      <span class="status-badge {% if categoria.activo|default(true) %}active{% else %}inactive{% endif %}">
-                        {% if categoria.activo|default(true) %}
-                          ✅ Activo
-                        {% else %}
-                          ❌ Inactivo
-                        {% endif %}
-                      </span>
+                      <span class="product-count">{{ categoria.total_productos }} productos</span>
                     </td>
                     <td>
                       <div class="action-buttons">
-                        <a href="#" class="btn-editar">
+                        <button
+                          class="btn-editar"
+                          onclick="abrirModalEditar(
+                            '{{ categoria.id_categoria }}',
+                            '{{ categoria.nombre }}',
+                            '{{ categoria.descripcion or '' }}'
+                          )">
                           ✏️ Editar
-                        </a>
-                        <a href="#" onclick="return confirm('¿Estás seguro de eliminar esta categoría?')" class="btn-eliminar">
+                        </button>
+                        <a
+                          href="{{ url_for('eliminar_categoria', id_categoria=categoria.id_categoria) }}"
+                          class="btn-eliminar"
+                          onclick="return confirm('¿Estás seguro de eliminar la categoría "{{ categoria.nombre }}"?')">
                           🗑️ Eliminar
-                        </a>
-                        <a href="#" class="btn-ver-productos">
-                          👁️ Ver productos
                         </a>
                       </div>
                     </td>
@@ -1010,7 +1282,7 @@
                 {% endfor %}
               {% else %}
                 <tr>
-                  <td colspan="5">
+                  <td colspan="4">
                     <div class="empty-state">
                       <div class="empty-icon">📭</div>
                       <p>No hay categorías registradas</p>
@@ -1025,6 +1297,34 @@
       </section>
 
     </main>
+  </div>
+
+  <!-- Modal de Edición -->
+  <div id="modalEditar" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+      
+      <h2>✏️ Editar Categoría</h2>
+
+      <form method="POST" id="formEditar">
+        <input type="hidden" name="id_categoria" id="edit_id">
+        
+        <div>
+          <label>Nombre de la Categoría <span class="required">*</span></label>
+          <input type="text" name="nombre" id="edit_nombre" required>
+        </div>
+
+        <div>
+          <label>Descripción</label>
+          <textarea name="descripcion" id="edit_descripcion" rows="3"></textarea>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="submit">💾 Guardar Cambios</button>
+          <button type="button" onclick="cerrarModal()">❌ Cancelar</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script>
@@ -1095,6 +1395,62 @@
         toggleForm();
       });
     {% endif %}
+
+    // Abrir modal de edición
+    function abrirModalEditar(id, nombre, descripcion) {
+      document.getElementById("edit_id").value = id;
+      document.getElementById("edit_nombre").value = nombre;
+      document.getElementById("edit_descripcion").value = descripcion || '';
+      document.getElementById("formEditar").action = "/categorias/editar/" + id;
+      document.getElementById("modalEditar").style.display = "flex";
+      document.body.style.overflow = "hidden";
+      
+      // Enfocar el primer campo
+      setTimeout(() => {
+        document.getElementById("edit_nombre").focus();
+      }, 100);
+    }
+
+    // Cerrar modal
+    function cerrarModal() {
+      document.getElementById("modalEditar").style.display = "none";
+      document.body.style.overflow = "auto";
+    }
+
+    // Cerrar modal al hacer clic fuera
+    document.getElementById("modalEditar").addEventListener('click', function(e) {
+      if (e.target === this) {
+        cerrarModal();
+      }
+    });
+
+    // Cerrar modal con tecla ESC
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        cerrarModal();
+      }
+    });
+
+    // Validación del formulario de edición
+    document.getElementById("formEditar").addEventListener('submit', function(e) {
+      const nombre = this.querySelector('input[name="nombre"]');
+      
+      if (!nombre.value.trim()) {
+        e.preventDefault();
+        nombre.classList.add('error');
+        alert('El nombre de la categoría es requerido');
+        return false;
+      }
+      
+      if (nombre.value.trim().length < 2) {
+        e.preventDefault();
+        nombre.classList.add('error');
+        alert('El nombre debe tener al menos 2 caracteres');
+        return false;
+      }
+      
+      return true;
+    });
   </script>
 
   <script src="{{ url_for('static', filename='js/usuarios.js') }}"></script>

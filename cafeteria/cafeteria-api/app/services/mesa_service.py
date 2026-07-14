@@ -51,6 +51,26 @@ class MesaService:
             estado=datos.estado
         )
 
+        existe = (
+
+            db.query(Mesa)
+
+            .filter(Mesa.numero == datos.numero)
+
+            .first()
+
+        )
+
+        if existe:
+
+            raise HTTPException(
+
+                status_code=400,
+
+                detail="Ya existe una mesa con ese número."
+
+            )
+
         db.add(mesa)
         db.commit()
         db.refresh(mesa)
@@ -62,9 +82,31 @@ class MesaService:
 
         mesa = MesaService.obtener(db, id_mesa)
 
-        if mesa:
-            db.delete(mesa)
-            db.commit()
+        if not mesa:
+            raise HTTPException(
+                status_code=404,
+                detail="Mesa no encontrada."
+            )
+
+        pedidos = (
+            db.query(Pedido)
+            .filter(Pedido.id_mesa == id_mesa)
+            .count()
+        )
+
+        if pedidos > 0:
+
+            raise HTTPException(
+
+                status_code=400,
+
+                detail="No se puede eliminar una mesa que tiene pedidos registrados."
+
+            )
+
+        db.delete(mesa)
+
+        db.commit()
 
         return mesa
     
@@ -86,6 +128,32 @@ class MesaService:
                 status_code=404,
                 detail="Mesa no encontrada."
             )
+        
+        repetida = (
+
+            db.query(Mesa)
+
+            .filter(
+
+                Mesa.numero == datos.numero,
+
+                Mesa.id_mesa != id_mesa
+
+            )
+
+            .first()
+
+        )
+
+        if repetida:
+
+            raise HTTPException(
+
+                status_code=400,
+
+                detail="Ese número de mesa ya existe."
+
+            )
 
         mesa.numero = datos.numero
         mesa.capacidad = datos.capacidad
@@ -95,3 +163,24 @@ class MesaService:
         db.refresh(mesa)
 
         return mesa
+    
+    @staticmethod
+    def estadisticas(db: Session):
+
+        return {
+
+            "total": db.query(Mesa).count(),
+
+            "libres": db.query(Mesa)
+                .filter(Mesa.estado == "Libre")
+                .count(),
+
+            "ocupadas": db.query(Mesa)
+                .filter(Mesa.estado == "Ocupada")
+                .count(),
+
+            "reservadas": db.query(Mesa)
+                .filter(Mesa.estado == "Reservada")
+                .count()
+
+        }

@@ -463,6 +463,239 @@
       filter: brightness(1.05);
     }
 
+    /* ============================================
+       NUEVO DISEÑO PARA REPORTES DISPONIBLES
+       ============================================ */
+    
+    .reports-available {
+      margin-top: 32px;
+    }
+
+    .reports-available .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .reports-available .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(107, 68, 35, 0.2), transparent);
+    }
+
+    .reports-grid-modern {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .report-modern-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid rgba(0,0,0,0.04);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .report-modern-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .report-modern-card:hover::before {
+      opacity: 1;
+    }
+
+    .report-modern-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* Colores por tipo de reporte */
+    .report-modern-card.productos::before {
+      background: linear-gradient(90deg, #6C3B2A, #D4A574);
+    }
+
+    .report-modern-card.pedidos::before {
+      background: linear-gradient(90deg, #2E7D32, #66BB6A);
+    }
+
+    .report-modern-card.inventario::before {
+      background: linear-gradient(90deg, #F57C00, #FFB74D);
+    }
+
+    .report-modern-card .report-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .report-modern-card h4 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .report-modern-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .report-modern-card .btn-report {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 24px;
+      border: none;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      width: 100%;
+      background: var(--bg-light);
+      color: var(--text-secondary);
+    }
+
+    .report-modern-card .btn-report:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .report-modern-card.productos .btn-report {
+      background: rgba(107, 68, 35, 0.1);
+      color: var(--primary);
+    }
+
+    .report-modern-card.productos .btn-report:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    .report-modern-card.pedidos .btn-report {
+      background: rgba(46, 125, 50, 0.1);
+      color: var(--success);
+    }
+
+    .report-modern-card.pedidos .btn-report:hover {
+      background: var(--success);
+      color: white;
+    }
+
+    .report-modern-card.inventario .btn-report {
+      background: rgba(245, 124, 0, 0.1);
+      color: var(--warning);
+    }
+
+    .report-modern-card.inventario .btn-report:hover {
+      background: var(--warning);
+      color: white;
+    }
+
+    /* Sección de exportación de resumen mejorada */
+    .export-summary-section {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 24px 32px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid rgba(0,0,0,0.04);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      transition: var(--transition);
+    }
+
+    .export-summary-section:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .export-summary-section .export-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .export-summary-section .export-info .export-icon {
+      font-size: 32px;
+    }
+
+    .export-summary-section .export-info .export-text h4 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .export-summary-section .export-info .export-text p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .export-summary-section .export-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .export-summary-section .btn-export-resumen {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .export-summary-section .btn-export-resumen.pdf {
+      background: #D32F2F;
+      color: white;
+    }
+
+    .export-summary-section .btn-export-resumen.pdf:hover {
+      background: #B71C1C;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .export-summary-section .btn-export-resumen.excel {
+      background: #2E7D32;
+      color: white;
+    }
+
+    .export-summary-section .btn-export-resumen.excel:hover {
+      background: #1B5E20;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
     /* Animaciones */
     @keyframes fadeInUp {
       from {
@@ -482,10 +715,18 @@
     .metric-card:nth-child(5) { animation-delay: 0.25s; }
     .metric-card:nth-child(6) { animation-delay: 0.3s; }
 
+    .report-modern-card:nth-child(1) { animation-delay: 0.1s; }
+    .report-modern-card:nth-child(2) { animation-delay: 0.2s; }
+    .report-modern-card:nth-child(3) { animation-delay: 0.3s; }
+
     /* Responsive */
     @media (max-width: 1024px) {
       .reports-grid {
         grid-template-columns: 1fr;
+      }
+
+      .reports-grid-modern {
+        grid-template-columns: repeat(2, 1fr);
       }
     }
 
@@ -528,6 +769,11 @@
         font-size: 24px;
       }
 
+      .reports-grid-modern {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
       .export-section {
         flex-direction: column;
       }
@@ -539,6 +785,22 @@
 
       .report-card {
         padding: 16px;
+      }
+
+      .export-summary-section {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+        padding: 20px;
+      }
+
+      .export-summary-section .export-info {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .export-summary-section .export-actions {
+        justify-content: center;
       }
     }
 
@@ -578,6 +840,134 @@
 
     ::-webkit-scrollbar-thumb:hover {
       background: var(--accent);
+    }
+
+    /* --- Estilo principal del botón --- */
+    .btn-logout-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 24px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 40px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.25);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .btn-logout-btn:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(220, 53, 69, 0.35);
+    }
+
+    .btn-logout-btn:active {
+        transform: translateY(0px);
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+    }
+
+    /* --- Variante pequeña (para espacios reducidos) --- */
+    .btn-logout-btn.small {
+        padding: 6px 16px;
+        font-size: 12px;
+        border-radius: 30px;
+    }
+
+    /* --- Variante sin fondo (outline) --- */
+    .btn-logout-btn.outline {
+        background: transparent;
+        color: #dc3545;
+        border: 2px solid #dc3545;
+        box-shadow: none;
+    }
+
+    .btn-logout-btn.outline:hover {
+        background: #dc3545;
+        color: white;
+    }
+
+    /* --- Variante solo icono --- */
+    .btn-logout-btn.icon-only {
+        padding: 10px 12px;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+    }
+
+    /* --- Enlace sin subrayado --- */
+    a.btn-logout {
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    /* ==========================================
+       EJEMPLOS DE UBICACIÓN
+       ========================================== */
+
+    /* 1. En el header (barra superior) */
+    .header-logout {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-left: auto;
+    }
+
+    /* 2. En el sidebar (menú lateral) */
+    .sidebar-logout {
+        margin-top: auto;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .sidebar-logout .btn-logout-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* 3. En el perfil de usuario (avatar + nombre + botón) */
+    .user-profile-logout {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 40px;
+    }
+
+    .user-profile-logout .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #6b4423;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .user-profile-logout .user-name {
+        color: #6b4423;
+        font-weight: 500;
+        font-size: 14px;
+        margin-right: 8px;
+    }
+
+    /* Estilos para dark mode o sidebar oscuro */
+    .sidebar-dark .btn-logout-btn {
+        background: rgba(220, 53, 69, 0.85);
+    }
+
+    .sidebar-dark .btn-logout-btn:hover {
+        background: #dc3545;
     }
   </style>
 </head>
@@ -644,6 +1034,11 @@
       </button>
 
       <div class="user-profile-badge">
+        <a href="{{ url_for('logout') }}" class="btn-logout">
+          <button type="button" class="btn-logout-btn">
+            🚪 Cerrar sesión
+          </button>
+        </a>
         <span>
           <strong>{{ session["usuario"] }}</strong>
           <br>
@@ -665,37 +1060,37 @@
         <div class="metric-card">
           <div class="metric-icon">👥</div>
           <span>Usuarios</span>
-          <p class="metric-value positive">{{ reporte.usuarios }}</p>
+          <p class="metric-value positive">{{ reporte.get("usuarios",0) }}</p>
         </div>
 
         <div class="metric-card">
           <div class="metric-icon">📦</div>
           <span>Productos</span>
-          <p class="metric-value">{{ reporte.productos }}</p>
+          <p class="metric-value">{{ reporte.get("productos",0) }}</p>
         </div>
 
         <div class="metric-card">
           <div class="metric-icon">🏷️</div>
           <span>Categorías</span>
-          <p class="metric-value">{{ reporte.categorias }}</p>
+          <p class="metric-value">{{ reporte.get("categorias",0) }}</p>
         </div>
 
         <div class="metric-card">
           <div class="metric-icon">⚠️</div>
           <span>Stock Bajo</span>
-          <p class="metric-value negative">{{ reporte.poco_stock }}</p>
+          <p class="metric-value negative">{{ reporte.get("poco_stock",0) }}</p>
         </div>
 
         <div class="metric-card">
           <div class="metric-icon">💰</div>
           <span>Ventas</span>
-          <p class="metric-value positive">${{ "{:,.2f}".format(reporte.ventas) }}</p>
+          <p class="metric-value positive">${{ "{:,.2f}".format(reporte.get("ventas",0)) }}</p>
         </div>
 
         <div class="metric-card">
           <div class="metric-icon">📋</div>
           <span>Pedidos</span>
-          <p class="metric-value">{{ reporte.pedidos }}</p>
+          <p class="metric-value">{{ reporte.get("pedidos",0) }}</p>
         </div>
       </section>
 
@@ -713,21 +1108,21 @@
                 <span class="title">Total de Ventas</span>
                 <span class="subtitle">Período actual</span>
               </div>
-              <span class="item-value positive">${{ "{:,.2f}".format(reporte.ventas) }}</span>
+              <span class="item-value positive">${{ "{:,.2f}".format(reporte.get("ventas",0)) }}</span>
             </div>
             <div class="report-item">
               <div class="item-info">
                 <span class="title">Pedidos Completados</span>
                 <span class="subtitle">Entregados exitosamente</span>
               </div>
-              <span class="item-value">{{ reporte.pedidos }}</span>
+              <span class="item-value">{{ reporte.get("pedidos", 0) }}</span>
             </div>
             <div class="report-item">
               <div class="item-info">
                 <span class="title">Productos Vendidos</span>
                 <span class="subtitle">Unidades totales</span>
               </div>
-              <span class="item-value">{{ reporte.productos_vendidos or 0 }}</span>
+              <span class="item-value">{{ reporte.get("productos_vendidos", 0) }}</span>
             </div>
             <div class="report-item">
               <div class="item-info">
@@ -735,7 +1130,7 @@
                 <span class="subtitle">Por pedido</span>
               </div>
               <span class="item-value positive">
-                ${{ "{:,.2f}".format((reporte.ventas / reporte.pedidos) if reporte.pedidos > 0 else 0) }}
+                ${{ "{:,.2f}".format((reporte.get("ventas", 0) / reporte.get("pedidos", 1)) if reporte.get("pedidos", 0) > 0 else 0) }}
               </span>
             </div>
           </div>
@@ -744,7 +1139,7 @@
         <!-- Reporte de Inventario -->
         <div class="report-card">
           <div class="card-header">
-            <h3>📦 Estado de Inventario</h3>
+            <h3>Estado de Inventario</h3>
             <span class="badge">Stock actual</span>
           </div>
           <div class="report-list">
@@ -753,49 +1148,87 @@
                 <span class="title">Productos Activos</span>
                 <span class="subtitle">En inventario</span>
               </div>
-              <span class="item-value positive">{{ reporte.productos_activos or reporte.productos }}</span>
+              <span class="item-value positive">{{ reporte.get("productos_activos", reporte.get("productos", 0)) }}</span>
             </div>
             <div class="report-item">
               <div class="item-info">
                 <span class="title">Stock Bajo</span>
                 <span class="subtitle">Menos de 10 unidades</span>
               </div>
-              <span class="item-value negative">{{ reporte.poco_stock }}</span>
+              <span class="item-value negative">{{ reporte.get("poco_stock", 0) }}</span>
             </div>
             <div class="report-item">
               <div class="item-info">
                 <span class="title">Sin Stock</span>
                 <span class="subtitle">Productos agotados</span>
               </div>
-              <span class="item-value negative">{{ reporte.sin_stock or 0 }}</span>
+              <span class="item-value negative">{{ reporte.get("sin_stock", 0) }}</span>
             </div>
             <div class="report-item">
               <div class="item-info">
                 <span class="title">Categorías Activas</span>
                 <span class="subtitle">Con productos</span>
               </div>
-              <span class="item-value">{{ reporte.categorias_activas or reporte.categorias }}</span>
+              <span class="item-value">{{ reporte.get("categorias_activas", reporte.get("categorias", 0)) }}</span>
             </div>
           </div>
         </div>
-      </div>
+      </div>   
 
-      <!-- Sección de Exportación -->
-      <div class="report-card" style="margin-top: 0;">
-        <div class="card-header">
-          <h3>📤 Exportar Reportes</h3>
-          <span class="badge">Descargar</span>
+      <!-- ========================================== -->
+      <!-- NUEVO DISEÑO: REPORTES DISPONIBLES        -->
+      <!-- ========================================== -->
+
+      <div class="reports-available">
+        <div class="section-title">
+          📑 Reportes Disponibles
         </div>
-        <div class="export-section">
-          <a href="{{ url_for('exportar_pdf') }}" class="btn-export pdf">
-            📄 Exportar PDF
-          </a>
-          <a href="{{ url_for('exportar_excel') }}" class="btn-export excel">
-            📊 Exportar Excel
-          </a>
-          <button class="btn-export print" onclick="window.print()">
-            🖨️ Imprimir
-          </button>
+
+        <div class="reports-grid-modern">
+          <!-- Reporte Productos -->
+          <div class="report-modern-card productos">
+            <span class="report-icon">📦</span>
+            <h4>Productos y Inventario</h4>
+            <p>
+              Consulta todos los productos registrados con filtros
+              y exportación a PDF y Excel.
+            </p>
+            <a href="{{ url_for('reporte_productos') }}" class="btn-report">
+              📋 Abrir Reporte
+            </a>
+          </div>
+
+          <!-- Reporte Pedidos -->
+          <div class="report-modern-card pedidos">
+            <span class="report-icon">🧾</span>
+            <h4>Pedidos</h4>
+            <p>
+              Consulta pedidos por mesa, estado y fechas con
+              opciones de exportación.
+            </p>
+            <a href="{{ url_for('reporte_pedidos') }}" class="btn-report">
+              📋 Abrir Reporte
+            </a>
+          </div>
+        </div>
+
+        <!-- Sección de Exportación de Resumen mejorada -->
+        <div class="export-summary-section">
+          <div class="export-info">
+            <span class="export-icon">📊</span>
+            <div class="export-text">
+              <h4>Exportar Resumen General</h4>
+              <p>Descarga el resumen completo de todos los reportes en formato PDF o Excel</p>
+            </div>
+          </div>
+          <div class="export-actions">
+            <a href="{{ url_for('exportar_pdf') }}" class="btn-export-resumen pdf">
+              📄 Exportar Resumen PDF
+            </a>
+            <a href="{{ url_for('exportar_excel') }}" class="btn-export-resumen excel">
+              📊 Exportar Resumen Excel
+            </a>
+          </div>
         </div>
       </div>
 

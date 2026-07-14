@@ -101,3 +101,19 @@ def actualizar_mesa(
         id_mesa,
         datos
     )
+
+@router.get("/estadisticas")
+def estadisticas(
+
+    usuario=Depends(
+        requiere_roles(
+            "administrador",
+            "mesero"
+        )
+    ),
+
+    db: Session = Depends(get_db)
+
+):
+
+    return MesaService.estadisticas(db)

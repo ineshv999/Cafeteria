@@ -107,24 +107,6 @@ class ApiService:
         )
     
     @staticmethod
-    def obtener_productos(token):
-
-        response = requests.get(
-
-            f"{Config.API_URL}/productos/",
-
-            headers={
-                "Authorization": f"Bearer {token}"
-            }
-
-        )
-
-        if response.status_code != 200:
-            return []
-
-        return response.json()
-    
-    @staticmethod
     def crear_producto(token, datos, imagen):
 
         files = {
@@ -198,20 +180,6 @@ class ApiService:
             f"{Config.API_URL}/categorias/",
 
             json=datos,
-
-            headers={
-                "Authorization": f"Bearer {token}"
-            }
-
-        )
-
-
-    @staticmethod
-    def eliminar_categoria(token, id_categoria):
-
-        return requests.delete(
-
-            f"{Config.API_URL}/categorias/{id_categoria}",
 
             headers={
                 "Authorization": f"Bearer {token}"
@@ -321,6 +289,90 @@ class ApiService:
         )
     
     @staticmethod
+    def obtener_productos(
+        token,
+        nombre=None,
+        id_categoria=None,
+        activo=None,
+        stock_minimo=None
+    ):
+
+        params = {}
+
+        if nombre:
+            params["nombre"] = nombre
+
+        if id_categoria:
+            params["id_categoria"] = id_categoria
+
+        if activo != "" and activo is not None:
+            params["activo"] = activo
+
+        if stock_minimo:
+            params["stock_minimo"] = stock_minimo
+
+        response = requests.get(
+
+            f"{Config.API_URL}/productos/",
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+
+            params=params
+
+        )
+
+        if response.status_code != 200:
+            return []
+
+        return response.json()
+
+    @staticmethod
+    def obtener_mesas(token):
+
+        response = requests.get(
+
+            f"{Config.API_URL}/mesas/",
+
+            headers={
+
+                "Authorization":
+                f"Bearer {token}"
+
+            }
+
+        )
+
+        if response.status_code != 200:
+
+            return []
+
+        return response.json()
+    
+    @staticmethod
+    def obtener_estadisticas_mesas(token):
+
+        response = requests.get(
+
+            f"{Config.API_URL}/mesas/estadisticas",
+
+            headers={
+
+                "Authorization":
+                f"Bearer {token}"
+
+            }
+
+        )
+
+        if response.status_code != 200:
+
+            return {}
+
+        return response.json()
+
+    @staticmethod
     def obtener_producto(token, id_producto):
 
         response = requests.get(
@@ -334,7 +386,6 @@ class ApiService:
             return None
 
         return response.json()
-
 
     @staticmethod
     def actualizar_producto(token, id_producto, datos, imagen=None):
@@ -383,10 +434,49 @@ class ApiService:
 
         )
 
+        print(response.status_code)
+        print(response.text)
+
+        if response.status_code == 401:
+
+            return {
+
+                "token_expirado": True
+
+            }
+
         if response.status_code != 200:
-            return None
+
+            return {}
 
         return response.json()
+    
+    @staticmethod
+    def descargar_pdf(token):
+
+        return requests.get(
+
+            f"{Config.API_URL}/reportes/pdf",
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+
+
+    @staticmethod
+    def descargar_excel(token):
+
+        return requests.get(
+
+            f"{Config.API_URL}/reportes/excel",
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
     
     @staticmethod
     def obtener_detalle_pedido(token, id_pedido):
@@ -452,3 +542,218 @@ class ApiService:
             }
 
         )
+    
+    @staticmethod
+    def actualizar_categoria(token, id_categoria, datos):
+
+        return requests.put(
+
+            f"{Config.API_URL}/categorias/{id_categoria}",
+
+            json=datos,
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+    
+    @staticmethod
+    def eliminar_categoria(token, id_categoria):
+
+        return requests.delete(
+
+            f"{Config.API_URL}/categorias/{id_categoria}",
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+    
+    @staticmethod
+    def obtener_reporte_productos(
+        token,
+        nombre=None,
+        id_categoria=None,
+        activo=None,
+        stock_minimo=None
+    ):
+
+        params = {}
+
+        if nombre:
+            params["nombre"] = nombre
+
+        if id_categoria:
+            params["id_categoria"] = id_categoria
+
+        if activo != "" and activo is not None:
+            params["activo"] = activo
+
+        if stock_minimo:
+            params["stock_minimo"] = stock_minimo
+
+        response = requests.get(
+
+            f"{Config.API_URL}/reportes/productos",
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+
+            params=params
+
+        )
+
+        if response.status_code != 200:
+            return []
+
+        return response.json()
+    
+    @staticmethod
+    def descargar_pdf_productos(token, params):
+
+        return requests.get(
+
+            f"{Config.API_URL}/reportes/productos/pdf",
+
+            headers={
+
+                "Authorization": f"Bearer {token}"
+
+            },
+
+            params=params
+
+        )
+    
+    @staticmethod
+    def descargar_excel_productos(token, params):
+
+        return requests.get(
+
+            f"{Config.API_URL}/reportes/productos/excel",
+
+            headers={
+
+                "Authorization": f"Bearer {token}"
+
+            },
+
+            params=params
+
+        )
+    
+    @staticmethod
+    def obtener_reporte_pedidos(
+
+        token,
+
+        estado=None,
+
+        id_mesa=None,
+
+        fecha_inicio=None,
+
+        fecha_fin=None
+
+    ):
+
+        params = {}
+
+        if estado:
+            params["estado"] = estado
+
+        if id_mesa:
+            params["id_mesa"] = id_mesa
+
+        if fecha_inicio:
+            params["fecha_inicio"] = fecha_inicio
+
+        if fecha_fin:
+            params["fecha_fin"] = fecha_fin
+
+        response = requests.get(
+
+            f"{Config.API_URL}/reportes/pedidos",
+
+            params=params,
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+
+        if response.status_code != 200:
+            return []
+
+        return response.json()
+    
+    @staticmethod
+    def descargar_pdf_pedidos(token, params):
+
+        return requests.get(
+
+            f"{Config.API_URL}/reportes/pedidos/pdf",
+
+            params=params,
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+    
+    @staticmethod
+    def descargar_excel_pedidos(token, params):
+
+        return requests.get(
+
+            f"{Config.API_URL}/reportes/pedidos/excel",
+
+            params=params,
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+        
+    
+    @staticmethod
+    def obtener_reporte_inventario(
+
+        token,
+
+        categoria=None,
+
+        stock_bajo=None
+
+    ):
+
+        params = {}
+
+        if categoria:
+            params["categoria"] = categoria
+
+        if stock_bajo:
+            params["stock_bajo"] = stock_bajo
+
+        response = requests.get(
+
+            f"{Config.API_URL}/reportes/inventario",
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+
+            params=params
+
+        )
+
+        if response.status_code != 200:
+            return []
+
+        return response.json()

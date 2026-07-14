@@ -13,9 +13,13 @@ class CategoriaUpdate(BaseModel):
     nombre: str
     descripcion: str
 
-class CategoriaResponse(CategoriaBase):
+class CategoriaResponse(BaseModel):
 
     id_categoria: int
+    nombre: str
+    descripcion: str
+
+    total_productos: int
 
     model_config = {
         "from_attributes": True
