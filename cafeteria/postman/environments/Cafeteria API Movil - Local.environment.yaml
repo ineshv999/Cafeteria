@@ -5,15 +5,15 @@ values:
   - key: email_mesero
     value: 'mesero@cafeteria.local'
   - key: password_mesero
-    value: 'Mesero123!'
+    value: ''
   - key: email_cocina
     value: 'cocina@cafeteria.local'
   - key: password_cocina
-    value: 'Cocina123!'
+    value: ''
   - key: email_caja
     value: 'caja@cafeteria.local'
   - key: password_caja
-    value: 'Caja123!'
+    value: ''
   - key: token_mesero
     value: ''
   - key: token_cocina

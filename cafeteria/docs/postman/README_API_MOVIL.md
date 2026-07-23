@@ -27,22 +27,27 @@ uvicorn app.main:app --reload
 - Al menos una mesa libre.
 - Al menos un producto activo con stock disponible.
 
-Para Neon ya se dejo un proyecto `cafeteria` configurado en `.env` con
-`DATABASE_URL`. Tambien se agrego un seed de datos demo:
+Configura `DATABASE_URL`, aplica las migraciones y define contraseñas de
+desarrollo sin guardarlas en Git:
 
-```powershell
+```bash
 cd cafeteria-api
-.\.venv\Scripts\python.exe scripts\seed_mobile_demo.py
+export SEED_MESERO_PASSWORD='cambia-este-valor'
+export SEED_COCINA_PASSWORD='cambia-este-valor'
+export SEED_CAJA_PASSWORD='cambia-este-valor'
+export SEED_ADMIN_PASSWORD='cambia-este-valor'
+.venv/bin/alembic upgrade head
+.venv/bin/python scripts/seed_mobile_demo.py
 ```
 
-Usuarios demo:
+El script crea o actualiza estos usuarios con las contraseñas proporcionadas:
 
-| Rol | Email | Password |
+| Rol | Email | Variable de contraseña |
 | --- | --- | --- |
-| Mesero | `mesero@cafeteria.local` | `Mesero123!` |
-| Cocina | `cocina@cafeteria.local` | `Cocina123!` |
-| Caja | `caja@cafeteria.local` | `Caja123!` |
-| Administrador | `admin@cafeteria.local` | `Admin123!` |
+| Mesero | `mesero@cafeteria.local` | `SEED_MESERO_PASSWORD` |
+| Cocina | `cocina@cafeteria.local` | `SEED_COCINA_PASSWORD` |
+| Caja | `caja@cafeteria.local` | `SEED_CAJA_PASSWORD` |
+| Administrador | `admin@cafeteria.local` | `SEED_ADMIN_PASSWORD` |
 
 Variables demo:
 
