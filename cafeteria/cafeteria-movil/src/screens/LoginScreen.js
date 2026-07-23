@@ -1,28 +1,25 @@
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import MockStatusBar from '../components/MockStatusBar';
 import ScreenBackground from '../components/ScreenBackground';
 import AppIcon from '../components/AppIcon';
 
-const ROLE_PASSWORDS = {
-  admin: 'admin123',
-  cashier: 'caja1',
-  kitchen: 'cocina1',
-  waiter: 'mesero1',
-};
-
-export default function LoginScreen({ isDarkMode, loginAsRole, navigate, roleOptions = [], setIsDarkMode, theme }) {
+export default function LoginScreen({
+  authError,
+  isDarkMode,
+  isLoginLoading = false,
+  login,
+  navigate,
+  roleOptions = [],
+  setIsDarkMode,
+  theme,
+}) {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const demoAccounts = useMemo(
-    () => roleOptions.map((role) => ({ ...role, password: ROLE_PASSWORDS[role.id] || 'coffee123' })),
-    [roleOptions],
-  );
-
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const normalizedIdentifier = identifier.trim().toLowerCase();
 
     if (!normalizedIdentifier || !password.trim()) {
@@ -30,31 +27,18 @@ export default function LoginScreen({ isDarkMode, loginAsRole, navigate, roleOpt
       return;
     }
 
-    const account = demoAccounts.find(
-      (role) => role.email.toLowerCase() === normalizedIdentifier || role.name.toLowerCase() === normalizedIdentifier,
-    );
-
-    if (!account) {
-      Alert.alert('Usuario no registrado', 'El usuario no existe en el sistema.');
-      return;
+    try {
+      await login?.(normalizedIdentifier, password);
+    } catch (error) {
+      Alert.alert(
+        'No se pudo iniciar sesión',
+        error?.userMessage || error?.message || 'Verifica tus credenciales y la conexión con la API.',
+      );
     }
-
-    if (account.password !== password) {
-      Alert.alert('Error de acceso', 'Usuario o contraseña incorrecta.');
-      return;
-    }
-
-    if (loginAsRole) {
-      loginAsRole(account.id);
-      return;
-    }
-
-    navigate('dashboard');
   };
 
   const fillAccount = (account) => {
     setIdentifier(account.email);
-    setPassword(account.password);
   };
 
   return (
@@ -111,20 +95,27 @@ export default function LoginScreen({ isDarkMode, loginAsRole, navigate, roleOpt
 
             <Pressable
               accessibilityRole="button"
+              disabled={isLoginLoading}
               onPress={handleLogin}
               style={({ pressed }) => [
                 styles.loginButton,
                 {
                   backgroundColor: isDarkMode ? theme.accent : theme.accentAlt,
                   boxShadow: theme.strongShadow,
-                  opacity: pressed ? 0.86 : 1,
+                  opacity: isLoginLoading ? 0.6 : pressed ? 0.86 : 1,
                 },
               ]}
             >
-              <Text style={styles.loginText}>Iniciar sesión</Text>
+              <Text style={styles.loginText}>{isLoginLoading ? 'Conectando…' : 'Iniciar sesión'}</Text>
               <Text style={styles.loginArrow}>→</Text>
             </Pressable>
           </View>
+
+          {authError ? (
+            <Text selectable style={[styles.loginError, { color: theme.danger || '#b91c1c' }]}>
+              {authError.userMessage || authError.message || String(authError)}
+            </Text>
+          ) : null}
 
           <Text selectable style={[styles.accessText, { color: theme.muted }]}>Acceso según rol: Mesero, Caja, Cocina o Admin</Text>
 
@@ -143,10 +134,10 @@ export default function LoginScreen({ isDarkMode, loginAsRole, navigate, roleOpt
               },
             ]}
           >
-            <Text selectable style={[styles.credentialsTitle, { color: theme.title }]}>Credenciales de prueba</Text>
-            <Text selectable style={[styles.credentialsNote, { color: theme.muted }]}>Selecciona cualquiera de los roles disponibles</Text>
+            <Text selectable style={[styles.credentialsTitle, { color: theme.title }]}>Usuarios disponibles</Text>
+            <Text selectable style={[styles.credentialsNote, { color: theme.muted }]}>Selecciona un rol para llenar el correo</Text>
 
-            {demoAccounts.map((account, index) => (
+            {roleOptions.map((account, index) => (
               <Pressable
                 accessibilityHint="Llena automáticamente el formulario"
                 accessibilityRole="button"
@@ -156,7 +147,7 @@ export default function LoginScreen({ isDarkMode, loginAsRole, navigate, roleOpt
                   styles.accountRow,
                   {
                     borderBottomColor: theme.inputBorder,
-                    borderBottomWidth: index === demoAccounts.length - 1 ? 0 : 1,
+                    borderBottomWidth: index === roleOptions.length - 1 ? 0 : 1,
                     opacity: pressed ? 0.65 : 1,
                   },
                 ]}
@@ -169,12 +160,12 @@ export default function LoginScreen({ isDarkMode, loginAsRole, navigate, roleOpt
                   <Text selectable style={[styles.accountEmail, { color: theme.muted }]}>{account.email}</Text>
                 </View>
                 <View style={[styles.passwordBadge, { backgroundColor: theme.surfaceAlt }]}>
-                  <Text selectable style={[styles.passwordBadgeText, { color: theme.accent }]}>{account.password}</Text>
+                  <Text selectable style={[styles.passwordBadgeText, { color: theme.accent }]}>Usar</Text>
                 </View>
               </Pressable>
             ))}
 
-            <Text selectable style={[styles.credentialsHelp, { color: theme.muted }]}>Toca una cuenta para llenar automáticamente los campos.</Text>
+            <Text selectable style={[styles.credentialsHelp, { color: theme.muted }]}>La contraseña nunca se guarda en esta pantalla.</Text>
           </View>
         </View>
       </View>
@@ -281,6 +272,7 @@ const styles = StyleSheet.create({
   },
   loginText: { color: '#ffffff', fontSize: 14, fontWeight: '800' },
   loginArrow: { color: '#ffffff', fontSize: 18, fontWeight: '800' },
+  loginError: { fontSize: 11, fontWeight: '700', marginTop: 10, textAlign: 'center' },
   accessText: { fontSize: 11, marginTop: 14, textAlign: 'center' },
   brandCard: { alignItems: 'center', borderCurve: 'continuous', borderRadius: 16, marginTop: 18, padding: 13 },
   brandTitle: { fontSize: 12, fontWeight: '800' },

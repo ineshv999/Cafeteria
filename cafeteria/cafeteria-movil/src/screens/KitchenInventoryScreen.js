@@ -11,12 +11,6 @@ import SectionTitle from '../components/SectionTitle';
 import StatCard from '../components/StatCard';
 import SummaryCard from '../components/SummaryCard';
 
-const fallbackInventory = [
-  { id: 'supply-coffee', icon: '☕', name: 'Café molido', quantity: 5, unit: 'kg', minimum: 2, category: 'Bebidas', updatedAt: 'Hoy' },
-  { id: 'supply-milk', icon: '🥛', name: 'Leche', quantity: 2, unit: 'litros', minimum: 5, category: 'Lácteos', updatedAt: 'Hoy' },
-  { id: 'supply-chocolate', icon: '🍫', name: 'Chocolate', quantity: 1, unit: 'kg', minimum: 3, category: 'Bebidas', updatedAt: 'Hoy' },
-];
-
 const emptyItemDraft = {
   category: 'General',
   icon: '📦',
@@ -36,15 +30,15 @@ export default function KitchenInventoryScreen({
   addCashierPurchase,
   addKitchenInventoryItem,
   cashierPurchases = [],
+  currentRoleId,
   deleteKitchenInventoryItem,
   goBack,
   isDarkMode,
-  kitchenInventory = fallbackInventory,
+  kitchenInventory = [],
   navigate,
   recordEvent,
   setIsDarkMode,
   theme,
-  updateCashierPurchase,
   updateKitchenInventoryItem,
 }) {
   const [query, setQuery] = useState('');
@@ -62,12 +56,10 @@ export default function KitchenInventoryScreen({
   const [purchaseDraft, setPurchaseDraft] = useState(emptyPurchaseDraft);
   const [purchaseError, setPurchaseError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [movements, setMovements] = useState([
-    { icon: '📉', text: 'Se descontó leche por Pedido #16' },
-    { icon: '📦', text: 'Se agregó café molido al inventario' },
-  ]);
+  const [movements, setMovements] = useState([]);
+  const [isMutating, setIsMutating] = useState(false);
 
-  const inventory = kitchenInventory.length ? kitchenInventory : fallbackInventory;
+  const inventory = kitchenInventory;
   const normalizedInventory = inventory.map(normalizeItem);
   const filteredInventory = normalizedInventory.filter((item) =>
     item.name.toLowerCase().includes(query.trim().toLowerCase()),
@@ -75,7 +67,8 @@ export default function KitchenInventoryScreen({
   const lowStock = normalizedInventory.filter((item) => item.statusType === 'low');
   const normalStock = normalizedInventory.filter((item) => item.statusType === 'normal');
   const pendingPurchases = cashierPurchases.filter((purchase) => purchase.type === 'pending' || purchase.urgent);
-  const unappliedPurchases = cashierPurchases.filter((purchase) => purchase.type === 'paid' && !purchase.appliedToInventory);
+  const canManagePurchases = currentRoleId === 'admin';
+  const canDeleteItems = currentRoleId === 'admin';
   const stats = [
     { icon: '✅', value: String(normalStock.length), label: 'Normales' },
     { icon: '⚠️', value: String(lowStock.length), label: 'Stock bajo' },
@@ -123,7 +116,7 @@ export default function KitchenInventoryScreen({
     setItemFormError('');
   };
 
-  const saveItem = () => {
+  const saveItem = async () => {
     if (!itemDraft.name.trim()) {
       setItemFormError('Ingresa el nombre del insumo para guardarlo.');
       return;
@@ -144,8 +137,12 @@ export default function KitchenInventoryScreen({
       updatedAt: 'Ahora',
     };
 
+    if (isMutating) return;
+    setIsMutating(true);
+    try {
     if (editingItem) {
-      updateKitchenInventoryItem?.(editingItem.id, (item) => ({ ...item, ...nextItem }));
+      const updated = await updateKitchenInventoryItem?.(editingItem.id, (item) => ({ ...item, ...nextItem }));
+      if (!updated) return;
       addMovement({ icon: '✏️', text: `${nextItem.name} actualizado en inventario` });
       recordEvent?.({
         detail: `${nextItem.name} fue editado en inventario.`,
@@ -156,10 +153,11 @@ export default function KitchenInventoryScreen({
         type: 'activity',
       });
     } else {
-      addKitchenInventoryItem?.({
+      const created = await addKitchenInventoryItem?.({
         ...nextItem,
         id: `supply-${Date.now()}`,
       });
+      if (!created) return;
       addMovement({ icon: '➕', text: `${nextItem.name} agregado al inventario` });
       recordEvent?.({
         detail: `${nextItem.name} quedó disponible con ${nextItem.quantity} ${nextItem.unit}.`,
@@ -172,6 +170,9 @@ export default function KitchenInventoryScreen({
     }
 
     closeItemSheet();
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const openAdjust = (item, mode = 'entry') => {
@@ -190,7 +191,7 @@ export default function KitchenInventoryScreen({
     setAdjustError('');
   };
 
-  const saveAdjustment = () => {
+  const saveAdjustment = async () => {
     const amount = Number(adjustQuantity || 0);
 
     if (!adjustTarget) {
@@ -202,12 +203,16 @@ export default function KitchenInventoryScreen({
       return;
     }
 
+    if (isMutating) return;
     const direction = adjustMode === 'entry' ? 1 : -1;
-    updateKitchenInventoryItem?.(adjustTarget.id, (item) => ({
+    setIsMutating(true);
+    try {
+    const updated = await updateKitchenInventoryItem?.(adjustTarget.id, (item) => ({
       ...item,
       quantity: Math.max(0, Number(item.quantity || 0) + amount * direction),
       updatedAt: 'Ahora',
     }));
+    if (!updated) return;
     addMovement({
       icon: adjustMode === 'entry' ? '📦' : '📉',
       text: `${adjustMode === 'entry' ? 'Entrada' : 'Salida'} de ${amount} ${adjustTarget.unit} en ${adjustTarget.name}${adjustReason ? `: ${adjustReason}` : ''}`,
@@ -221,6 +226,9 @@ export default function KitchenInventoryScreen({
       type: 'activity',
     });
     closeAdjustSheet();
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const openPurchase = (item) => {
@@ -233,8 +241,8 @@ export default function KitchenInventoryScreen({
     });
   };
 
-  const requestPurchase = () => {
-    if (!purchaseTarget) {
+  const requestPurchase = async () => {
+    if (!purchaseTarget || !canManagePurchases) {
       return;
     }
 
@@ -262,7 +270,11 @@ export default function KitchenInventoryScreen({
       urgent: Boolean(purchaseDraft.urgent),
     };
 
-    addCashierPurchase?.(purchase);
+    if (isMutating) return;
+    setIsMutating(true);
+    try {
+    const created = await addCashierPurchase?.(purchase);
+    if (!created) return;
     addMovement({ icon: '🛒', text: `Solicitud enviada a caja: ${purchaseTarget.name}` });
     recordEvent?.({
       detail: `${purchaseTarget.name}: ${purchaseDraft.quantity} ${purchaseTarget.unit} solicitado a caja por $${Number(purchaseDraft.amount || 0).toFixed(2)}.`,
@@ -275,54 +287,20 @@ export default function KitchenInventoryScreen({
     setPurchaseTarget(null);
     setPurchaseDraft(emptyPurchaseDraft);
     setPurchaseError('');
-  };
-
-  const applyPurchaseToInventory = (purchase) => {
-    const quantity = Number(purchase.quantity || 0);
-    const existingItem = normalizedInventory.find(
-      (item) => item.id === purchase.inventoryItemId || item.name.toLowerCase() === String(purchase.name).toLowerCase(),
-    );
-
-    if (existingItem) {
-      updateKitchenInventoryItem?.(existingItem.id, (item) => ({
-        ...item,
-        quantity: Number(item.quantity || 0) + quantity,
-        updatedAt: 'Ahora',
-      }));
-    } else {
-      addKitchenInventoryItem?.({
-        category: 'Compras',
-        icon: purchase.icon || '📦',
-        id: `supply-${Date.now()}`,
-        minimum: 1,
-        name: purchase.name,
-        quantity,
-        unit: purchase.unit || 'piezas',
-        updatedAt: 'Ahora',
-      });
+    } finally {
+      setIsMutating(false);
     }
-
-    updateCashierPurchase?.(purchase.id, (currentPurchase) => ({
-      ...currentPurchase,
-      appliedToInventory: true,
-    }));
-    addMovement({ icon: '✅', text: `Entrada aplicada desde caja: ${purchase.name}` });
-    recordEvent?.({
-      detail: `${purchase.name} fue aplicado al inventario desde una compra de caja.`,
-      icon: '✅',
-      module: 'Inventario',
-      severity: 'success',
-      title: 'Compra aplicada',
-      type: 'activity',
-    });
   };
 
-  const confirmDelete = () => {
-    if (!deleteTarget) {
+  const confirmDelete = async () => {
+    if (!deleteTarget || !canDeleteItems || isMutating) {
       return;
     }
 
-    deleteKitchenInventoryItem?.(deleteTarget.id);
+    setIsMutating(true);
+    try {
+    const deleted = await deleteKitchenInventoryItem?.(deleteTarget.id);
+    if (!deleted) return;
     addMovement({ icon: '🗑️', text: `${deleteTarget.name} eliminado del inventario` });
     recordEvent?.({
       detail: `${deleteTarget.name} fue eliminado del inventario.`,
@@ -334,6 +312,9 @@ export default function KitchenInventoryScreen({
     });
     setDeleteTarget(null);
     setSelectedItem(null);
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   return (
@@ -355,7 +336,7 @@ export default function KitchenInventoryScreen({
         <SummaryCard
           title="Estado del inventario"
           amount={`${normalizedInventory.length} insumos`}
-          subtitle={`${lowStock.length} productos con stock bajo · ${unappliedPurchases.length} compras por aplicar`}
+          subtitle={`${lowStock.length} productos con stock bajo · sincronizado con compras`}
           icon="⚠️"
           isDarkMode={isDarkMode}
           theme={theme}
@@ -408,23 +389,24 @@ export default function KitchenInventoryScreen({
 
         <View style={styles.quickGrid}>
           <QuickCard action={{ icon: '➕', title: 'Agregar', description: 'Nuevo insumo' }} isDarkMode={isDarkMode} onPress={openNewItem} theme={theme} />
-          <QuickCard
-            action={{ icon: '🛒', title: 'Compra', description: 'Solicitar a caja' }}
-            isDarkMode={isDarkMode}
-            onPress={() => openPurchase(lowStock[0] || normalizedInventory[0])}
-            theme={theme}
-          />
+          {canManagePurchases ? (
+            <QuickCard
+              action={{ icon: '🛒', title: 'Compra', description: 'Registrar solicitud' }}
+              isDarkMode={isDarkMode}
+              onPress={() => openPurchase(lowStock[0] || normalizedInventory[0])}
+              theme={theme}
+            />
+          ) : null}
         </View>
 
         {recentPurchases.length ? (
           <>
-            <SectionTitle title="Compras desde caja" subtitle="Aplica entradas cuando caja registre compras" compact theme={theme} />
+            <SectionTitle title="Compras desde caja" subtitle="Las compras recibidas actualizan el stock automáticamente" compact theme={theme} />
             <View style={styles.purchaseList}>
               {recentPurchases.map((purchase) => (
                 <PurchaseSyncCard
                   key={purchase.id}
                   isDarkMode={isDarkMode}
-                  onApply={() => applyPurchaseToInventory(purchase)}
                   purchase={purchase}
                   theme={theme}
                 />
@@ -468,6 +450,8 @@ export default function KitchenInventoryScreen({
         isDarkMode={isDarkMode}
         item={selectedItem}
         onAdjust={openAdjust}
+        canDelete={canDeleteItems}
+        canPurchase={canManagePurchases}
         onClose={() => setSelectedItem(null)}
         onDelete={(item) => setDeleteTarget(item)}
         onEdit={openEditItem}
@@ -506,7 +490,7 @@ export default function KitchenInventoryScreen({
         draft={purchaseDraft}
         error={purchaseError}
         isDarkMode={isDarkMode}
-        item={purchaseTarget}
+        item={canManagePurchases ? purchaseTarget : null}
         onCancel={() => {
           setPurchaseTarget(null);
           setPurchaseError('');
@@ -520,7 +504,7 @@ export default function KitchenInventoryScreen({
       />
       <DeleteItemModal
         isDarkMode={isDarkMode}
-        item={deleteTarget}
+        item={canDeleteItems ? deleteTarget : null}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
         theme={theme}
@@ -627,9 +611,9 @@ function QuickCard({ action, isDarkMode, onPress, theme }) {
   );
 }
 
-function PurchaseSyncCard({ isDarkMode, onApply, purchase, theme }) {
-  const canApply = purchase.type === 'paid' && !purchase.appliedToInventory;
+function PurchaseSyncCard({ isDarkMode, purchase, theme }) {
   const isPending = purchase.type === 'pending';
+  const isCancelled = purchase.type === 'cancelled';
 
   return (
     <View
@@ -650,36 +634,21 @@ function PurchaseSyncCard({ isDarkMode, onApply, purchase, theme }) {
             {purchase.name}
           </Text>
           <Text selectable style={[styles.purchaseDetail, { color: theme.muted }]}>
-            {purchase.quantity} {purchase.unit} · {isPending ? 'Pendiente en caja' : purchase.appliedToInventory ? 'Aplicada' : 'Registrada en caja'}
+            {purchase.quantity} {purchase.unit} · {isPending ? 'Pendiente en caja' : isCancelled ? 'Cancelada' : 'Stock actualizado'}
           </Text>
         </View>
       </View>
 
-      {canApply ? (
-        <Pressable
-          onPress={onApply}
-          style={({ pressed }) => [
-            styles.applyButton,
-            {
-              backgroundColor: isDarkMode ? theme.accent : theme.accentAlt,
-              opacity: pressed ? 0.86 : 1,
-            },
-          ]}
-        >
-          <Text style={styles.applyButtonText}>Aplicar</Text>
-        </Pressable>
-      ) : (
         <View style={[styles.purchaseBadge, { backgroundColor: isPending ? theme.warningBg : theme.actionSoft }]}>
           <Text style={[styles.purchaseBadgeText, { color: isPending ? theme.warningText : theme.amber }]}>
-            {isPending ? 'Pendiente' : 'OK'}
+            {isPending ? 'Pendiente' : isCancelled ? 'Cancelada' : 'Recibida'}
           </Text>
         </View>
-      )}
     </View>
   );
 }
 
-function ItemActionsSheet({ isDarkMode, item, onAdjust, onClose, onDelete, onEdit, onPurchase, theme }) {
+function ItemActionsSheet({ canDelete, canPurchase, isDarkMode, item, onAdjust, onClose, onDelete, onEdit, onPurchase, theme }) {
   if (!item) {
     return null;
   }
@@ -706,14 +675,16 @@ function ItemActionsSheet({ isDarkMode, item, onAdjust, onClose, onDelete, onEdi
           <View style={styles.sheetActionsGrid}>
             <ActionButton label="Entrada" onPress={() => onAdjust(item, 'entry')} theme={theme} />
             <ActionButton label="Salida" onPress={() => onAdjust(item, 'out')} theme={theme} />
-            <ActionButton label="Solicitar compra" onPress={() => onPurchase(item)} theme={theme} />
+            {canPurchase ? <ActionButton label="Registrar compra" onPress={() => onPurchase(item)} theme={theme} /> : null}
             <ActionButton label="Editar" onPress={() => onEdit(item)} theme={theme} />
           </View>
 
           <View style={styles.modalActions}>
-            <Pressable onPress={() => onDelete(item)} style={[styles.modalSecondary, { backgroundColor: '#dc2626' }]}>
-              <Text style={styles.modalPrimaryText}>Eliminar</Text>
-            </Pressable>
+            {canDelete ? (
+              <Pressable onPress={() => onDelete(item)} style={[styles.modalSecondary, { backgroundColor: '#dc2626' }]}>
+                <Text style={styles.modalPrimaryText}>Eliminar</Text>
+              </Pressable>
+            ) : null}
             <Pressable onPress={onClose} style={[styles.modalPrimary, { backgroundColor: theme.accent }]}>
               <Text style={styles.modalPrimaryText}>Cerrar</Text>
             </Pressable>

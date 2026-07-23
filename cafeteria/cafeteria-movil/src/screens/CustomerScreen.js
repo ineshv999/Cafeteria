@@ -9,47 +9,105 @@ import ScreenBackground from '../components/ScreenBackground';
 import SectionTitle from '../components/SectionTitle';
 import StatCard from '../components/StatCard';
 import SummaryCard from '../components/SummaryCard';
-import { customerModules, customerMovements, customerStats } from '../data/appData';
+import { customerModules } from '../data/appData';
 
-const orderStates = [
-  { label: 'Pendientes', value: 4, color: '#f59e0b' },
-  { label: 'En cocina', value: 6, color: '#d97706' },
-  { label: 'Listos', value: 3, color: '#16a34a' },
-  { label: 'Entregados', value: 11, color: '#2563eb' },
+const hourBuckets = [
+  { label: '8-10', start: 8, end: 10 },
+  { label: '10-12', start: 10, end: 12 },
+  { label: '12-14', start: 12, end: 14 },
+  { label: '14-16', start: 14, end: 16 },
+  { label: '16-18', start: 16, end: 18 },
 ];
 
-const tableStates = [
-  { label: 'Ocupadas', value: 6, detail: 'Mesas con consumo' },
-  { label: 'Libres', value: 4, detail: 'Disponibles ahora' },
-  { label: 'Por pagar', value: 2, detail: 'Esperando caja' },
-];
+function isToday(value) {
+  const date = new Date(value || 0);
+  const today = new Date();
+  return !Number.isNaN(date.getTime())
+    && date.getFullYear() === today.getFullYear()
+    && date.getMonth() === today.getMonth()
+    && date.getDate() === today.getDate();
+}
 
-const hourlyOrders = [
-  { label: '8-10', value: 3 },
-  { label: '10-12', value: 6 },
-  { label: '12-14', value: 9 },
-  { label: '14-16', value: 5 },
-  { label: '16-18', value: 8 },
-];
+function orderTotal(order) {
+  return Number(order.total || String(order.amount || '').replace(/[^0-9.]/g, '')) || 0;
+}
 
-const favoriteProducts = [
-  { icon: '☕', label: 'Café americano', value: 18 },
-  { icon: '🥐', label: 'Pan dulce', value: 14 },
-  { icon: '🥤', label: 'Frappé', value: 9 },
-  { icon: '⭐', label: 'Combo desayuno', value: 7 },
-];
-
-const promoStats = [
-  { label: 'Sugeridas', value: 12 },
-  { label: 'Aceptadas', value: 8 },
-  { label: 'Rechazadas', value: 4 },
-];
-
-export default function CustomerScreen({ goBack, isDarkMode, setIsDarkMode, theme, navigate }) {
-  const maxOrderState = Math.max(...orderStates.map((state) => state.value));
-  const maxHourlyOrders = Math.max(...hourlyOrders.map((hour) => hour.value));
-  const maxFavoriteProduct = Math.max(...favoriteProducts.map((product) => product.value));
-  const maxPromoStat = Math.max(...promoStats.map((promo) => promo.value));
+export default function CustomerScreen({
+  availableTables = [],
+  customerOrders = [],
+  goBack,
+  isDarkMode,
+  navigate,
+  promotions = [],
+  setIsDarkMode,
+  theme,
+}) {
+  const todayOrders = customerOrders.filter((order) => !order.createdAt || isToday(order.createdAt));
+  const activeOrders = customerOrders.filter((order) => ['pending', 'kitchen', 'ready'].includes(order.statusType));
+  const paidOrders = customerOrders.filter((order) => order.statusType === 'paid');
+  const activeTableIds = new Set(activeOrders.map((order) => order.tableId || order.table).filter(Boolean));
+  const orderStates = [
+    { label: 'Pendientes', value: customerOrders.filter((order) => order.statusType === 'pending').length, color: '#f59e0b' },
+    { label: 'En cocina', value: customerOrders.filter((order) => order.statusType === 'kitchen').length, color: '#d97706' },
+    { label: 'Listos', value: customerOrders.filter((order) => order.statusType === 'ready').length, color: '#16a34a' },
+    { label: 'Pagados', value: paidOrders.length, color: '#2563eb' },
+  ];
+  const tableStates = [
+    { label: 'Ocupadas', value: activeTableIds.size, detail: 'Mesas con consumo' },
+    { label: 'Libres', value: availableTables.length, detail: 'Disponibles ahora' },
+    { label: 'Por pagar', value: customerOrders.filter((order) => order.statusType === 'ready').length, detail: 'Esperando caja' },
+  ];
+  const hourlyOrders = hourBuckets.map((bucket) => ({
+    label: bucket.label,
+    value: todayOrders.filter((order) => {
+      const date = new Date(order.createdAt || 0);
+      return !Number.isNaN(date.getTime()) && date.getHours() >= bucket.start && date.getHours() < bucket.end;
+    }).length,
+  }));
+  const favoriteProducts = Object.values(customerOrders.flatMap((order) => order.productItems || []).reduce((result, item) => {
+    const label = item.name || 'Producto';
+    result[label] = result[label] || { icon: '☕', label, value: 0 };
+    result[label].value += Number(item.quantity || 0);
+    return result;
+  }, {})).sort((left, right) => right.value - left.value).slice(0, 4);
+  const promoStats = [
+    { label: 'Activas', value: promotions.length },
+    { label: 'Con producto', value: promotions.filter((promotion) => promotion.orderItem).length },
+    { label: 'Pedidos hoy', value: todayOrders.length },
+  ];
+  const averageTicket = paidOrders.length
+    ? paidOrders.reduce((total, order) => total + orderTotal(order), 0) / paidOrders.length
+    : 0;
+  const productCount = customerOrders.reduce(
+    (total, order) => total + (order.productItems || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0),
+    0,
+  );
+  const averageProducts = customerOrders.length ? productCount / customerOrders.length : 0;
+  const serviceDurations = paidOrders.map((order) => {
+    const start = new Date(order.createdAt || 0);
+    const end = new Date(order.paidAt || 0);
+    return !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())
+      ? Math.max(0, (end.getTime() - start.getTime()) / 60000)
+      : null;
+  }).filter((value) => value !== null);
+  const averageService = serviceDurations.length
+    ? Math.round(serviceDurations.reduce((sum, value) => sum + value, 0) / serviceDurations.length)
+    : 0;
+  const recentOrder = customerOrders[0];
+  const featuredPromotion = promotions[0];
+  const movements = customerOrders.slice(0, 3).map((order) => ({
+    icon: order.statusType === 'paid' ? '✅' : order.statusType === 'cancelled' ? '❌' : '🧾',
+    text: `${order.id} · ${order.status || 'Sin estado'}`,
+  }));
+  const customerStats = [
+    { icon: '🍽️', value: String(availableTables.length), label: 'Libres' },
+    { icon: '⏳', value: String(activeOrders.length), label: 'En proceso' },
+    { icon: '✅', value: String(paidOrders.length), label: 'Pagados' },
+  ];
+  const maxOrderState = Math.max(1, ...orderStates.map((state) => state.value));
+  const maxHourlyOrders = Math.max(1, ...hourlyOrders.map((hour) => hour.value));
+  const maxFavoriteProduct = Math.max(1, ...favoriteProducts.map((product) => product.value));
+  const maxPromoStat = Math.max(1, ...promoStats.map((promo) => promo.value));
 
   return (
     <ScreenBackground isDarkMode={isDarkMode} theme={theme} contentStyle={styles.screen}>
@@ -70,7 +128,7 @@ export default function CustomerScreen({ goBack, isDarkMode, setIsDarkMode, them
 
         <SummaryCard
           title="Pedidos levantados"
-          amount="15 pedidos"
+          amount={`${todayOrders.length} pedidos`}
           subtitle="Pedidos registrados durante el día"
           icon="🧾"
           isDarkMode={isDarkMode}
@@ -192,12 +250,12 @@ export default function CustomerScreen({ goBack, isDarkMode, setIsDarkMode, them
           </View>
         </AnalyticsCard>
 
-        <AnalyticsCard isDarkMode={isDarkMode} theme={theme} title="Promociones aceptadas">
+        <AnalyticsCard isDarkMode={isDarkMode} theme={theme} title="Promociones disponibles">
           <View style={styles.metricList}>
             {promoStats.map((promo) => (
               <HorizontalMetric
                 key={promo.label}
-                color={promo.label === 'Aceptadas' ? '#16a34a' : promo.label === 'Rechazadas' ? '#dc2626' : theme.accentAlt}
+                color={promo.label === 'Activas' ? '#16a34a' : theme.accentAlt}
                 label={promo.label}
                 max={maxPromoStat}
                 theme={theme}
@@ -206,7 +264,7 @@ export default function CustomerScreen({ goBack, isDarkMode, setIsDarkMode, them
             ))}
           </View>
           <Text selectable style={[styles.acceptanceText, { color: theme.muted }]}>
-            67% de aceptación en sugerencias del día
+            Datos sincronizados con las promociones vigentes de la API
           </Text>
         </AnalyticsCard>
 
@@ -224,10 +282,10 @@ export default function CustomerScreen({ goBack, isDarkMode, setIsDarkMode, them
               Ticket promedio por mesa
             </Text>
             <Text selectable style={[styles.ticketValue, { color: theme.title }]}>
-              $145.00
+              ${averageTicket.toFixed(2)}
             </Text>
             <Text selectable style={[styles.ticketDetail, { color: theme.muted }]}>
-              3.2 productos por pedido
+              {averageProducts.toFixed(1)} productos por pedido
             </Text>
           </View>
           <View style={[styles.ticketIconWrap, { backgroundColor: isDarkMode ? 'rgba(245,158,11,0.14)' : '#ffffff' }]}>
@@ -254,29 +312,29 @@ export default function CustomerScreen({ goBack, isDarkMode, setIsDarkMode, them
             </Text>
           </View>
           <Text selectable style={[styles.timeValue, { color: theme.amber }]}>
-            14 min
+            {averageService ? `${averageService} min` : 'Sin datos'}
           </Text>
         </View>
 
         <InfoCard
-          badge="Activa"
+          badge={featuredPromotion?.badge || 'Sin promociones'}
           icon="⭐"
           isDarkMode={isDarkMode}
-          subtitle="Café americano + pan dulce por $55.00"
+          subtitle={featuredPromotion?.detail || 'Las promociones vigentes aparecerán aquí'}
           theme={theme}
           title="Promoción del día"
-          value="Combo desayuno"
+          value={featuredPromotion?.title || 'No hay una promoción activa'}
           variant="marketing"
         />
 
         <InfoCard
-          badge="En cocina"
+          badge={recentOrder?.status || 'Sin actividad'}
           isDarkMode={isDarkMode}
-          subtitle="Mesa 2 · En preparación"
+          subtitle={recentOrder?.detail || 'Los pedidos sincronizados aparecerán aquí'}
           theme={theme}
           title="Pedido reciente"
-          value="Pedido #31"
-          amount="$145"
+          value={recentOrder?.id || 'Sin pedidos registrados'}
+          amount={recentOrder?.amount || '$0.00'}
         />
 
         <View
@@ -298,7 +356,7 @@ export default function CustomerScreen({ goBack, isDarkMode, setIsDarkMode, them
             </View>
           </View>
 
-          {customerMovements.map((movement) => (
+          {movements.map((movement) => (
             <View key={movement.text} style={styles.movementItem}>
               <AppIcon color={theme.amber} name={movement.icon} size={18} />
               <Text selectable style={[styles.movementCopy, { color: theme.muted }]}>
@@ -306,6 +364,11 @@ export default function CustomerScreen({ goBack, isDarkMode, setIsDarkMode, them
               </Text>
             </View>
           ))}
+          {!movements.length ? (
+            <Text selectable style={[styles.movementCopy, { color: theme.muted, marginTop: 10 }]}>
+              Aún no hay movimientos sincronizados.
+            </Text>
+          ) : null}
         </View>
       </View>
 

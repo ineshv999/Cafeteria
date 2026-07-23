@@ -1,4 +1,4 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useState } from 'react';
 
 import AppHeader from '../components/AppHeader';
@@ -13,12 +13,10 @@ import SummaryCard from '../components/SummaryCard';
 
 const paymentOptions = ['Efectivo', 'Tarjeta', 'Transferencia'];
 
-const initialMovements = [
-  { icon: '✅', text: 'Pedido #23 confirmado y enviado a cocina' },
-  { icon: '❌', text: 'Pedido #21 cancelado por caja' },
-];
-
 export default function CashierOrdersScreen({
+  cancelOrder,
+  canCancelOrders = false,
+  chargeOrder,
   customerOrders,
   goBack,
   isDarkMode,
@@ -32,16 +30,17 @@ export default function CashierOrdersScreen({
   const [selectedPayments, setSelectedPayments] = useState({});
   const [decision, setDecision] = useState(null);
   const [paymentEdit, setPaymentEdit] = useState(null);
-  const [movements, setMovements] = useState(initialMovements);
+  const [movements, setMovements] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const cashierOrders = customerOrders.filter((order) => order.statusType !== 'delivered');
-  const pendingOrders = cashierOrders.filter((order) => order.statusType === 'pending');
-  const confirmedOrders = cashierOrders.filter((order) => ['kitchen', 'ready'].includes(order.statusType));
+  const cashierOrders = customerOrders.filter((order) => ['ready', 'paid', 'cancelled'].includes(order.statusType));
+  const pendingOrders = cashierOrders.filter((order) => order.statusType === 'ready');
+  const confirmedOrders = cashierOrders.filter((order) => order.statusType === 'paid');
   const canceledOrders = cashierOrders.filter((order) => order.statusType === 'cancelled');
   const previewOrder = pendingOrders[0] || cashierOrders[0];
   const orderStats = [
-    { icon: '🧾', value: String(pendingOrders.length), label: 'Recibidos' },
-    { icon: '✅', value: String(confirmedOrders.length), label: 'Confirmados' },
+    { icon: '🧾', value: String(pendingOrders.length), label: 'Por cobrar' },
+    { icon: '✅', value: String(confirmedOrders.length), label: 'Pagados' },
     { icon: '❌', value: String(canceledOrders.length), label: 'Cancelados' },
   ];
 
@@ -70,10 +69,6 @@ export default function CashierOrdersScreen({
       return;
     }
 
-    updateCustomerOrder(paymentEdit.order.id, (order) => ({
-      ...order,
-      paymentMethod: paymentEdit.paymentMethod,
-    }));
     recordEvent?.({
       detail: `${paymentEdit.order.id} cambió método de pago a ${paymentEdit.paymentMethod}.`,
       icon: '💳',
@@ -90,63 +85,58 @@ export default function CashierOrdersScreen({
     setPaymentEdit(null);
   };
 
-  const confirmDecision = () => {
+  const confirmDecision = async () => {
     if (!decision) {
       return;
     }
 
     const paymentMethod = getPaymentMethod(decision.order);
 
-    if (decision.type === 'confirm') {
-      updateCustomerOrder(decision.order.id, (order) => ({
-        ...order,
-        action: 'Ver detalle',
-        actionType: 'detail',
-        cashierStatus: 'paid',
-        paidAt: 'Hoy',
-        paymentMethod,
-        status: 'En cocina',
-        statusType: 'kitchen',
-        stepsDone: Math.max(order.stepsDone || 1, 2),
-      }));
-      recordEvent?.({
-        detail: `${decision.order.id} confirmado con ${paymentMethod} y enviado a cocina.`,
-        icon: '💵',
-        module: 'Caja',
-        severity: 'success',
-        title: 'Pago confirmado',
-        type: 'notification',
-      });
-      setMovements((currentMovements) => [
-        { icon: '✅', text: `${decision.order.id} confirmado con ${paymentMethod}` },
-        ...currentMovements,
-      ]);
-    } else {
-      updateCustomerOrder(decision.order.id, (order) => ({
-        ...order,
-        action: 'Detalle',
-        actionType: 'detail',
-        cashierStatus: 'cancelled',
-        paymentMethod: null,
-        status: 'Cancelado',
-        statusType: 'cancelled',
-        stepsDone: 1,
-      }));
-      recordEvent?.({
-        detail: `${decision.order.id} fue cancelado por caja. Se actualizan ventas y ganancias.`,
-        icon: '❌',
-        module: 'Caja',
-        severity: 'warning',
-        title: 'Pedido cancelado',
-        type: 'notification',
-      });
-      setMovements((currentMovements) => [
-        { icon: '❌', text: `${decision.order.id} cancelado por caja` },
-        ...currentMovements,
-      ]);
-    }
+    try {
+      setIsSubmitting(true);
 
-    setDecision(null);
+      if (decision.type === 'confirm') {
+        await chargeOrder?.(decision.order.apiId ?? decision.order.id, {
+          amountReceived: Number(decision.order.total || 0),
+          paymentMethod,
+        });
+        recordEvent?.({
+          detail: `${decision.order.id} cobrado con ${paymentMethod}.`,
+          icon: '💵',
+          module: 'Caja',
+          severity: 'success',
+          title: 'Pago confirmado',
+          type: 'notification',
+        });
+        setMovements((currentMovements) => [
+          { icon: '✅', text: `${decision.order.id} cobrado con ${paymentMethod}` },
+          ...currentMovements,
+        ]);
+      } else {
+        await cancelOrder?.(decision.order.apiId ?? decision.order.id);
+        recordEvent?.({
+          detail: `${decision.order.id} fue cancelado por caja.`,
+          icon: '❌',
+          module: 'Caja',
+          severity: 'warning',
+          title: 'Pedido cancelado',
+          type: 'notification',
+        });
+        setMovements((currentMovements) => [
+          { icon: '❌', text: `${decision.order.id} cancelado por caja` },
+          ...currentMovements,
+        ]);
+      }
+
+      setDecision(null);
+    } catch (error) {
+      Alert.alert(
+        decision.type === 'confirm' ? 'No se pudo cobrar el pedido' : 'No se pudo cancelar el pedido',
+        error?.userMessage || error?.message || 'Revisa la conexión con la API e inténtalo de nuevo.',
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -175,7 +165,7 @@ export default function CashierOrdersScreen({
         <SummaryCard
           title="Pedidos recibidos"
           amount={`${pendingOrders.length} pendientes`}
-          subtitle={pendingOrders.length ? 'Listos para confirmar o cancelar' : 'No hay pedidos pendientes de pago'}
+          subtitle={pendingOrders.length ? 'Listos para cobrar o cancelar' : 'No hay pedidos pendientes de pago'}
           icon="💵"
           isDarkMode={isDarkMode}
           theme={theme}
@@ -194,6 +184,7 @@ export default function CashierOrdersScreen({
             cashierOrders.map((order) => (
               <OrderCard
                 key={order.id}
+                canCancel={canCancelOrders}
                 isDarkMode={isDarkMode}
                 onCancel={() => setDecision({ order, type: 'cancel' })}
                 onConfirm={() => setDecision({ order, type: 'confirm' })}
@@ -208,7 +199,7 @@ export default function CashierOrdersScreen({
           ) : (
             <EmptyState
               icon="🧾"
-              subtitle="Cuando Cliente/Mesero levante un pedido, aparecerá aquí para confirmarlo o cancelarlo."
+              subtitle="Cuando Cocina marque un pedido como listo, aparecerá aquí para cobrarlo."
               theme={theme}
               title="Sin pedidos para caja"
             />
@@ -258,6 +249,7 @@ export default function CashierOrdersScreen({
       <DecisionModal
         decision={decision}
         isDarkMode={isDarkMode}
+        isSubmitting={isSubmitting}
         onCancel={() => setDecision(null)}
         onConfirm={confirmDecision}
         paymentMethod={decision ? getPaymentMethod(decision.order) : ''}
@@ -275,11 +267,12 @@ export default function CashierOrdersScreen({
   );
 }
 
-function OrderCard({ isDarkMode, onCancel, onConfirm, onDetail, onEditPayment, onPaymentChange, order, paymentMethod, theme }) {
-  const isPending = order.statusType === 'pending';
+function OrderCard({ canCancel = false, isDarkMode, onCancel, onConfirm, onDetail, onEditPayment, onPaymentChange, order, paymentMethod, theme }) {
+  const isPending = order.statusType === 'ready';
   const isCancelled = order.statusType === 'cancelled';
-  const canEditPayment = !isPending && !isCancelled && order.cashierStatus === 'paid';
-  const canCancelProcessed = canEditPayment;
+  const isPaid = order.statusType === 'paid';
+  const canEditPayment = false;
+  const canCancelProcessed = false;
 
   return (
     <View
@@ -343,7 +336,7 @@ function OrderCard({ isDarkMode, onCancel, onConfirm, onDetail, onEditPayment, o
         </View>
       )}
 
-      {canEditPayment && (
+      {isPaid && (
         <View style={[styles.paymentSummary, { backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : '#ffffff' }]}>
           <Text selectable style={[styles.paymentSummaryLabel, { color: theme.muted }]}>
             Método de pago
@@ -357,7 +350,7 @@ function OrderCard({ isDarkMode, onCancel, onConfirm, onDetail, onEditPayment, o
       <View style={styles.orderActions}>
         {isPending && (
           <Pressable onPress={onConfirm} style={[styles.actionButton, styles.confirmButton]}>
-            <Text style={styles.actionText}>Confirmar</Text>
+            <Text style={styles.actionText}>Cobrar</Text>
           </Pressable>
         )}
         <Pressable
@@ -374,12 +367,12 @@ function OrderCard({ isDarkMode, onCancel, onConfirm, onDetail, onEditPayment, o
             <Text style={[styles.actionText, { color: isDarkMode ? theme.amber : theme.accent }]}>Editar pago</Text>
           </Pressable>
         )}
-        {canCancelProcessed && (
+        {canCancel && canCancelProcessed && (
           <Pressable onPress={onCancel} style={[styles.actionButton, styles.cancelButton]}>
             <Text style={styles.actionText}>Cancelar</Text>
           </Pressable>
         )}
-        {isPending && (
+        {canCancel && isPending && (
           <Pressable onPress={onCancel} style={[styles.actionButton, styles.cancelButton]}>
             <Text style={styles.actionText}>Cancelar</Text>
           </Pressable>
@@ -428,6 +421,7 @@ function StatusBadge({ isDarkMode, status, type, theme }) {
   const colors = {
     cancelled: { backgroundColor: '#fee2e2', borderColor: 'transparent', color: '#b91c1c' },
     kitchen: { backgroundColor: isDarkMode ? 'rgba(251, 146, 60, 0.15)' : '#ffedd5', borderColor: 'transparent', color: isDarkMode ? '#fb923c' : '#c2410c' },
+    paid: { backgroundColor: isDarkMode ? 'rgba(34, 197, 94, 0.15)' : '#dcfce7', borderColor: 'transparent', color: isDarkMode ? '#86efac' : '#166534' },
     pending: { backgroundColor: theme.warningBg, borderColor: isDarkMode ? 'rgba(245, 158, 11, 0.25)' : 'transparent', color: theme.warningText },
     ready: { backgroundColor: isDarkMode ? 'rgba(34, 197, 94, 0.15)' : '#dcfce7', borderColor: 'transparent', color: isDarkMode ? '#86efac' : '#166534' },
   };
@@ -456,7 +450,7 @@ function DetailLine({ label, value, theme }) {
   );
 }
 
-function DecisionModal({ decision, isDarkMode, onCancel, onConfirm, paymentMethod, theme }) {
+function DecisionModal({ decision, isDarkMode, isSubmitting = false, onCancel, onConfirm, paymentMethod, theme }) {
   const isConfirming = decision?.type === 'confirm';
   const isPaidCancellation = decision?.type === 'cancel' && decision?.order?.cashierStatus === 'paid';
 
@@ -478,7 +472,7 @@ function DecisionModal({ decision, isDarkMode, onCancel, onConfirm, paymentMetho
           </Text>
           <Text selectable style={[styles.modalCopy, { color: theme.muted }]}>
             {isConfirming
-              ? `¿Confirmar ${decision?.order.id} con pago en ${paymentMethod} y enviarlo a cocina?`
+              ? `¿Cobrar ${decision?.order.id} con pago en ${paymentMethod}?`
               : isPaidCancellation
                 ? `¿Seguro que deseas cancelar ${decision?.order.id}? Se quitará de ventas, ganancia y métodos de pago.`
                 : `¿Seguro que deseas cancelar ${decision?.order.id}?`}
@@ -497,16 +491,17 @@ function DecisionModal({ decision, isDarkMode, onCancel, onConfirm, paymentMetho
               <Text style={[styles.modalSecondaryText, { color: theme.title }]}>Volver</Text>
             </Pressable>
             <Pressable
+              disabled={isSubmitting}
               onPress={onConfirm}
               style={({ pressed }) => [
                 styles.modalPrimary,
                 {
                   backgroundColor: isConfirming ? '#16a34a' : '#dc2626',
-                  opacity: pressed ? 0.86 : 1,
+                  opacity: isSubmitting ? 0.6 : pressed ? 0.86 : 1,
                 },
               ]}
             >
-              <Text style={styles.modalPrimaryText}>Confirmar</Text>
+              <Text style={styles.modalPrimaryText}>{isSubmitting ? 'Procesando…' : 'Confirmar'}</Text>
             </Pressable>
           </View>
         </View>

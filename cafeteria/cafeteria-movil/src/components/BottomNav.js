@@ -17,9 +17,9 @@ const cashierItems = [
 ];
 
 const customerItems = [
-  { icon: 'home-outline', activeIcon: 'home', label: 'Inicio', target: 'customer' },
+  { icon: 'home-outline', activeIcon: 'home', label: 'Inicio', target: 'dashboard' },
+  { icon: 'create-outline', activeIcon: 'create', label: 'Pedido', target: 'customerOrder' },
   { icon: 'document-text-outline', activeIcon: 'document-text', label: 'Pedidos', target: 'customerOrders' },
-  { icon: 'megaphone-outline', activeIcon: 'megaphone', label: 'Promo', target: 'customerMarketing' },
   { icon: 'person-outline', activeIcon: 'person', label: 'Perfil', target: 'profile' },
 ];
 
@@ -30,8 +30,8 @@ const customerOrderItems = [
   { icon: 'person-outline', activeIcon: 'person', label: 'Perfil', target: 'profile' },
 ];
 
-export default function BottomNav({ active, isDarkMode, navigate, theme }) {
-  const items =
+export default function BottomNav({ active, currentRoleId, isDarkMode, navigate, theme }) {
+  const adminItems =
     active === 'cashier'
       ? cashierItems
       : active === 'cashierOrders'
@@ -45,8 +45,15 @@ export default function BottomNav({ active, isDarkMode, navigate, theme }) {
               : active === 'customerMarketing'
                 ? customerOrderItems
                 : active === 'kitchenOrders'
-                  ? defaultItems
+                ? defaultItems
       : defaultItems;
+  const items = currentRoleId === 'waiter'
+    ? customerItems
+    : currentRoleId === 'cashier'
+      ? cashierItems
+      : currentRoleId === 'kitchen'
+        ? defaultItems
+        : adminItems;
 
   return (
     <BlurView

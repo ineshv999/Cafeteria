@@ -8,71 +8,112 @@ import ScreenBackground from '../components/ScreenBackground';
 import SectionTitle from '../components/SectionTitle';
 import StatCard from '../components/StatCard';
 import SummaryCard from '../components/SummaryCard';
-import { dashboardModules, dashboardStats } from '../data/appData';
-
-const weeklySales = [
-  { day: 'Lun', value: 420 },
-  { day: 'Mar', value: 510 },
-  { day: 'Mié', value: 360 },
-  { day: 'Jue', value: 580 },
-  { day: 'Vie', value: 690 },
-  { day: 'Sáb', value: 820 },
-  { day: 'Dom', value: 740 },
-];
+import { dashboardModules } from '../data/appData';
 
 const hourlySales = [
-  { label: '7-10', value: 38 },
-  { label: '10-13', value: 62 },
-  { label: '13-16', value: 44 },
-  { label: '16-19', value: 71 },
-  { label: '19-22', value: 29 },
+  { label: '7-10', value: 0 },
+  { label: '10-13', value: 0 },
+  { label: '13-16', value: 0 },
+  { label: '16-19', value: 0 },
+  { label: '19-22', value: 0 },
 ];
 
-const bestSellers = [
-  { icon: '☕', label: 'Café americano', value: 64 },
-  { icon: '🥐', label: 'Pan dulce', value: 48 },
-  { icon: '🥤', label: 'Frappé', value: 36 },
-  { icon: '🍫', label: 'Chocolate', value: 28 },
-  { icon: '⭐', label: 'Combo desayuno', value: 22 },
-];
+function isToday(value) {
+  const date = new Date(value || 0);
+  const today = new Date();
+  return !Number.isNaN(date.getTime())
+    && date.getFullYear() === today.getFullYear()
+    && date.getMonth() === today.getMonth()
+    && date.getDate() === today.getDate();
+}
 
-const orderStates = [
-  { label: 'Pendientes', value: 9, color: '#f59e0b' },
-  { label: 'En cocina', value: 14, color: '#d97706' },
-  { label: 'Listos', value: 7, color: '#16a34a' },
-  { label: 'Cancelados', value: 2, color: '#dc2626' },
-];
-
-const criticalStock = [
-  { icon: '🥛', label: 'Leche', detail: '2 L disponibles', level: 'Crítico' },
-  { icon: '🍫', label: 'Chocolate', detail: '1 kg disponible', level: 'Bajo' },
-  { icon: '🥤', label: 'Vasos', detail: '32 piezas', level: 'Comprar' },
-];
-
-const financeStats = [
-  { label: 'Ventas', value: 4850 },
-  { label: 'Gastos', value: 1870 },
-  { label: 'Ganancia', value: 2980 },
-];
-
-const paymentMethods = [
-  { label: 'Efectivo', value: 46 },
-  { label: 'Tarjeta', value: 38 },
-  { label: 'Transferencia', value: 16 },
-];
-
-const modulePerformance = [
-  { icon: '🧍', label: 'Mesero', value: '15 pedidos', detail: '4 en proceso' },
-  { icon: '💵', label: 'Caja', value: '18 pagos', detail: '$4,850 ventas' },
-  { icon: '👨‍🍳', label: 'Cocina', value: '12 listos', detail: '5 en preparación' },
-];
-
-export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode, theme, navigate, userProfile }) {
-  const maxSales = Math.max(...weeklySales.map((sale) => sale.value));
-  const maxHourlySales = Math.max(...hourlySales.map((sale) => sale.value));
-  const maxBestSeller = Math.max(...bestSellers.map((product) => product.value));
-  const maxOrderState = Math.max(...orderStates.map((state) => state.value));
-  const maxFinance = Math.max(...financeStats.map((stat) => stat.value));
+export default function DashboardScreen({
+  cashierExpenses = [],
+  cashierPurchases = [],
+  currentRole,
+  customerOrders = [],
+  isDarkMode,
+  kitchenInventory = [],
+  navigate,
+  setIsDarkMode,
+  theme,
+  userProfile,
+}) {
+  const paidOrders = customerOrders.filter((order) => order.statusType === 'paid');
+  const todayPaidOrders = paidOrders.filter((order) => isToday(order.paidAt || order.createdAt));
+  const todayExpenses = cashierExpenses.filter((expense) => isToday(expense.createdAt));
+  const todayPurchases = cashierPurchases.filter((purchase) =>
+    purchase.type === 'paid' && isToday(purchase.createdAt),
+  );
+  const salesTotal = todayPaidOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+  const expensesTotal = [...todayExpenses, ...todayPurchases]
+    .reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+  const activeOrders = customerOrders.filter((order) => ['pending', 'kitchen', 'ready'].includes(order.statusType));
+  const lowStockItems = kitchenInventory.filter((item) => Number(item.quantity || 0) <= Number(item.minimum || 0));
+  const lastOrder = customerOrders[0];
+  const liveStats = [
+    { icon: '🧾', value: String(activeOrders.length), label: 'Activos' },
+    { icon: '✅', value: String(todayPaidOrders.length), label: 'Pagados hoy' },
+    { icon: '📦', value: String(lowStockItems.length), label: 'Stock bajo' },
+  ];
+  const liveOrderStates = [
+    { label: 'Pendientes', value: customerOrders.filter((order) => order.statusType === 'pending').length, color: '#f59e0b' },
+    { label: 'En cocina', value: customerOrders.filter((order) => order.statusType === 'kitchen').length, color: '#d97706' },
+    { label: 'Listos', value: customerOrders.filter((order) => order.statusType === 'ready').length, color: '#16a34a' },
+    { label: 'Cancelados', value: customerOrders.filter((order) => order.statusType === 'cancelled').length, color: '#dc2626' },
+  ];
+  const liveBestSellers = Object.values(todayPaidOrders.flatMap((order) => order.productItems || []).reduce((accumulator, item) => {
+    const key = item.name || 'Producto';
+    accumulator[key] = accumulator[key] || { icon: '☕', label: key, value: 0 };
+    accumulator[key].value += Number(item.quantity || 0);
+    return accumulator;
+  }, {})).sort((left, right) => right.value - left.value).slice(0, 5);
+  const liveFinanceStats = [
+    { label: 'Ventas', value: salesTotal },
+    { label: 'Gastos', value: expensesTotal },
+    { label: 'Ganancia', value: salesTotal - expensesTotal },
+  ];
+  const paymentCounts = todayPaidOrders.reduce((counts, order) => {
+    const method = order.paymentMethod || 'Sin método';
+    counts[method] = (counts[method] || 0) + 1;
+    return counts;
+  }, {});
+  const livePaymentMethods = Object.entries(paymentCounts).map(([label, count]) => ({
+    label,
+    value: todayPaidOrders.length ? Math.round((count / todayPaidOrders.length) * 100) : 0,
+  }));
+  const liveWeeklySales = Array.from({ length: 7 }, (_, offset) => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - (6 - offset));
+    const nextDate = new Date(date);
+    nextDate.setDate(nextDate.getDate() + 1);
+    const value = paidOrders.reduce((total, order) => {
+      const paidAt = new Date(order.paidAt || order.createdAt || 0);
+      return paidAt >= date && paidAt < nextDate ? total + Number(order.total || 0) : total;
+    }, 0);
+    return { day: date.toLocaleDateString('es-MX', { weekday: 'short' }), value };
+  });
+  const liveHourlySales = hourlySales.map((bucket) => ({ ...bucket, value: 0 }));
+  todayPaidOrders.forEach((order) => {
+    const date = new Date(order.paidAt || order.createdAt || 0);
+    if (Number.isNaN(date.getTime())) return;
+    const hour = date.getHours();
+    const index = hour < 10 ? 0 : hour < 13 ? 1 : hour < 16 ? 2 : hour < 19 ? 3 : 4;
+    liveHourlySales[index].value += Number(order.total || 0);
+  });
+  const maxSales = Math.max(1, ...liveWeeklySales.map((sale) => sale.value));
+  const maxHourlySales = Math.max(1, ...liveHourlySales.map((sale) => sale.value));
+  const maxBestSeller = Math.max(1, ...liveBestSellers.map((product) => product.value));
+  const maxOrderState = Math.max(1, ...liveOrderStates.map((state) => state.value));
+  const maxFinance = Math.max(1, ...liveFinanceStats.map((stat) => Math.abs(stat.value)));
+  const averageTicket = todayPaidOrders.length ? salesTotal / todayPaidOrders.length : 0;
+  const liveModulePerformance = [
+    { icon: '🧍', label: 'Mesero', value: `${customerOrders.length} pedidos`, detail: `${activeOrders.length} en proceso` },
+    { icon: '💵', label: 'Caja', value: `${todayPaidOrders.length} pagos`, detail: `$${salesTotal.toFixed(2)} en ventas hoy` },
+    { icon: '👨‍🍳', label: 'Cocina', value: `${customerOrders.filter((order) => order.statusType === 'ready').length} listos`, detail: `${customerOrders.filter((order) => order.statusType === 'kitchen').length} en preparación` },
+    { icon: '📦', label: 'Inventario', value: `${kitchenInventory.length} insumos`, detail: `${lowStockItems.length} con stock bajo` },
+  ];
   const visibleModules = currentRole?.moduleTargets
     ? dashboardModules.filter((module) => currentRole.moduleTargets.includes(module.target))
     : dashboardModules;
@@ -84,8 +125,8 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
 
         <AppHeader
           eyebrow="Bienvenido"
-          title={userProfile?.name || 'Fer'}
-          subtitle={`${userProfile?.role || 'Administrador'} · Sistema de cafetería`}
+          title={userProfile?.name || 'Usuario'}
+          subtitle={`${userProfile?.role || currentRole?.label || 'Cuenta'} · Sistema de cafetería`}
           icon={currentRole?.icon || '☕'}
           isDarkMode={isDarkMode}
           theme={theme}
@@ -93,7 +134,7 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
 
         <SummaryCard
           title="Resumen del día"
-          amount="$2,450.00"
+          amount={`$${salesTotal.toFixed(2)}`}
           subtitle="Ventas registradas hoy"
           icon="📊"
           isDarkMode={isDarkMode}
@@ -101,7 +142,7 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
         />
 
         <View style={styles.statsRow}>
-          {dashboardStats.map((stat) => (
+          {liveStats.map((stat) => (
             <StatCard key={stat.label} {...stat} theme={theme} />
           ))}
         </View>
@@ -144,21 +185,21 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
                 },
               ]}
             >
-              <Text style={[styles.activeBadgeText, { color: theme.amber }]}>Activo</Text>
+              <Text style={[styles.activeBadgeText, { color: theme.amber }]}>{lastOrder?.status || 'Sin actividad'}</Text>
             </View>
           </View>
 
           <View style={styles.orderInfo}>
             <View>
               <Text selectable style={[styles.orderTitle, { color: theme.title }]}>
-                Pedido #15
+                {lastOrder?.id || 'Sin pedidos registrados'}
               </Text>
               <Text selectable style={[styles.orderDetail, { color: theme.muted }]}>
-                Mesa 3 · En preparación
+                {lastOrder?.detail || 'Los pedidos sincronizados aparecerán aquí'}
               </Text>
             </View>
             <Text selectable style={[styles.orderAmount, { color: isDarkMode ? theme.amber : theme.title }]}>
-              $180.00
+              {lastOrder?.amount || '$0.00'}
             </Text>
           </View>
         </View>
@@ -177,7 +218,7 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
           </Text>
 
           <View style={styles.chartRow}>
-            {weeklySales.map((sale) => {
+            {liveWeeklySales.map((sale) => {
               const barHeight = 36 + (sale.value / maxSales) * 66;
 
               return (
@@ -205,7 +246,7 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
 
         <AnalyticsCard isDarkMode={isDarkMode} theme={theme} title="Ventas por hora">
           <View style={styles.hourGrid}>
-            {hourlySales.map((sale) => (
+            {liveHourlySales.map((sale) => (
               <View key={sale.label} style={styles.hourItem}>
                 <View
                   style={[
@@ -238,7 +279,7 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
 
         <AnalyticsCard isDarkMode={isDarkMode} theme={theme} title="Productos más vendidos">
           <View style={styles.metricList}>
-            {bestSellers.map((product) => (
+            {liveBestSellers.map((product) => (
               <HorizontalMetric
                 key={product.label}
                 color={isDarkMode ? '#d97706' : theme.accentAlt}
@@ -255,7 +296,7 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
 
         <AnalyticsCard isDarkMode={isDarkMode} theme={theme} title="Pedidos por estado">
           <View style={styles.metricList}>
-            {orderStates.map((state) => (
+            {liveOrderStates.map((state) => (
               <HorizontalMetric
                 key={state.label}
                 color={state.color}
@@ -270,9 +311,9 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
 
         <AnalyticsCard isDarkMode={isDarkMode} theme={theme} title="Stock crítico">
           <View style={styles.stockList}>
-            {criticalStock.map((item) => (
+            {lowStockItems.map((item) => (
               <View
-                key={item.label}
+                key={item.id || item.name}
                 style={[
                   styles.stockRow,
                   {
@@ -283,15 +324,15 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
                 <AppIcon color={theme.amber} name={item.icon} size={20} />
                 <View style={styles.stockCopy}>
                   <Text selectable style={[styles.stockTitle, { color: theme.title }]}>
-                    {item.label}
+                    {item.name}
                   </Text>
                   <Text selectable style={[styles.stockDetail, { color: theme.muted }]}>
-                    {item.detail}
+                    {item.quantity} {item.unit} disponibles · mínimo {item.minimum}
                   </Text>
                 </View>
                 <View style={[styles.stockBadge, { backgroundColor: isDarkMode ? 'rgba(245, 158, 11, 0.14)' : '#ffedd5' }]}>
                   <Text selectable style={[styles.stockBadgeText, { color: isDarkMode ? '#fb923c' : '#c2410c' }]}>
-                    {item.level}
+                    Stock bajo
                   </Text>
                 </View>
               </View>
@@ -301,7 +342,7 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
 
         <AnalyticsCard isDarkMode={isDarkMode} theme={theme} title="Ganancia vs gastos">
           <View style={styles.metricList}>
-            {financeStats.map((stat) => (
+            {liveFinanceStats.map((stat) => (
               <HorizontalMetric
                 key={stat.label}
                 color={stat.label === 'Gastos' ? '#dc2626' : stat.label === 'Ganancia' ? '#16a34a' : theme.accentAlt}
@@ -317,7 +358,7 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
 
         <AnalyticsCard isDarkMode={isDarkMode} theme={theme} title="Métodos de pago">
           <View style={styles.paymentRow}>
-            {paymentMethods.map((method) => (
+            {livePaymentMethods.map((method) => (
               <View
                 key={method.label}
                 style={[
@@ -341,7 +382,7 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
 
         <AnalyticsCard isDarkMode={isDarkMode} theme={theme} title="Rendimiento por módulo">
           <View style={styles.modulePerfGrid}>
-            {modulePerformance.map((module) => (
+            {liveModulePerformance.map((module) => (
               <View
                 key={module.label}
                 style={[
@@ -380,10 +421,10 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
               Ticket promedio
             </Text>
             <Text selectable style={[styles.ticketValue, { color: theme.title }]}>
-              $145.00
+              ${averageTicket.toFixed(2)}
             </Text>
             <Text selectable style={[styles.ticketDetail, { color: theme.muted }]}>
-              +8% comparado con ayer
+              Calculado con {todayPaidOrders.length} pedidos pagados hoy
             </Text>
           </View>
           <View style={[styles.ticketIconWrap, { backgroundColor: isDarkMode ? 'rgba(245,158,11,0.14)' : '#ffffff' }]}>
@@ -417,6 +458,7 @@ function AnalyticsCard({ children, isDarkMode, theme, title }) {
 
 function HorizontalMetric({ color, icon, label, max, money = false, theme, value, valueSuffix = '' }) {
   const displayValue = money ? `$${value.toLocaleString('en-US')}` : `${value}${valueSuffix}`;
+  const width = value === 0 ? 0 : Math.min(100, Math.max(8, (Math.abs(value) / Math.max(1, max)) * 100));
 
   return (
     <View style={styles.horizontalMetric}>
@@ -430,7 +472,7 @@ function HorizontalMetric({ color, icon, label, max, money = false, theme, value
         </Text>
       </View>
       <View style={[styles.metricTrack, { backgroundColor: 'rgba(120, 53, 15, 0.12)' }]}>
-        <View style={[styles.metricFill, { backgroundColor: color, width: `${Math.max(8, (value / max) * 100)}%` }]} />
+        <View style={[styles.metricFill, { backgroundColor: color, width: `${width}%` }]} />
       </View>
     </View>
   );

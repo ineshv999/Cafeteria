@@ -10,22 +10,14 @@ import SectionTitle from '../components/SectionTitle';
 import StatCard from '../components/StatCard';
 import SummaryCard from '../components/SummaryCard';
 
-const baseSales = 4850;
-const baseExpenses = [
-  { amount: 920, category: 'Operación', description: 'Gastos registrados' },
-  { amount: 950, category: 'Suministros', description: 'Compras de suministros' },
-];
 const expenseCategories = ['Insumos', 'Servicios', 'Limpieza', 'Mantenimiento', 'Otro'];
-const initialMovements = [
-  { icon: '💵', text: 'Venta registrada por Pedido #24' },
-  { icon: '🧾', text: 'Gasto registrado: compra de servilletas' },
-  { icon: '🛒', text: 'Compra de leche agregada a cuentas' },
-];
 
 export default function CashierAccountsScreen({
   addCashierExpense,
   cashierExpenses = [],
+  cashierPurchases = [],
   customerOrders = [],
+  currentRoleId,
   deleteCashierExpense,
   goBack,
   isDarkMode,
@@ -34,41 +26,52 @@ export default function CashierAccountsScreen({
   navigate,
   updateCashierExpense,
 }) {
-  const expenses = cashierExpenses.length
-    ? cashierExpenses
-    : baseExpenses.map((expense, index) => ({ ...expense, id: expense.id || `base-expense-${index}` }));
-  const [movements, setMovements] = useState(initialMovements);
+  const expenses = cashierExpenses.filter((expense) => isToday(expense.createdAt));
+  const receivedPurchases = cashierPurchases.filter(
+    (purchase) => purchase.type === 'paid' && isToday(purchase.createdAt),
+  );
+  const canDeleteExpenses = currentRoleId === 'admin';
+  const [movements, setMovements] = useState([]);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [expenseModalMode, setExpenseModalMode] = useState('create');
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [isDeleteExpenseModalOpen, setIsDeleteExpenseModalOpen] = useState(false);
   const [isCutModalOpen, setIsCutModalOpen] = useState(false);
-  const [cutClosed, setCutClosed] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
   const [expenseDraft, setExpenseDraft] = useState({
     amount: '',
     category: 'Insumos',
     description: '',
   });
 
-  const paidOrders = customerOrders.filter((order) => order.cashierStatus === 'paid');
+  const paidOrders = customerOrders.filter(
+    (order) => order.cashierStatus === 'paid' && isToday(order.paidAt || order.createdAt),
+  );
   const liveSales = paidOrders.reduce((total, order) => total + getNumericTotal(order), 0);
-  const salesTotal = baseSales + liveSales;
+  const salesTotal = liveSales;
   const expenseTotal = expenses.reduce((total, expense) => total + expense.amount, 0);
-  const profitTotal = salesTotal - expenseTotal;
-  const suppliesTotal = expenses
-    .filter((expense) => ['Insumos', 'Suministros'].includes(expense.category))
-    .reduce((total, expense) => total + expense.amount, 0);
-  const paidByMethod = getPaidByMethod(paidOrders, salesTotal);
+  const purchaseTotal = receivedPurchases.reduce((total, purchase) => total + purchase.amount, 0);
+  const totalCosts = expenseTotal + purchaseTotal;
+  const profitTotal = salesTotal - totalCosts;
+  const paidByMethod = getPaidByMethod(paidOrders);
+  const includedCosts = [
+    ...expenses,
+    ...receivedPurchases.map((purchase) => ({
+      amount: purchase.amount,
+      description: `Compra: ${purchase.name}`,
+      id: `purchase-${purchase.id}`,
+    })),
+  ];
   const accountRows = [
-    { badge: 'Ingreso', label: 'Ventas totales', type: 'income', value: formatCurrency(salesTotal) },
-    { badge: 'Gasto', label: 'Gastos registrados', type: 'expense', value: formatCurrency(expenseTotal) },
-    { badge: 'Compra', label: 'Compras de suministros', type: 'expense', value: formatCurrency(suppliesTotal) },
-    { badge: 'Ganancia', final: true, label: 'Total en caja', type: 'profit', value: formatCurrency(profitTotal) },
+    { badge: 'Ingreso', label: 'Ventas cobradas hoy', type: 'income', value: formatCurrency(salesTotal) },
+    { badge: 'Gasto', label: 'Gastos operativos de hoy', type: 'expense', value: formatCurrency(expenseTotal) },
+    { badge: 'Compra', label: 'Compras recibidas hoy', type: 'expense', value: formatCurrency(purchaseTotal) },
+    { badge: 'Resultado', final: true, label: 'Resultado estimado', type: 'profit', value: formatCurrency(profitTotal) },
   ];
   const stats = [
     { icon: '💵', value: formatCompactCurrency(salesTotal), label: 'Ventas' },
-    { icon: '🧾', value: formatCompactCurrency(expenseTotal), label: 'Gastos' },
-    { icon: '✅', value: formatCompactCurrency(profitTotal), label: 'Ganancia' },
+    { icon: '🧾', value: formatCompactCurrency(totalCosts), label: 'Costos' },
+    { icon: '✅', value: formatCompactCurrency(profitTotal), label: 'Resultado' },
   ];
 
   const openCreateExpense = () => {
@@ -95,7 +98,7 @@ export default function CashierAccountsScreen({
     setExpenseModalMode('create');
   };
 
-  const registerExpense = () => {
+  const registerExpense = async () => {
     const amount = Number(expenseDraft.amount.replace(/[^0-9.]/g, ''));
     const description = expenseDraft.description.trim();
 
@@ -104,23 +107,27 @@ export default function CashierAccountsScreen({
     }
 
     const newExpense = {
-      id: `expense-${Date.now()}`,
       amount,
       category: expenseDraft.category,
       description,
     };
 
-    addCashierExpense(newExpense);
-    setMovements((currentMovements) => [
-      { icon: '🧾', text: `Gasto registrado: ${description} (${formatCurrency(amount)})` },
-      ...currentMovements,
-    ]);
-    setExpenseDraft({ amount: '', category: 'Insumos', description: '' });
-    closeExpenseModal();
-    setCutClosed(false);
+    setIsMutating(true);
+    try {
+      const created = await addCashierExpense(newExpense);
+      if (!created) return;
+      setMovements((currentMovements) => [
+        { icon: '🧾', text: `Gasto registrado: ${description} (${formatCurrency(amount)})` },
+        ...currentMovements,
+      ]);
+      setExpenseDraft({ amount: '', category: 'Insumos', description: '' });
+      closeExpenseModal();
+    } finally {
+      setIsMutating(false);
+    }
   };
 
-  const saveEditedExpense = () => {
+  const saveEditedExpense = async () => {
     const amount = Number(expenseDraft.amount.replace(/[^0-9.]/g, ''));
     const description = expenseDraft.description.trim();
 
@@ -128,22 +135,28 @@ export default function CashierAccountsScreen({
       return;
     }
 
-    updateCashierExpense(selectedExpense.id, (expense) => ({
-      ...expense,
-      amount,
-      category: expenseDraft.category,
-      description,
-    }));
-    setMovements((currentMovements) => [
-      { icon: '🧾', text: `Gasto editado: ${description} (${formatCurrency(amount)})` },
-      ...currentMovements,
-    ]);
-    setExpenseDraft({ amount: '', category: 'Insumos', description: '' });
-    closeExpenseModal();
-    setCutClosed(false);
+    setIsMutating(true);
+    try {
+      const updated = await updateCashierExpense(selectedExpense.id, (expense) => ({
+        ...expense,
+        amount,
+        category: expenseDraft.category,
+        description,
+      }));
+      if (!updated) return;
+      setMovements((currentMovements) => [
+        { icon: '🧾', text: `Gasto editado: ${description} (${formatCurrency(amount)})` },
+        ...currentMovements,
+      ]);
+      setExpenseDraft({ amount: '', category: 'Insumos', description: '' });
+      closeExpenseModal();
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const openDeleteExpense = (expense) => {
+    if (!canDeleteExpenses) return;
     setSelectedExpense(expense);
     setIsDeleteExpenseModalOpen(true);
   };
@@ -153,27 +166,23 @@ export default function CashierAccountsScreen({
     setIsDeleteExpenseModalOpen(false);
   };
 
-  const deleteExpense = () => {
+  const deleteExpense = async () => {
     if (!selectedExpense) {
       return;
     }
 
-    deleteCashierExpense(selectedExpense.id);
-    setMovements((currentMovements) => [
-      { icon: '🗑️', text: `Gasto eliminado: ${selectedExpense.description} (${formatCurrency(selectedExpense.amount)})` },
-      ...currentMovements,
-    ]);
-    cancelDeleteExpense();
-    setCutClosed(false);
-  };
-
-  const closeCashCut = () => {
-    setCutClosed(true);
-    setIsCutModalOpen(false);
-    setMovements((currentMovements) => [
-      { icon: '📄', text: `Corte cerrado con total en caja de ${formatCurrency(profitTotal)}` },
-      ...currentMovements,
-    ]);
+    setIsMutating(true);
+    try {
+      const deleted = await deleteCashierExpense(selectedExpense.id);
+      if (!deleted) return;
+      setMovements((currentMovements) => [
+        { icon: '🗑️', text: `Gasto eliminado: ${selectedExpense.description} (${formatCurrency(selectedExpense.amount)})` },
+        ...currentMovements,
+      ]);
+      cancelDeleteExpense();
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   return (
@@ -202,7 +211,7 @@ export default function CashierAccountsScreen({
         <SummaryCard
           title="Ganancia estimada"
           amount={formatCurrency(profitTotal)}
-          subtitle="Después de restar gastos del día"
+          subtitle="Ventas cobradas menos gastos y compras recibidas hoy"
           icon="📈"
           isDarkMode={isDarkMode}
           theme={theme}
@@ -264,6 +273,7 @@ export default function CashierAccountsScreen({
         </View>
 
         <ExpenseBreakdown
+          canDelete={canDeleteExpenses}
           expenses={expenses}
           isDarkMode={isDarkMode}
           onDelete={openDeleteExpense}
@@ -282,25 +292,19 @@ export default function CashierAccountsScreen({
         >
           <View style={styles.cashHeader}>
             <Text selectable style={[styles.cashHeading, { color: theme.title }]}>
-              Corte de caja
+              Resumen de caja
             </Text>
             <View
               style={[
                 styles.openBadge,
                 {
-                  backgroundColor: cutClosed
-                    ? isDarkMode
-                      ? 'rgba(59, 130, 246, 0.20)'
-                      : '#dbeafe'
-                    : isDarkMode
-                      ? 'rgba(34, 197, 94, 0.15)'
-                      : '#ffffff',
+                  backgroundColor: isDarkMode ? 'rgba(34, 197, 94, 0.15)' : '#ffffff',
                   borderColor: isDarkMode ? 'rgba(34, 197, 94, 0.25)' : 'transparent',
                 },
               ]}
             >
-              <Text style={[styles.openBadgeText, { color: cutClosed ? '#2563eb' : isDarkMode ? '#86efac' : '#15803d' }]}>
-                {cutClosed ? 'Cerrada' : 'Abierta'}
+              <Text style={[styles.openBadgeText, { color: isDarkMode ? '#86efac' : '#15803d' }]}>
+                Sincronizado
               </Text>
             </View>
           </View>
@@ -308,10 +312,10 @@ export default function CashierAccountsScreen({
           <View style={styles.cashInfo}>
             <View style={styles.cashCopy}>
               <Text selectable style={[styles.cashTitle, { color: theme.title }]}>
-                Último corte realizado
+                Vista financiera actual
               </Text>
               <Text selectable style={[styles.cashDetail, { color: theme.muted }]}>
-                Hoy · 8:00 PM · {cutClosed ? 'Corte cerrado' : 'Pendiente de cerrar'}
+                Calculada con los registros sincronizados de hoy
               </Text>
             </View>
             <Text selectable style={[styles.cashAmount, { color: isDarkMode ? theme.amber : theme.accent }]}>
@@ -355,6 +359,11 @@ export default function CashierAccountsScreen({
               </Text>
             </View>
           ))}
+          {!movements.length ? (
+            <Text selectable style={[styles.movementCopy, { color: theme.muted, marginTop: 9 }]}>
+              Sin cambios locales en esta sesión.
+            </Text>
+          ) : null}
         </View>
       </View>
 
@@ -363,6 +372,7 @@ export default function CashierAccountsScreen({
         draft={expenseDraft}
         isDarkMode={isDarkMode}
         isOpen={isExpenseModalOpen}
+        isSaving={isMutating}
         mode={expenseModalMode}
         onCancel={closeExpenseModal}
         onChange={setExpenseDraft}
@@ -373,22 +383,21 @@ export default function CashierAccountsScreen({
         expense={selectedExpense}
         isDarkMode={isDarkMode}
         isOpen={isDeleteExpenseModalOpen}
+        isSaving={isMutating}
         onCancel={cancelDeleteExpense}
         onConfirm={deleteExpense}
         theme={theme}
       />
       <CashCutModal
-        cutClosed={cutClosed}
-        expenses={expenses}
+        costs={includedCosts}
         isDarkMode={isDarkMode}
         isOpen={isCutModalOpen}
         onClose={() => setIsCutModalOpen(false)}
-        onConfirmClose={closeCashCut}
         paidByMethod={paidByMethod}
         profitTotal={profitTotal}
         salesTotal={salesTotal}
         theme={theme}
-        totalExpenses={expenseTotal}
+        totalExpenses={totalCosts}
       />
     </ScreenBackground>
   );
@@ -402,20 +411,24 @@ function getNumericTotal(order) {
   return Number(String(order.amount || '0').replace(/[^0-9.]/g, '')) || 0;
 }
 
-function getPaidByMethod(paidOrders, salesTotal) {
-  const live = paidOrders.reduce(
+function getPaidByMethod(paidOrders) {
+  return paidOrders.reduce(
     (totals, order) => ({
       ...totals,
       [order.paymentMethod || 'Efectivo']: (totals[order.paymentMethod || 'Efectivo'] || 0) + getNumericTotal(order),
     }),
-    {},
+    { Efectivo: 0, Tarjeta: 0, Transferencia: 0 },
   );
+}
 
-  return {
-    Efectivo: 1850 + (live.Efectivo || 0),
-    Tarjeta: 2240 + (live.Tarjeta || 0),
-    Transferencia: Math.max(0, salesTotal - 1850 - 2240 - (live.Efectivo || 0) - (live.Tarjeta || 0)),
-  };
+function isToday(value) {
+  if (!value) return false;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return false;
+  const now = new Date();
+  return parsed.getFullYear() === now.getFullYear()
+    && parsed.getMonth() === now.getMonth()
+    && parsed.getDate() === now.getDate();
 }
 
 function formatCurrency(value) {
@@ -458,7 +471,7 @@ function AccountRow({ isDarkMode, row, theme }) {
   );
 }
 
-function ExpenseBreakdown({ expenses, isDarkMode, onDelete, onEdit, theme }) {
+function ExpenseBreakdown({ canDelete, expenses, isDarkMode, onDelete, onEdit, theme }) {
   return (
     <View
       style={[
@@ -471,8 +484,13 @@ function ExpenseBreakdown({ expenses, isDarkMode, onDelete, onEdit, theme }) {
       ]}
     >
       <Text selectable style={[styles.expenseTitle, { color: theme.title }]}>
-        Gastos recientes
+        Gastos de hoy
       </Text>
+      {!expenses.length ? (
+        <Text selectable style={[styles.expenseCategory, { color: theme.muted, marginTop: 10 }]}>
+          No hay gastos operativos registrados hoy.
+        </Text>
+      ) : null}
       {expenses.slice(0, 4).map((expense, index) => (
         <View key={expense.id || `${expense.description}-${index}`} style={styles.expenseRow}>
           <View style={[styles.expenseIcon, { backgroundColor: theme.softIcon }]}>
@@ -502,18 +520,20 @@ function ExpenseBreakdown({ expenses, isDarkMode, onDelete, onEdit, theme }) {
             >
               <Text style={[styles.expenseActionText, { color: theme.amber }]}>Editar</Text>
             </Pressable>
-            <Pressable
-              onPress={() => onDelete(expense)}
-              style={({ pressed }) => [
-                styles.expenseActionButton,
-                {
-                  backgroundColor: isDarkMode ? 'rgba(248, 113, 113, 0.13)' : '#fee2e2',
-                  opacity: pressed ? 0.82 : 1,
-                },
-              ]}
-            >
-              <Text style={[styles.expenseActionText, { color: isDarkMode ? '#fca5a5' : '#dc2626' }]}>Eliminar</Text>
-            </Pressable>
+            {canDelete ? (
+              <Pressable
+                onPress={() => onDelete(expense)}
+                style={({ pressed }) => [
+                  styles.expenseActionButton,
+                  {
+                    backgroundColor: isDarkMode ? 'rgba(248, 113, 113, 0.13)' : '#fee2e2',
+                    opacity: pressed ? 0.82 : 1,
+                  },
+                ]}
+              >
+                <Text style={[styles.expenseActionText, { color: isDarkMode ? '#fca5a5' : '#dc2626' }]}>Eliminar</Text>
+              </Pressable>
+            ) : null}
           </View>
         </View>
       ))}
@@ -521,7 +541,7 @@ function ExpenseBreakdown({ expenses, isDarkMode, onDelete, onEdit, theme }) {
   );
 }
 
-function ExpenseModal({ draft, isDarkMode, isOpen, mode = 'create', onCancel, onChange, onSave, theme }) {
+function ExpenseModal({ draft, isDarkMode, isOpen, isSaving, mode = 'create', onCancel, onChange, onSave, theme }) {
   const canSave = Boolean(draft.description.trim()) && Number(draft.amount.replace(/[^0-9.]/g, '')) > 0;
   const isEditing = mode === 'edit';
 
@@ -611,17 +631,19 @@ function ExpenseModal({ draft, isDarkMode, isOpen, mode = 'create', onCancel, on
               <Text style={[styles.modalSecondaryText, { color: theme.title }]}>Cancelar</Text>
             </Pressable>
             <Pressable
-              disabled={!canSave}
+              disabled={!canSave || isSaving}
               onPress={onSave}
               style={({ pressed }) => [
                 styles.modalPrimary,
                 {
                   backgroundColor: theme.accent,
-                  opacity: !canSave ? 0.45 : pressed ? 0.86 : 1,
+                  opacity: !canSave || isSaving ? 0.45 : pressed ? 0.86 : 1,
                 },
               ]}
             >
-              <Text style={styles.modalPrimaryText}>{isEditing ? 'Guardar cambios' : 'Guardar gasto'}</Text>
+              <Text style={styles.modalPrimaryText}>
+                {isSaving ? 'Guardando…' : isEditing ? 'Guardar cambios' : 'Guardar gasto'}
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -658,7 +680,7 @@ function InputBox({ isDarkMode, keyboardType = 'default', label, onChangeText, p
   );
 }
 
-function DeleteExpenseModal({ expense, isDarkMode, isOpen, onCancel, onConfirm, theme }) {
+function DeleteExpenseModal({ expense, isDarkMode, isOpen, isSaving, onCancel, onConfirm, theme }) {
   return (
     <Modal animationType="fade" onRequestClose={onCancel} transparent visible={isOpen}>
       <View style={styles.modalOverlay}>
@@ -709,16 +731,17 @@ function DeleteExpenseModal({ expense, isDarkMode, isOpen, onCancel, onConfirm, 
               <Text style={[styles.modalSecondaryText, { color: theme.title }]}>Conservar</Text>
             </Pressable>
             <Pressable
+              disabled={isSaving}
               onPress={onConfirm}
               style={({ pressed }) => [
                 styles.modalPrimary,
                 {
                   backgroundColor: '#dc2626',
-                  opacity: pressed ? 0.86 : 1,
+                  opacity: isSaving ? 0.55 : pressed ? 0.86 : 1,
                 },
               ]}
             >
-              <Text style={styles.modalPrimaryText}>Eliminar</Text>
+              <Text style={styles.modalPrimaryText}>{isSaving ? 'Eliminando…' : 'Eliminar'}</Text>
             </Pressable>
           </View>
         </View>
@@ -728,19 +751,17 @@ function DeleteExpenseModal({ expense, isDarkMode, isOpen, onCancel, onConfirm, 
 }
 
 function CashCutModal({
-  cutClosed,
-  expenses,
+  costs,
   isDarkMode,
   isOpen,
   onClose,
-  onConfirmClose,
   paidByMethod,
   profitTotal,
   salesTotal,
   theme,
   totalExpenses,
 }) {
-  const expensePreview = expenses.slice(0, 3);
+  const expensePreview = costs.slice(0, 5);
 
   return (
     <Modal animationType="fade" onRequestClose={onClose} transparent visible={isOpen}>
@@ -759,7 +780,7 @@ function CashCutModal({
             Corte de caja
           </Text>
           <Text selectable style={[styles.sheetSubtitle, { color: theme.muted }]}>
-            Revisión antes de cerrar turno.
+            Vista informativa calculada con los datos sincronizados de hoy.
           </Text>
 
           <View style={[styles.cutSummaryBox, { backgroundColor: theme.actionSoft }]}>
@@ -794,19 +815,6 @@ function CashCutModal({
               ]}
             >
               <Text style={[styles.modalSecondaryText, { color: theme.title }]}>Cerrar vista</Text>
-            </Pressable>
-            <Pressable
-              disabled={cutClosed}
-              onPress={onConfirmClose}
-              style={({ pressed }) => [
-                styles.modalPrimary,
-                {
-                  backgroundColor: cutClosed ? '#737373' : theme.accent,
-                  opacity: cutClosed ? 0.55 : pressed ? 0.86 : 1,
-                },
-              ]}
-            >
-              <Text style={styles.modalPrimaryText}>{cutClosed ? 'Corte cerrado' : 'Cerrar corte'}</Text>
             </Pressable>
           </View>
         </View>

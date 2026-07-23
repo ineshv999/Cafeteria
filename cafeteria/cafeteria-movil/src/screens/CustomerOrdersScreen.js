@@ -11,95 +11,36 @@ import SectionTitle from '../components/SectionTitle';
 import StatCard from '../components/StatCard';
 import SummaryCard from '../components/SummaryCard';
 
-const initialOrders = [
-  {
-    id: 'Pedido #31',
-    detail: 'Mesa 2 · Café americano, pan dulce',
-    status: 'En cocina',
-    statusType: 'kitchen',
-    stepsDone: 2,
-    amount: '$95.00',
-    action: 'Ver detalle',
-    products: '2 cafés americanos, 1 pan dulce',
-    notes: 'Sin azúcar en un café.',
-  },
-  {
-    id: 'Pedido #32',
-    detail: 'Mesa 4 · Latte, frappé, galleta',
-    status: 'Listo',
-    statusType: 'ready',
-    stepsDone: 3,
-    amount: '$160.00',
-    action: 'Entregar',
-    actionType: 'deliver',
-    products: '1 latte, 1 frappé, 1 galleta artesanal',
-    notes: 'Frappé sin crema.',
-  },
-  {
-    id: 'Pedido #29',
-    detail: 'Mesa 1 · Chocolate caliente',
-    status: 'Entregado',
-    statusType: 'delivered',
-    stepsDone: 4,
-    amount: '$48.00',
-    action: 'Detalle',
-    products: '1 chocolate caliente',
-    notes: 'Entregado al cliente.',
-  },
-];
-
-const steps = ['Pendiente', 'Cocina', 'Listo', 'Entregado'];
-
-const initialComments = [
-  { icon: '💬', text: 'Mesa 4 pidió el frappé sin crema.' },
-  { icon: '⭐', text: 'Cliente aceptó promoción de combo desayuno.' },
-];
+const steps = ['Pendiente', 'Cocina', 'Listo', 'Pagado'];
 
 export default function CustomerOrdersScreen({
-  customerOrders = initialOrders,
+  cancelOrder,
+  canCancelOrders = false,
+  customerOrders = [],
   goBack,
   isDarkMode,
   setIsDarkMode,
   theme,
   navigate,
-  updateCustomerOrder,
 }) {
   const orders = customerOrders;
-  const [comments, setComments] = useState(initialComments);
+  const [comments, setComments] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [pendingDelivery, setPendingDelivery] = useState(null);
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [commentDraft, setCommentDraft] = useState('');
+  const [cancelError, setCancelError] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const pendingCount = orders.filter((order) => order.statusType === 'pending').length;
   const kitchenCount = orders.filter((order) => order.statusType === 'kitchen').length;
   const readyCount = orders.filter((order) => order.statusType === 'ready').length;
-  const activeCount = orders.filter((order) => !['cancelled', 'delivered'].includes(order.statusType)).length;
+  const activeCount = orders.filter((order) => !['cancelled', 'paid'].includes(order.statusType)).length;
   const kitchenAlerts = orders.filter((order) => order.kitchenNote || order.waiterNotice?.message);
   const orderStats = [
     { icon: '⏳', value: String(pendingCount), label: 'Pendientes' },
     { icon: '👨‍🍳', value: String(kitchenCount), label: 'En cocina' },
     { icon: '✅', value: String(readyCount), label: 'Listos' },
   ];
-
-  const confirmDelivery = () => {
-    if (updateCustomerOrder) {
-      updateCustomerOrder(pendingDelivery.id, (order) => ({
-        ...order,
-        action: 'Detalle',
-        actionType: 'detail',
-        notes: order.notes || 'Entregado al cliente.',
-        status: 'Entregado',
-        statusType: 'delivered',
-        stepsDone: 4,
-      }));
-    }
-    setComments((currentComments) => [
-      { icon: '✅', text: `${pendingDelivery.id} entregado al cliente.` },
-      ...currentComments,
-    ]);
-    setPendingDelivery(null);
-  };
 
   const saveComment = () => {
     const cleanComment = commentDraft.trim();
@@ -111,6 +52,20 @@ export default function CustomerOrdersScreen({
     setComments((currentComments) => [{ icon: '💬', text: cleanComment }, ...currentComments]);
     setCommentDraft('');
     setIsCommentOpen(false);
+  };
+
+  const handleCancelOrder = async () => {
+    if (!selectedOrder || !cancelOrder) return;
+    setIsCancelling(true);
+    setCancelError('');
+    try {
+      await cancelOrder(selectedOrder.apiId || selectedOrder.id);
+      setSelectedOrder(null);
+    } catch (error) {
+      setCancelError(error?.userMessage || error?.message || 'No se pudo cancelar el pedido.');
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   return (
@@ -158,7 +113,7 @@ export default function CustomerOrdersScreen({
 
         <SectionTitle
           title="Pedidos asignados"
-          subtitle="Revisa el avance y entrega al cliente"
+          subtitle="Revisa el avance hasta el cobro"
           compact
           theme={theme}
         />
@@ -169,14 +124,7 @@ export default function CustomerOrdersScreen({
               <OrderCard
                 key={order.id}
                 isDarkMode={isDarkMode}
-                onAction={() => {
-                  if (order.actionType === 'deliver') {
-                    setPendingDelivery(order);
-                    return;
-                  }
-
-                  setSelectedOrder(order);
-                }}
+                onAction={() => setSelectedOrder(order)}
                 order={order}
                 theme={theme}
               />
@@ -253,16 +201,13 @@ export default function CustomerOrdersScreen({
 
 
       <OrderDetailModal
+        cancelError={cancelError}
+        canCancel={canCancelOrders && ['pending', 'kitchen'].includes(selectedOrder?.statusType)}
         isDarkMode={isDarkMode}
+        isCancelling={isCancelling}
+        onCancelOrder={handleCancelOrder}
         onClose={() => setSelectedOrder(null)}
         order={selectedOrder}
-        theme={theme}
-      />
-      <ConfirmDeliveryModal
-        isDarkMode={isDarkMode}
-        onCancel={() => setPendingDelivery(null)}
-        onConfirm={confirmDelivery}
-        order={pendingDelivery}
         theme={theme}
       />
       <CommentModal
@@ -488,7 +433,7 @@ function StatusBadge({ isDarkMode, status, type }) {
   );
 }
 
-function OrderDetailModal({ isDarkMode, onClose, order, theme }) {
+function OrderDetailModal({ cancelError, canCancel, isCancelling, isDarkMode, onCancelOrder, onClose, order, theme }) {
   return (
     <Modal animationType="fade" onRequestClose={onClose} transparent visible={Boolean(order)}>
       <View style={styles.modalOverlay}>
@@ -538,18 +483,30 @@ function OrderDetailModal({ isDarkMode, onClose, order, theme }) {
               {order?.amount}
             </Text>
           </View>
-          <Pressable
-            onPress={onClose}
-            style={({ pressed }) => [
-              styles.modalPrimaryFull,
-              {
-                backgroundColor: isDarkMode ? theme.accent : theme.accentAlt,
-                opacity: pressed ? 0.86 : 1,
-              },
-            ]}
-          >
-            <Text style={styles.modalPrimaryText}>Cerrar</Text>
-          </Pressable>
+          {cancelError ? <Text selectable style={[styles.modalCopy, { color: '#dc2626' }]}>{cancelError}</Text> : null}
+          <View style={styles.modalActions}>
+            {canCancel ? (
+              <Pressable
+                disabled={isCancelling}
+                onPress={onCancelOrder}
+                style={({ pressed }) => [styles.modalSecondary, { backgroundColor: '#dc2626', opacity: pressed || isCancelling ? 0.7 : 1 }]}
+              >
+                <Text style={styles.modalPrimaryText}>{isCancelling ? 'Cancelando...' : 'Cancelar pedido'}</Text>
+              </Pressable>
+            ) : null}
+            <Pressable
+              onPress={onClose}
+              style={({ pressed }) => [
+                styles.modalPrimary,
+                {
+                  backgroundColor: isDarkMode ? theme.accent : theme.accentAlt,
+                  opacity: pressed ? 0.86 : 1,
+                },
+              ]}
+            >
+              <Text style={styles.modalPrimaryText}>Cerrar</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </Modal>

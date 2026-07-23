@@ -9,28 +9,13 @@ import ScreenBackground from '../components/ScreenBackground';
 import SectionTitle from '../components/SectionTitle';
 import StatCard from '../components/StatCard';
 import SummaryCard from '../components/SummaryCard';
-import { inventoryItems, kitchenMovements, kitchenOrders, quickKitchenActions } from '../data/appData';
+import { quickKitchenActions } from '../data/appData';
 
-const prepTimes = [
-  { label: 'Cafe', value: 6 },
-  { label: 'Pan', value: 9 },
-  { label: 'Latte', value: 11 },
-  { label: 'Frappe', value: 14 },
-  { label: 'Combo', value: 16 },
-];
-
-const stationLoad = [
-  { label: 'Barra cafe', value: 7, color: '#d97706' },
-  { label: 'Bebidas frias', value: 4, color: '#38bdf8' },
-  { label: 'Panaderia', value: 3, color: '#f59e0b' },
-  { label: 'Empaque', value: 2, color: '#22c55e' },
-];
-
-const serviceWindows = [
-  { label: 'Manana', value: 18 },
-  { label: 'Mediodia', value: 12 },
-  { label: 'Tarde', value: 21 },
-  { label: 'Noche', value: 8 },
+const serviceBuckets = [
+  { label: 'Mañana', start: 6, end: 12 },
+  { label: 'Mediodía', start: 12, end: 15 },
+  { label: 'Tarde', start: 15, end: 19 },
+  { label: 'Noche', start: 19, end: 24 },
 ];
 
 const kitchenModules = [
@@ -53,16 +38,41 @@ const kitchenModules = [
 
 export default function KitchenScreen({ customerOrders = [], goBack, isDarkMode, kitchenInventory = [], setIsDarkMode, theme, navigate }) {
   const liveOrders = getKitchenOrders(customerOrders);
-  const visibleOrders = liveOrders.length ? liveOrders : kitchenOrders;
-  const pendingCount = visibleOrders.filter((order) => order.statusType === 'pending').length || 3;
-  const progressCount = visibleOrders.filter((order) => ['kitchen', 'progress'].includes(order.statusType)).length || 5;
-  const readyCount = customerOrders.filter((order) => order.statusType === 'ready').length || 12;
+  const visibleOrders = liveOrders;
+  const pendingCount = visibleOrders.filter((order) => order.statusType === 'pending').length;
+  const progressCount = visibleOrders.filter((order) => ['kitchen', 'progress'].includes(order.statusType)).length;
+  const readyCount = customerOrders.filter((order) => order.statusType === 'ready').length;
   const activeCount = pendingCount + progressCount;
-  const maxPrepTime = Math.max(...prepTimes.map((item) => item.value));
-  const maxStationLoad = Math.max(...stationLoad.map((item) => item.value));
-  const maxServiceWindow = Math.max(...serviceWindows.map((item) => item.value));
-  const inventorySnapshot = kitchenInventory.length ? kitchenInventory.map(normalizeInventoryItem) : inventoryItems;
+  const stationLoad = [
+    { label: 'Pendientes', value: pendingCount, color: '#f59e0b' },
+    { label: 'En preparación', value: progressCount, color: '#d97706' },
+    { label: 'Listos para caja', value: readyCount, color: '#22c55e' },
+  ];
+  const preparationSamples = customerOrders.filter((order) => order.preparationStartedAt && order.readyAt).map((order) => {
+    const startedAt = new Date(order.preparationStartedAt);
+    const readyAt = new Date(order.readyAt);
+    return {
+      label: String(order.productItems?.[0]?.name || order.id || 'Pedido').slice(0, 12),
+      value: Math.max(0, Math.round((readyAt.getTime() - startedAt.getTime()) / 60000)),
+    };
+  }).filter((item) => Number.isFinite(item.value)).slice(0, 5);
+  const prepTimes = preparationSamples;
+  const serviceWindows = serviceBuckets.map((bucket) => ({
+    label: bucket.label,
+    value: customerOrders.filter((order) => {
+      const date = new Date(order.createdAt || 0);
+      return !Number.isNaN(date.getTime()) && date.getHours() >= bucket.start && date.getHours() < bucket.end;
+    }).length,
+  }));
+  const maxPrepTime = Math.max(1, ...prepTimes.map((item) => item.value));
+  const maxStationLoad = Math.max(1, ...stationLoad.map((item) => item.value));
+  const maxServiceWindow = Math.max(1, ...serviceWindows.map((item) => item.value));
+  const inventorySnapshot = kitchenInventory.map(normalizeInventoryItem);
   const lowStock = inventorySnapshot.filter((item) => item.statusType === 'low');
+  const kitchenMovements = visibleOrders.slice(0, 3).map((order) => ({
+    icon: order.statusType === 'ready' ? '✅' : order.statusType === 'kitchen' ? '🍳' : '🧾',
+    text: `${order.id} · ${order.status || 'Sin estado'}`,
+  }));
   const stats = [
     { icon: '⏳', value: String(pendingCount), label: 'Pendientes' },
     { icon: '🍳', value: String(progressCount), label: 'Preparación' },
@@ -118,7 +128,7 @@ export default function KitchenScreen({ customerOrders = [], goBack, isDarkMode,
           ))}
         </View>
 
-        <InsightCard isDarkMode={isDarkMode} theme={theme} title="Carga por estación">
+        <InsightCard isDarkMode={isDarkMode} theme={theme} title="Carga por estado">
           <View style={styles.metricList}>
             {stationLoad.map((item) => (
               <HorizontalMetric key={item.label} item={item} max={maxStationLoad} theme={theme} />
@@ -147,6 +157,11 @@ export default function KitchenScreen({ customerOrders = [], goBack, isDarkMode,
                 </Text>
               </View>
             ))}
+            {!prepTimes.length ? (
+              <Text selectable style={[styles.emptyText, { color: theme.muted }]}>
+                Aún no hay pedidos con tiempos completos para calcular esta métrica.
+              </Text>
+            ) : null}
           </View>
         </InsightCard>
 
@@ -166,7 +181,7 @@ export default function KitchenScreen({ customerOrders = [], goBack, isDarkMode,
 
         <InsightCard isDarkMode={isDarkMode} theme={theme} title="Insumos críticos">
           <View style={styles.stockList}>
-            {(lowStock.length ? lowStock : inventorySnapshot.slice(0, 2)).map((item) => (
+            {lowStock.map((item) => (
               <View
                 key={item.name}
                 style={[
@@ -186,10 +201,15 @@ export default function KitchenScreen({ customerOrders = [], goBack, isDarkMode,
                   </Text>
                 </View>
                 <View style={[styles.stockBadge, { backgroundColor: theme.warningBg }]}>
-                  <Text style={[styles.stockBadgeText, { color: theme.warningText }]}>{item.status}</Text>
+                  <Text style={[styles.stockBadgeText, { color: theme.warningText }]}>Bajo</Text>
                 </View>
               </View>
             ))}
+            {!lowStock.length ? (
+              <Text selectable style={[styles.emptyText, { color: theme.muted }]}>
+                No hay insumos por debajo de su stock mínimo.
+              </Text>
+            ) : null}
           </View>
         </InsightCard>
 
@@ -199,6 +219,11 @@ export default function KitchenScreen({ customerOrders = [], goBack, isDarkMode,
           {visibleOrders.slice(0, 3).map((order) => (
             <RecentOrderCard key={order.id} isDarkMode={isDarkMode} order={order} theme={theme} />
           ))}
+          {!visibleOrders.length ? (
+            <Text selectable style={[styles.emptyText, { color: theme.muted }]}>
+              No hay pedidos pendientes, en preparación o listos.
+            </Text>
+          ) : null}
         </View>
 
         <View
@@ -236,6 +261,11 @@ export default function KitchenScreen({ customerOrders = [], goBack, isDarkMode,
               </Text>
             </View>
           ))}
+          {!kitchenMovements.length ? (
+            <Text selectable style={[styles.emptyText, { color: theme.muted, marginTop: 10 }]}>
+              Aún no hay movimientos sincronizados.
+            </Text>
+          ) : null}
         </View>
       </View>
 
@@ -261,6 +291,7 @@ function normalizeInventoryItem(item) {
   return {
     ...item,
     quantityText: `${quantity} ${item.unit || ''} disponibles`.trim(),
+    status: quantity <= minimum ? 'Bajo' : 'Normal',
     statusType: quantity <= minimum ? 'low' : 'normal',
   };
 }
@@ -548,5 +579,11 @@ const styles = StyleSheet.create({
   movementCopy: {
     flex: 1,
     fontSize: 11,
+  },
+  emptyText: {
+    flex: 1,
+    fontSize: 11,
+    lineHeight: 16,
+    paddingVertical: 12,
   },
 });

@@ -15,6 +15,7 @@ export default function NotificationsScreen({
   goBack,
   isDarkMode,
   kitchenInventory = [],
+  markNotificationRead,
   navigate,
   setIsDarkMode,
   systemEvents = [],
@@ -99,7 +100,16 @@ export default function NotificationsScreen({
         {filteredNotifications.length ? (
           <View style={styles.list}>
             {filteredNotifications.map((notification) => (
-              <NotificationCard key={notification.id} isDarkMode={isDarkMode} notification={notification} navigate={navigate} theme={theme} />
+              <NotificationCard
+                key={notification.id}
+                isDarkMode={isDarkMode}
+                notification={notification}
+                onOpen={async () => {
+                  if (notification.apiId && !notification.read) await markNotificationRead?.(notification.apiId);
+                  if (notification.target) navigate(notification.target);
+                }}
+                theme={theme}
+              />
             ))}
           </View>
         ) : (
@@ -118,19 +128,19 @@ export default function NotificationsScreen({
   );
 }
 
-function NotificationCard({ isDarkMode, navigate, notification, theme }) {
+function NotificationCard({ isDarkMode, notification, onOpen, theme }) {
   const colors = getSeverityColors(notification.severity, isDarkMode, theme);
 
   return (
     <Pressable
-      onPress={() => notification.target && navigate(notification.target)}
+      onPress={onOpen}
       style={({ pressed }) => [
         styles.notificationCard,
         {
           backgroundColor: theme.surface,
           borderColor: colors.border,
           boxShadow: theme.cardShadow,
-          opacity: pressed ? 0.86 : 1,
+          opacity: notification.read ? 0.68 : pressed ? 0.86 : 1,
         },
       ]}
     >
@@ -184,7 +194,7 @@ function buildNotifications(systemEvents, customerOrders, kitchenInventory) {
     .filter((order) => order.statusType === 'ready')
     .map((order) => ({
       createdAt: order.readyAt || 'Ahora',
-      detail: `${order.id} esta listo para entregar.`,
+      detail: `${order.id} está listo para cobrar en caja.`,
       group: 'Pedidos',
       icon: '✅',
       id: `ready-${order.id}`,

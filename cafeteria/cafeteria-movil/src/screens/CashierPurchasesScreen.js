@@ -14,6 +14,7 @@ import SummaryCard from '../components/SummaryCard';
 const defaultDraft = {
   amount: '',
   icon: '📦',
+  inventoryItemId: null,
   name: '',
   quantity: '',
   status: 'Registrada',
@@ -22,32 +23,18 @@ const defaultDraft = {
   urgent: false,
 };
 
-const supplySuggestions = [
-  { icon: '🥛', name: 'Leche', unit: 'litros' },
-  { icon: '☕', name: 'Café molido', unit: 'kg' },
-  { icon: '🥤', name: 'Vasos', unit: 'piezas' },
-  { icon: '🧻', name: 'Servilletas', unit: 'paquetes' },
-  { icon: '🍫', name: 'Chocolate', unit: 'kg' },
-];
-
-const initialMovements = [
-  { icon: '📦', text: 'Compra de leche agregada al inventario' },
-  { icon: '💵', text: 'Gasto registrado automáticamente en cuentas' },
-];
-
 export default function CashierPurchasesScreen({
-  addCashierExpense,
   addCashierPurchase,
   cashierPurchases = [],
-  deleteCashierExpense,
+  currentRoleId,
   deleteCashierPurchase,
   goBack,
   isDarkMode,
+  kitchenInventory = [],
   setIsDarkMode,
   theme,
   navigate,
   recordEvent,
-  updateCashierExpense,
   updateCashierPurchase,
 }) {
   const [draft, setDraft] = useState(defaultDraft);
@@ -58,9 +45,19 @@ export default function CashierPurchasesScreen({
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [movements, setMovements] = useState(initialMovements);
+  const [movements, setMovements] = useState([]);
+  const [isMutating, setIsMutating] = useState(false);
 
-  const purchaseTotal = cashierPurchases.reduce((total, purchase) => total + Number(purchase.amount || 0), 0);
+  const supplySuggestions = kitchenInventory.map((item) => ({
+    icon: item.icon || '📦',
+    inventoryItemId: item.id,
+    name: item.name,
+    unit: item.unit || 'piezas',
+  }));
+
+  const purchaseTotal = cashierPurchases
+    .filter((purchase) => purchase.type !== 'cancelled')
+    .reduce((total, purchase) => total + Number(purchase.amount || 0), 0);
   const registeredTotal = cashierPurchases
     .filter((purchase) => purchase.type === 'paid')
     .reduce((total, purchase) => total + Number(purchase.amount || 0), 0);
@@ -71,27 +68,23 @@ export default function CashierPurchasesScreen({
     { icon: '📦', value: String(uniqueSupplies), label: 'Insumos' },
     { icon: '⚠️', value: String(urgentCount), label: 'Urgentes' },
   ];
-  const canRegister = Boolean(draft.name.trim()) && Number(draft.amount) > 0 && Number(draft.quantity) > 0;
+  const canRegister = Boolean(draft.name.trim())
+    && (Boolean(draft.inventoryItemId) || currentRoleId === 'admin')
+    && Number(draft.amount) > 0
+    && Number(draft.quantity) > 0;
 
   const updateDraft = (changes) => {
     setDraft((currentDraft) => ({ ...currentDraft, ...changes }));
   };
 
   const chooseSupply = (supply) => {
-    updateDraft({ icon: supply.icon, name: supply.name, unit: supply.unit });
+    updateDraft({ icon: supply.icon, inventoryItemId: supply.inventoryItemId, name: supply.name, unit: supply.unit });
   };
 
   const resetDraft = () => {
     setDraft(defaultDraft);
     setEditingPurchase(null);
   };
-
-  const buildExpense = (purchase, expenseId = `expense-${purchase.id}`) => ({
-    id: expenseId,
-    amount: Number(purchase.amount || 0),
-    category: 'Suministros',
-    description: `Compra de ${purchase.name.toLowerCase()}`,
-  });
 
   const buildPurchaseFromDraft = (sourceDraft, purchaseId = `purchase-${Date.now()}`) => {
     const amount = Number(sourceDraft.amount || 0);
@@ -103,6 +96,7 @@ export default function CashierPurchasesScreen({
       amount,
       detail: `${quantity} ${sourceDraft.unit} · Hoy`,
       icon: sourceDraft.icon || '📦',
+      inventoryItemId: sourceDraft.inventoryItemId,
       name: sourceDraft.name.trim(),
       quantity: String(quantity),
       status: type === 'paid' ? 'Registrada' : 'Pendiente',
@@ -118,28 +112,30 @@ export default function CashierPurchasesScreen({
     }
   };
 
-  const confirmNewPurchase = () => {
+  const confirmNewPurchase = async () => {
+    if (isMutating) return;
     const purchase = buildPurchaseFromDraft(draft);
-    const purchaseWithExpense = purchase.type === 'paid' ? { ...purchase, expenseId: `expense-${purchase.id}` } : purchase;
-
-    addCashierPurchase(purchaseWithExpense);
-    if (purchaseWithExpense.type === 'paid') {
-      addCashierExpense(buildExpense(purchaseWithExpense, purchaseWithExpense.expenseId));
-    }
+    setIsMutating(true);
+    try {
+    const created = await addCashierPurchase(purchase);
+    if (!created) return;
     setMovements((currentMovements) => [
-      { icon: '🛒', text: `${purchaseWithExpense.name} registrada por ${formatCurrency(purchaseWithExpense.amount)}` },
+      { icon: '🛒', text: `${purchase.name} registrada por ${formatCurrency(purchase.amount)}` },
       ...currentMovements,
     ]);
     recordEvent?.({
-      detail: `${purchaseWithExpense.name} por ${formatCurrency(purchaseWithExpense.amount)} quedó ${purchaseWithExpense.type === 'paid' ? 'registrada' : 'pendiente'}.`,
+      detail: `${purchase.name} por ${formatCurrency(purchase.amount)} quedó ${purchase.type === 'paid' ? 'recibida' : 'pendiente'}.`,
       icon: '🛒',
       module: 'Caja',
-      severity: purchaseWithExpense.type === 'paid' ? 'success' : 'warning',
+      severity: purchase.type === 'paid' ? 'success' : 'warning',
       title: 'Compra registrada',
       type: 'notification',
     });
     setIsConfirmOpen(false);
     resetDraft();
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const openDetail = (purchase) => {
@@ -148,10 +144,12 @@ export default function CashierPurchasesScreen({
   };
 
   const openEdit = (purchase) => {
+    if (purchase.type !== 'pending') return;
     setEditingPurchase(purchase);
     setDraft({
       amount: String(purchase.amount),
       icon: purchase.icon,
+      inventoryItemId: purchase.inventoryItemId,
       name: purchase.name,
       quantity: String(purchase.quantity),
       status: purchase.status,
@@ -167,40 +165,23 @@ export default function CashierPurchasesScreen({
     resetDraft();
   };
 
-  const saveEditedPurchase = () => {
-    if (!editingPurchase || !canRegister) {
+  const saveEditedPurchase = async () => {
+    if (!editingPurchase || editingPurchase.type !== 'pending' || !canRegister || isMutating) {
       return;
     }
 
     const nextPurchase = buildPurchaseFromDraft(draft, editingPurchase.id);
-    const shouldHaveExpense = nextPurchase.type === 'paid';
-    const nextExpenseId = editingPurchase.expenseId || `expense-${editingPurchase.id}`;
-    const syncedPurchase = shouldHaveExpense ? { ...nextPurchase, expenseId: nextExpenseId } : { ...nextPurchase, expenseId: undefined };
-
-    updateCashierPurchase(editingPurchase.id, (purchase) => ({ ...purchase, ...syncedPurchase }));
-
-    if (shouldHaveExpense && editingPurchase.expenseId) {
-      updateCashierExpense(editingPurchase.expenseId, (expense) => ({
-        ...expense,
-        amount: syncedPurchase.amount,
-        description: `Compra de ${syncedPurchase.name.toLowerCase()}`,
-      }));
-    }
-
-    if (shouldHaveExpense && !editingPurchase.expenseId) {
-      addCashierExpense(buildExpense(syncedPurchase, nextExpenseId));
-    }
-
-    if (!shouldHaveExpense && editingPurchase.expenseId) {
-      deleteCashierExpense(editingPurchase.expenseId);
-    }
+    setIsMutating(true);
+    try {
+    const updated = await updateCashierPurchase(editingPurchase.id, (purchase) => ({ ...purchase, ...nextPurchase }));
+    if (!updated) return;
 
     setMovements((currentMovements) => [
-      { icon: '✏️', text: `Compra editada: ${syncedPurchase.name}` },
+      { icon: '✏️', text: `Compra editada: ${nextPurchase.name}` },
       ...currentMovements,
     ]);
     recordEvent?.({
-      detail: `${syncedPurchase.name} se editó por ${formatCurrency(syncedPurchase.amount)}.`,
+      detail: `${nextPurchase.name} se editó por ${formatCurrency(nextPurchase.amount)}.`,
       icon: '✏️',
       module: 'Caja',
       severity: 'info',
@@ -208,28 +189,22 @@ export default function CashierPurchasesScreen({
       type: 'activity',
     });
     closeEdit();
+    } finally {
+      setIsMutating(false);
+    }
   };
 
-  const markRegistered = (purchase) => {
-    const expenseId = purchase.expenseId || `expense-${purchase.id}`;
-
-    updateCashierPurchase(purchase.id, (currentPurchase) => ({
+  const markRegistered = async (purchase) => {
+    if (purchase.type !== 'pending' || isMutating) return;
+    setIsMutating(true);
+    try {
+    const updated = await updateCashierPurchase(purchase.id, (currentPurchase) => ({
       ...currentPurchase,
-      expenseId,
       status: 'Registrada',
       type: 'paid',
       urgent: false,
     }));
-
-    if (purchase.expenseId) {
-      updateCashierExpense(purchase.expenseId, (expense) => ({
-        ...expense,
-        amount: Number(purchase.amount || 0),
-        description: `Compra de ${purchase.name.toLowerCase()}`,
-      }));
-    } else {
-      addCashierExpense(buildExpense({ ...purchase, type: 'paid' }, expenseId));
-    }
+    if (!updated) return;
 
     setMovements((currentMovements) => [
       { icon: '✅', text: `${purchase.name} marcada como registrada` },
@@ -244,6 +219,9 @@ export default function CashierPurchasesScreen({
       type: 'notification',
     });
     setIsDetailOpen(false);
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const openDelete = (purchase) => {
@@ -256,21 +234,21 @@ export default function CashierPurchasesScreen({
     setIsDeleteOpen(false);
   };
 
-  const confirmDelete = () => {
-    if (!deleteTarget) {
+  const confirmDelete = async () => {
+    if (!deleteTarget || deleteTarget.type !== 'pending' || isMutating) {
       return;
     }
 
-    deleteCashierPurchase(deleteTarget.id);
-    if (deleteTarget.expenseId) {
-      deleteCashierExpense(deleteTarget.expenseId);
-    }
+    setIsMutating(true);
+    try {
+    const cancelled = await deleteCashierPurchase(deleteTarget.id);
+    if (!cancelled) return;
     setMovements((currentMovements) => [
       { icon: '🗑️', text: `Compra eliminada: ${deleteTarget.name}` },
       ...currentMovements,
     ]);
     recordEvent?.({
-      detail: `${deleteTarget.name} fue eliminado de compras${deleteTarget.expenseId ? ' y cuentas' : ''}.`,
+      detail: `${deleteTarget.name} fue cancelada en compras.`,
       icon: '🗑️',
       module: 'Caja',
       severity: 'warning',
@@ -279,6 +257,9 @@ export default function CashierPurchasesScreen({
     });
     closeDelete();
     setIsDetailOpen(false);
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   return (
@@ -300,7 +281,7 @@ export default function CashierPurchasesScreen({
         <SummaryCard
           title="Gasto en suministros"
           amount={formatCurrency(purchaseTotal)}
-          subtitle={`${formatCurrency(registeredTotal)} registrados en cuentas`}
+          subtitle={`${formatCurrency(registeredTotal)} en compras recibidas`}
           icon="📦"
           isDarkMode={isDarkMode}
           theme={theme}
@@ -325,7 +306,7 @@ export default function CashierPurchasesScreen({
           ]}
         >
           <View style={styles.suggestionRow}>
-            {supplySuggestions.slice(0, 4).map((supply) => {
+            {supplySuggestions.map((supply) => {
               const active = draft.name === supply.name;
 
               return (
@@ -347,9 +328,10 @@ export default function CashierPurchasesScreen({
           </View>
 
           <FormInput
+            editable={currentRoleId === 'admin'}
             icon={draft.icon}
             isDarkMode={isDarkMode}
-            label="Seleccionar insumo"
+            label={currentRoleId === 'admin' ? 'Seleccionar o crear insumo' : 'Seleccionar insumo'}
             onChangeText={(name) => updateDraft({ name })}
             placeholder="Ej. Leche"
             theme={theme}
@@ -395,8 +377,8 @@ export default function CashierPurchasesScreen({
             <StatusChip
               active={draft.type === 'paid'}
               isDarkMode={isDarkMode}
-              label="Registrada"
-              onPress={() => updateDraft({ status: 'Registrada', type: 'paid' })}
+              label="Recibida"
+              onPress={() => updateDraft({ status: 'Recibida', type: 'paid' })}
               theme={theme}
             />
             <StatusChip
@@ -510,7 +492,7 @@ export default function CashierPurchasesScreen({
   );
 }
 
-function FormInput({ icon, isDarkMode, keyboardType = 'default', label, onChangeText, placeholder, small, theme, value }) {
+function FormInput({ editable = true, icon, isDarkMode, keyboardType = 'default', label, onChangeText, placeholder, small, theme, value }) {
   return (
     <View
       style={[
@@ -528,6 +510,7 @@ function FormInput({ icon, isDarkMode, keyboardType = 'default', label, onChange
           {label}
         </Text>
         <TextInput
+          editable={editable}
           keyboardType={keyboardType}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -564,7 +547,7 @@ function StatusChip({ active, isDarkMode, label, onPress, theme, warning = false
 }
 
 function PurchaseCard({ isDarkMode, onDelete, onDetail, onEdit, onRegister, purchase, theme }) {
-  const paid = purchase.type === 'paid';
+  const pending = purchase.type === 'pending';
   const badge = getPurchaseBadge(purchase, isDarkMode, theme);
 
   return (
@@ -605,9 +588,9 @@ function PurchaseCard({ isDarkMode, onDelete, onDetail, onEdit, onRegister, purc
 
       <View style={styles.cardActions}>
         <SmallAction isDarkMode={isDarkMode} label="Detalle" onPress={() => onDetail(purchase)} theme={theme} />
-        <SmallAction isDarkMode={isDarkMode} label="Editar" onPress={() => onEdit(purchase)} theme={theme} />
-        {!paid ? <SmallAction isDarkMode={isDarkMode} label="Registrar" onPress={() => onRegister(purchase)} theme={theme} success /> : null}
-        <SmallAction danger isDarkMode={isDarkMode} label="Eliminar" onPress={() => onDelete(purchase)} theme={theme} />
+        {pending ? <SmallAction isDarkMode={isDarkMode} label="Editar" onPress={() => onEdit(purchase)} theme={theme} /> : null}
+        {pending ? <SmallAction isDarkMode={isDarkMode} label="Recibir" onPress={() => onRegister(purchase)} theme={theme} success /> : null}
+        {pending ? <SmallAction danger isDarkMode={isDarkMode} label="Cancelar" onPress={() => onDelete(purchase)} theme={theme} /> : null}
       </View>
     </View>
   );
@@ -676,7 +659,7 @@ function PurchaseEditSheet({ draft, isDarkMode, isOpen, onCancel, onChange, onSa
             Editar compra
           </Text>
           <Text selectable style={[styles.sheetSubtitle, { color: theme.muted }]}>
-            Actualiza la compra y sincroniza el gasto en cuentas.
+            Actualiza la compra pendiente antes de recibirla.
           </Text>
 
           <FormInput icon={draft.icon} isDarkMode={isDarkMode} label="Insumo" onChangeText={(name) => onChange({ name })} theme={theme} value={draft.name} />
@@ -730,7 +713,7 @@ function PurchaseDetailModal({ isDarkMode, isOpen, onClose, onDelete, onEdit, on
             Detalle de compra
           </Text>
           <Text selectable style={[styles.sheetSubtitle, { color: theme.muted }]}>
-            Información del suministro y su impacto en cuentas.
+            Información del suministro y su impacto en inventario.
           </Text>
           <View style={[styles.detailBox, { backgroundColor: theme.actionSoft }]}>
             <CutRow label="Insumo" theme={theme} value={purchase.name} />
@@ -740,11 +723,11 @@ function PurchaseDetailModal({ isDarkMode, isOpen, onClose, onDelete, onEdit, on
           </View>
           <View style={styles.modalActions}>
             <ModalButton isDarkMode={isDarkMode} label="Cerrar" onPress={onClose} theme={theme} />
-            <ModalButton label="Editar" onPress={() => onEdit(purchase)} primary theme={theme} />
+            {purchase.type === 'pending' ? <ModalButton label="Editar" onPress={() => onEdit(purchase)} primary theme={theme} /> : null}
           </View>
           <View style={styles.modalActions}>
-            {purchase.type === 'pending' ? <ModalButton label="Registrar" onPress={() => onRegister(purchase)} success theme={theme} /> : null}
-            <ModalButton danger label="Eliminar" onPress={() => onDelete(purchase)} theme={theme} />
+            {purchase.type === 'pending' ? <ModalButton label="Recibir" onPress={() => onRegister(purchase)} success theme={theme} /> : null}
+            {purchase.type === 'pending' ? <ModalButton danger label="Cancelar" onPress={() => onDelete(purchase)} theme={theme} /> : null}
           </View>
         </View>
       </View>
@@ -758,15 +741,15 @@ function DeletePurchaseModal({ isDarkMode, isOpen, onCancel, onConfirm, purchase
       <View style={styles.modalOverlay}>
         <View style={[styles.modalCard, getModalSurface(isDarkMode, theme)]}>
           <Text selectable style={[styles.sheetTitle, { color: theme.title }]}>
-            Eliminar compra
+            Cancelar compra
           </Text>
           <Text selectable style={[styles.sheetSubtitle, { color: theme.muted }]}>
-            Si esta compra ya estaba registrada, también se quitará su gasto de cuentas.
+            Solo las compras pendientes pueden cancelarse; no se modificará el inventario.
           </Text>
           {purchase ? <PurchasePreview draft={purchase} theme={theme} /> : null}
           <View style={styles.modalActions}>
             <ModalButton isDarkMode={isDarkMode} label="Conservar" onPress={onCancel} theme={theme} />
-            <ModalButton danger label="Eliminar" onPress={onConfirm} theme={theme} />
+            <ModalButton danger label="Cancelar compra" onPress={onConfirm} theme={theme} />
           </View>
         </View>
       </View>
@@ -925,6 +908,7 @@ const styles = StyleSheet.create({
   },
   suggestionRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
   supplyChip: {

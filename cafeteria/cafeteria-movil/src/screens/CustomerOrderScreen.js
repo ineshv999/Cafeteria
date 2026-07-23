@@ -1,4 +1,4 @@
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useState } from 'react';
 
 import AppHeader from '../components/AppHeader';
@@ -9,67 +9,9 @@ import ScreenBackground from '../components/ScreenBackground';
 import SectionTitle from '../components/SectionTitle';
 import SummaryCard from '../components/SummaryCard';
 
-const tables = ['Mesa 1', 'Mesa 2', 'Mesa 3', 'Mesa 4'];
-
-const initialProducts = [
-  {
-    icon: '☕',
-    name: 'Café americano',
-    price: 35,
-    quantity: 2,
-  },
-  {
-    icon: '🥐',
-    name: 'Pan dulce',
-    price: 25,
-    quantity: 1,
-  },
-  {
-    icon: '🥤',
-    name: 'Frappé',
-    price: 55,
-    quantity: 0,
-  },
-  {
-    icon: '🥛',
-    name: 'Latte',
-    price: 45,
-    quantity: 0,
-  },
-  {
-    icon: '🍳',
-    name: 'Combo desayuno',
-    price: 55,
-    quantity: 0,
-  },
-  {
-    icon: '🍫',
-    name: 'Chocolate caliente',
-    price: 48,
-    quantity: 0,
-  },
-  {
-    icon: '🥪',
-    name: 'Sándwich de jamón',
-    price: 65,
-    quantity: 0,
-  },
-  {
-    icon: '🍪',
-    name: 'Galleta artesanal',
-    price: 22,
-    quantity: 0,
-  },
-  {
-    icon: '🧊',
-    name: 'Café frío',
-    price: 42,
-    quantity: 0,
-  },
-];
-
 export default function CustomerOrderScreen({
   addCustomerOrder,
+  availableTables = [],
   customerDraft,
   goBack,
   isDarkMode,
@@ -80,8 +22,14 @@ export default function CustomerOrderScreen({
   navigate,
   updateCustomerDraft,
 }) {
-  const selectedTable = customerDraft?.selectedTable || 'Mesa 3';
-  const draftProducts = customerDraft?.products || initialProducts;
+  const tableOptions = availableTables.map((table) => ({
+    id: table.id ?? table.id_mesa ?? table.number ?? table.numero,
+    label: table.label || table.name || `Mesa ${table.number ?? table.numero ?? table.id ?? table.id_mesa}`,
+  }));
+  const selectedTableId = customerDraft?.selectedTableId ?? tableOptions[0]?.id ?? null;
+  const selectedTableOption = tableOptions.find((table) => String(table.id) === String(selectedTableId)) || tableOptions[0];
+  const selectedTable = selectedTableOption?.label || 'Sin mesa disponible';
+  const draftProducts = customerDraft?.products || [];
   const menuProducts = kitchenMenuItems
     .filter((item) => item.available)
     .map((item) => {
@@ -92,14 +40,16 @@ export default function CustomerOrderScreen({
         icon: item.icon,
         menuId: item.id,
         name: item.name,
-        price: Number(item.price || 0),
+        price: Number(draftProduct?.promotionId ? draftProduct.price : item.price || 0),
+        promotionId: draftProduct?.promotionId || null,
         quantity: draftProduct?.quantity || 0,
       };
     });
-  const orderProducts = menuProducts.length ? menuProducts : draftProducts;
+  const orderProducts = menuProducts;
   const observations = customerDraft?.observations || '';
   const [decision, setDecision] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const productCount = orderProducts.reduce((total, product) => total + product.quantity, 0);
   const orderTotal = orderProducts.reduce((total, product) => total + product.quantity * product.price, 0);
@@ -139,7 +89,8 @@ export default function CustomerOrderScreen({
   const updateSelectedTable = (table) => {
     updateCustomerDraft((currentDraft) => ({
       ...currentDraft,
-      selectedTable: table,
+      selectedTable: table.label,
+      selectedTableId: table.id,
     }));
   };
 
@@ -150,47 +101,44 @@ export default function CustomerOrderScreen({
     }));
   };
 
-  const handleDecisionConfirm = () => {
+  const handleDecisionConfirm = async () => {
     if (decision === 'confirm') {
       const orderedProducts = orderProducts.filter((product) => product.quantity > 0);
-      const productSummary = orderedProducts
-        .map((product) => `${product.quantity} ${product.name}`)
-        .join(', ');
-      const subtotal = orderTotal / 1.16;
-      const tax = orderTotal - subtotal;
-      const newOrder = {
-        id: `Pedido #${Math.floor(Date.now() / 1000) % 1000}`,
-        detail: `${selectedTable} · ${orderedProducts.map((product) => product.name).join(', ')}`,
-        status: 'Pendiente',
-        statusType: 'pending',
-        stepsDone: 1,
-        amount: `$${orderTotal.toFixed(2)}`,
-        action: 'Ver detalle',
-        actionType: 'detail',
-        cashierStatus: 'pending',
-        paymentMethod: null,
-        productItems: orderedProducts.map((product) => ({
-          name: product.name,
-          price: product.price,
-          quantity: product.quantity,
-          total: product.price * product.quantity,
-        })),
-        products: productSummary,
-        servedBy: 'Mesero Fer',
-        subtotal,
-        table: selectedTable,
-        tax,
-        total: orderTotal,
-        notes: observations.trim() || 'Sin observaciones.',
-      };
 
-      if (addCustomerOrder) {
-        addCustomerOrder(newOrder);
+      if (!selectedTableOption) {
+        Alert.alert('Mesa requerida', 'No hay una mesa disponible para registrar el pedido.');
+        setDecision(null);
+        return;
       }
 
-      resetCustomerDraft();
-      setDecision(null);
-      navigate('customerOrders');
+      if (!orderedProducts.length || orderedProducts.some((product) => !product.menuId)) {
+        Alert.alert('Pedido incompleto', 'Selecciona al menos un producto sincronizado con la API.');
+        setDecision(null);
+        return;
+      }
+
+      try {
+        setIsSubmitting(true);
+        await addCustomerOrder?.({
+          items: orderedProducts.map((product) => ({
+            productId: product.menuId,
+            promotionId: product.promotionId || undefined,
+            quantity: product.quantity,
+          })),
+          observations: observations.trim() || null,
+          tableId: selectedTableOption.id,
+        });
+        resetCustomerDraft();
+        setDecision(null);
+        navigate('customerOrders');
+      } catch (error) {
+        Alert.alert(
+          'No se pudo crear el pedido',
+          error?.userMessage || error?.message || 'Revisa la conexión y vuelve a intentarlo.',
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
       return;
     }
 
@@ -235,13 +183,13 @@ export default function CustomerOrderScreen({
         <SectionTitle title="Selecciona una mesa" subtitle="Elige dónde se levantará el pedido" compact theme={theme} />
 
         <View style={styles.tablesGrid}>
-          {tables.map((table) => {
-            const isActive = table === selectedTable;
+          {tableOptions.map((table) => {
+            const isActive = String(table.id) === String(selectedTableOption?.id);
 
             return (
               <Pressable
-                key={table}
-                accessibilityLabel={table}
+                key={String(table.id)}
+                accessibilityLabel={table.label}
                 onPress={() => updateSelectedTable(table)}
                 style={({ pressed }) => [
                   styles.tableBox,
@@ -254,11 +202,14 @@ export default function CustomerOrderScreen({
                 ]}
               >
                 <Text selectable style={[styles.tableText, { color: isActive ? '#ffffff' : theme.title }]}>
-                  {table}
+                  {table.label}
                 </Text>
               </Pressable>
             );
           })}
+          {!tableOptions.length ? (
+            <Text selectable style={[styles.emptyText, { color: theme.muted }]}>No hay mesas libres en este momento.</Text>
+          ) : null}
         </View>
 
         <SectionTitle title="Agregar productos" subtitle="Selecciona productos del menú" compact theme={theme} />
@@ -310,6 +261,9 @@ export default function CustomerOrderScreen({
               </View>
             </View>
           ))}
+          {!orderProducts.length ? (
+            <Text selectable style={[styles.emptyText, { color: theme.muted }]}>No hay productos disponibles en el menú.</Text>
+          ) : null}
         </View>
 
         <View
@@ -415,6 +369,7 @@ export default function CustomerOrderScreen({
 
       <DecisionModal
         decision={decision}
+        isSubmitting={isSubmitting}
         isDarkMode={isDarkMode}
         onCancel={() => setDecision(null)}
         onConfirm={handleDecisionConfirm}
@@ -522,7 +477,7 @@ function OrderDetailsModal({ isDarkMode, isOpen, onClose, products, theme, total
   );
 }
 
-function DecisionModal({ decision, isDarkMode, onCancel, onConfirm, theme }) {
+function DecisionModal({ decision, isDarkMode, isSubmitting = false, onCancel, onConfirm, theme }) {
   const isConfirming = decision === 'confirm';
 
   return (
@@ -560,16 +515,17 @@ function DecisionModal({ decision, isDarkMode, onCancel, onConfirm, theme }) {
             </Pressable>
 
             <Pressable
+              disabled={isSubmitting}
               onPress={onConfirm}
               style={({ pressed }) => [
                 styles.modalPrimary,
                 {
                   backgroundColor: isConfirming ? (isDarkMode ? theme.accent : theme.accentAlt) : '#dc2626',
-                  opacity: pressed ? 0.86 : 1,
+                  opacity: isSubmitting ? 0.6 : pressed ? 0.86 : 1,
                 },
               ]}
             >
-              <Text style={styles.modalPrimaryText}>Confirmar</Text>
+              <Text style={styles.modalPrimaryText}>{isSubmitting ? 'Guardando…' : 'Confirmar'}</Text>
             </Pressable>
           </View>
         </View>
@@ -613,6 +569,11 @@ const styles = StyleSheet.create({
   productList: {
     gap: 10,
     paddingTop: 12,
+  },
+  emptyText: {
+    fontSize: 12,
+    lineHeight: 18,
+    paddingVertical: 10,
   },
   productCard: {
     alignItems: 'center',

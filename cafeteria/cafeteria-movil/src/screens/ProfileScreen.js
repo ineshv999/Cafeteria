@@ -8,6 +8,8 @@ import SectionTitle from '../components/SectionTitle';
 
 export default function ProfileScreen({
   cashierExpenses = [],
+  currentRole,
+  currentRoleId,
   customerOrders = [],
   goBack,
   isDarkMode,
@@ -21,26 +23,38 @@ export default function ProfileScreen({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const [draft, setDraft] = useState(userProfile);
+  const [isSaving, setIsSaving] = useState(false);
   const paidOrders = customerOrders.filter((order) => order.cashierStatus === 'paid');
   const activeOrders = customerOrders.filter((order) => ['pending', 'kitchen', 'ready'].includes(order.statusType));
-  const deliveredOrders = customerOrders.filter((order) => order.statusType === 'delivered');
+  const deliveredOrders = customerOrders.filter((order) => order.statusType === 'paid');
   const lowStock = kitchenInventory.filter((item) => Number(item.quantity || 0) <= Number(item.minimum || 0));
   const salesTotal = paidOrders.reduce((total, order) => total + getOrderTotal(order), 0);
   const expensesTotal = cashierExpenses.reduce((total, expense) => total + Number(expense.amount || 0), 0);
   const stats = [
-    { label: 'Pedidos activos', value: activeOrders.length || 3, icon: '🧾' },
-    { label: 'Entregados', value: deliveredOrders.length || 11, icon: '✅' },
-    { label: 'Stock bajo', value: lowStock.length || 2, icon: '⚠️' },
+    { label: 'Pedidos activos', value: activeOrders.length, icon: '🧾' },
+    { label: 'Pagados', value: deliveredOrders.length, icon: '✅' },
+    { label: 'Stock bajo', value: lowStock.length, icon: '⚠️' },
   ];
+  const permissions = [
+    ['Dashboard', 'dashboard'],
+    ['Cliente', 'customer'],
+    ['Caja', 'cashier'],
+    ['Cocina', 'kitchen'],
+  ].filter(([, target]) => currentRole?.allowedScreens?.includes(target));
 
   const openEdit = () => {
     setDraft(userProfile);
     setIsEditOpen(true);
   };
 
-  const saveProfile = () => {
-    updateUserProfile(() => draft);
-    setIsEditOpen(false);
+  const saveProfile = async () => {
+    setIsSaving(true);
+    try {
+      const updated = await updateUserProfile(() => draft);
+      if (updated) setIsEditOpen(false);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -60,7 +74,7 @@ export default function ProfileScreen({
               {userProfile.name}
             </Text>
             <Text selectable style={[styles.subtitle, { color: theme.muted }]}>
-              {userProfile.role} · {userProfile.shift}
+              {userProfile.role}
             </Text>
           </View>
         </View>
@@ -74,7 +88,7 @@ export default function ProfileScreen({
               CoffeeAdmin
             </Text>
             <Text selectable style={styles.summaryHint}>
-              Operacion conectada en tiempo real
+              Operación sincronizada con la API
             </Text>
           </View>
           <View style={styles.summaryIcon}>
@@ -110,9 +124,7 @@ export default function ProfileScreen({
 
         <View style={[styles.infoCard, { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, boxShadow: theme.cardShadow }]}>
           <InfoRow label="Correo" value={userProfile.email} theme={theme} />
-          <InfoRow label="Telefono" value={userProfile.phone} theme={theme} />
-          <InfoRow label="Rol" value={userProfile.role} theme={theme} />
-          <InfoRow label="Turno" value={userProfile.shift} theme={theme} last />
+          <InfoRow label="Rol" value={userProfile.role} theme={theme} last />
         </View>
 
         <View style={styles.actionRow}>
@@ -139,14 +151,16 @@ export default function ProfileScreen({
             theme={theme}
             title="Ayuda"
           />
-          <OptionCard
-            detail={`${formatCurrency(salesTotal)} vendidos · ${formatCurrency(expensesTotal)} en gastos`}
-            icon="📊"
-            isDarkMode={isDarkMode}
-            onPress={() => navigate('cashierAccounts')}
-            theme={theme}
-            title="Resumen financiero"
-          />
+          {['cashier', 'admin'].includes(currentRoleId) ? (
+            <OptionCard
+              detail={`${formatCurrency(salesTotal)} vendidos · ${formatCurrency(expensesTotal)} en gastos`}
+              icon="📊"
+              isDarkMode={isDarkMode}
+              onPress={() => navigate('cashierAccounts')}
+              theme={theme}
+              title="Resumen financiero"
+            />
+          ) : null}
         </View>
 
         <View style={[styles.permissionsCard, { backgroundColor: theme.surfaceAlt, borderColor: isDarkMode ? theme.surfaceBorder : 'transparent' }]}>
@@ -154,7 +168,7 @@ export default function ProfileScreen({
             Permisos del rol
           </Text>
           <View style={styles.permissionGrid}>
-            {['Dashboard', 'Cliente', 'Caja', 'Cocina'].map((permission) => (
+            {permissions.map(([permission]) => (
               <View key={permission} style={[styles.permissionPill, { backgroundColor: isDarkMode ? 'rgba(245,158,11,0.12)' : '#ffffff' }]}>
                 <Text selectable style={[styles.permissionText, { color: theme.amber }]}>
                   {permission}
@@ -169,6 +183,7 @@ export default function ProfileScreen({
       <ProfileEditModal
         draft={draft}
         isDarkMode={isDarkMode}
+        isSaving={isSaving}
         onChange={setDraft}
         onClose={() => setIsEditOpen(false)}
         onSave={saveProfile}
@@ -176,7 +191,7 @@ export default function ProfileScreen({
         visible={isEditOpen}
       />
       <ConfirmModal
-        description="Volveras al login y conservaras los datos de prueba de esta sesion."
+        description="Volverás al inicio de sesión y se eliminará el token guardado en este dispositivo."
         isDarkMode={isDarkMode}
         onCancel={() => setIsLogoutOpen(false)}
         onConfirm={() => {
@@ -251,7 +266,7 @@ function OptionCard({ detail, icon, isDarkMode, onPress, theme, title }) {
   );
 }
 
-function ProfileEditModal({ draft, isDarkMode, onChange, onClose, onSave, theme, visible }) {
+function ProfileEditModal({ draft, isDarkMode, isSaving, onChange, onClose, onSave, theme, visible }) {
   return (
     <Modal animationType="slide" onRequestClose={onClose} transparent visible={visible}>
       <View style={styles.modalLayer}>
@@ -263,11 +278,14 @@ function ProfileEditModal({ draft, isDarkMode, onChange, onClose, onSave, theme,
           </Text>
           <FormInput label="Nombre" onChange={(value) => onChange({ ...draft, name: value })} theme={theme} value={draft.name} />
           <FormInput label="Correo" onChange={(value) => onChange({ ...draft, email: value })} theme={theme} value={draft.email} />
-          <FormInput label="Telefono" onChange={(value) => onChange({ ...draft, phone: value })} theme={theme} value={draft.phone} />
-          <FormInput label="Turno" onChange={(value) => onChange({ ...draft, shift: value })} theme={theme} value={draft.shift} />
           <View style={styles.sheetActions}>
             <SheetButton label="Cancelar" onPress={onClose} secondary theme={theme} />
-            <SheetButton label="Guardar" onPress={onSave} theme={theme} />
+            <SheetButton
+              disabled={isSaving || !draft.name?.trim() || !draft.email?.includes('@')}
+              label={isSaving ? 'Guardando…' : 'Guardar'}
+              onPress={onSave}
+              theme={theme}
+            />
           </View>
         </View>
       </View>
@@ -313,9 +331,9 @@ function FormInput({ label, onChange, theme, value }) {
   );
 }
 
-function SheetButton({ label, onPress, secondary = false, theme }) {
+function SheetButton({ disabled = false, label, onPress, secondary = false, theme }) {
   return (
-    <Pressable onPress={onPress} style={[styles.sheetButton, { backgroundColor: secondary ? theme.actionSoft : theme.accent }]}>
+    <Pressable disabled={disabled} onPress={onPress} style={[styles.sheetButton, { backgroundColor: secondary ? theme.actionSoft : theme.accent, opacity: disabled ? 0.5 : 1 }]}>
       <Text selectable style={[styles.sheetButtonText, { color: secondary ? theme.title : '#ffffff' }]}>
         {label}
       </Text>

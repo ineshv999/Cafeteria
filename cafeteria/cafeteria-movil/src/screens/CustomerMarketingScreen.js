@@ -1,4 +1,4 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useState } from 'react';
 
 import AppHeader from '../components/AppHeader';
@@ -10,123 +10,132 @@ import SectionTitle from '../components/SectionTitle';
 import StatCard from '../components/StatCard';
 import SummaryCard from '../components/SummaryCard';
 
-const promotions = [
-  {
-    title: 'Combo desayuno',
-    detail: 'Café americano + pan dulce',
-    badge: 'Activa',
-    badgeType: 'active',
-    label: 'Precio promoción',
-    value: '$55.00',
-    featured: true,
-    orderItem: {
-      icon: '🍳',
-      name: 'Combo desayuno',
-      price: 55,
-    },
-  },
-  {
-    title: '2x1 Frappé',
-    detail: 'Disponible de 3:00 PM a 5:00 PM',
-    badge: 'Horario',
-    badgeType: 'time',
-    label: 'Ahorro estimado',
-    value: '$45.00',
-    orderItem: {
-      icon: '🥤',
-      name: '2x1 Frappé',
-      price: 55,
-    },
-  },
-  {
-    title: 'Latte + galleta',
-    detail: 'Ideal para venta por la tarde',
-    badge: 'Nueva',
-    badgeType: 'time',
-    label: 'Precio sugerido',
-    value: '$68.00',
-    orderItem: {
-      icon: '🥛',
-      name: 'Latte + galleta',
-      price: 68,
-    },
-  },
-];
+const emptyPromotionDraft = {
+  description: '',
+  name: '',
+  productId: '',
+  type: 'Porcentaje',
+  value: '',
+};
 
-const recommended = [
-  {
-    icon: '☕',
-    title: 'Café americano',
-    detail: 'Más vendido',
-    price: '$35',
-    orderItem: {
-      icon: '☕',
-      name: 'Café americano',
-      price: 35,
-    },
-  },
-  {
-    icon: '🥐',
-    title: 'Pan dulce',
-    detail: 'Ideal para combo',
-    price: '$25',
-    orderItem: {
-      icon: '🥐',
-      name: 'Pan dulce',
-      price: 25,
-    },
-  },
-  {
-    icon: '🥤',
-    title: 'Frappé',
-    detail: 'Bebida fría recomendada',
-    price: '$55',
-    orderItem: {
-      icon: '🥤',
-      name: 'Frappé',
-      price: 55,
-    },
-  },
-  {
-    icon: '🥛',
-    title: 'Latte',
-    detail: 'Buena venta de tarde',
-    price: '$45',
-    orderItem: {
-      icon: '🥛',
-      name: 'Latte',
-      price: 45,
-    },
-  },
-];
-
-const initialFeedback = [
-  { icon: '⭐', text: 'Clientes aceptan más el combo desayuno por la mañana.' },
-  { icon: '💬', text: 'Recomendar frappé cuando el cliente pide bebida fría.' },
-];
+const promotionTypes = ['Porcentaje', 'Monto', 'Precio fijo'];
 
 export default function CustomerMarketingScreen({
+  addPromotion,
   addMarketingItemToDraft,
+  currentRoleId,
+  deletePromotion,
   goBack,
   isDarkMode,
+  promotions = [],
+  recommendedProducts = [],
   setIsDarkMode,
   theme,
+  updatePromotion,
   navigate,
 }) {
+  const canManage = currentRoleId === 'admin';
+  const recommended = recommendedProducts.map((product) => ({
+    detail: product.category || 'Producto disponible',
+    icon: product.icon || '☕',
+    orderItem: {
+      icon: product.icon || '☕',
+      menuId: product.id,
+      name: product.name,
+      price: Number(product.price || 0),
+    },
+    price: `$${Number(product.price || 0).toFixed(2)}`,
+    title: product.name,
+  }));
   const [suggestedPromos, setSuggestedPromos] = useState({});
   const [suggestedProducts, setSuggestedProducts] = useState({});
-  const [feedback, setFeedback] = useState(initialFeedback);
+  const [feedback, setFeedback] = useState([]);
   const [selectedSuggestion, setSelectedSuggestion] = useState(null);
+  const [promotionDraft, setPromotionDraft] = useState(emptyPromotionDraft);
+  const [editingPromotion, setEditingPromotion] = useState(null);
+  const [promotionToDelete, setPromotionToDelete] = useState(null);
+  const [isPromotionFormOpen, setIsPromotionFormOpen] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
 
   const promoSuggestions = Object.values(suggestedPromos).reduce((total, count) => total + count, 0);
   const productSuggestions = Object.values(suggestedProducts).reduce((total, count) => total + count, 0);
   const suggestionTotal = promoSuggestions + productSuggestions;
-  const acceptedRate = Math.min(99, 92 + Math.floor(suggestionTotal / 2));
   const marketingStats = [
     { icon: '📢', value: String(promotions.length), label: 'Promos' },
-    { icon: '☕', value: String(18 + suggestionTotal), label: 'Vendidos' },
-    { icon: '⭐', value: `${acceptedRate}%`, label: 'Aceptación' },
+    { icon: '☕', value: String(recommended.length), label: 'Productos' },
+    { icon: '⭐', value: String(suggestionTotal), label: 'En pedido' },
   ];
+
+  const openCreatePromotion = () => {
+    setEditingPromotion(null);
+    setPromotionDraft({
+      ...emptyPromotionDraft,
+      productId: recommendedProducts[0]?.id ? String(recommendedProducts[0].id) : '',
+    });
+    setIsPromotionFormOpen(true);
+  };
+
+  const openEditPromotion = (promotion) => {
+    setEditingPromotion(promotion);
+    setPromotionDraft({
+      description: promotion.description || promotion.detail || '',
+      name: promotion.title || '',
+      productId: promotion.productId ? String(promotion.productId) : '',
+      type: promotion.type || 'Porcentaje',
+      value: String(promotion.numericValue || ''),
+    });
+    setIsPromotionFormOpen(true);
+  };
+
+  const closePromotionForm = () => {
+    if (isMutating) return;
+    setEditingPromotion(null);
+    setPromotionDraft(emptyPromotionDraft);
+    setIsPromotionFormOpen(false);
+  };
+
+  const savePromotion = async () => {
+    const payload = {
+      ...promotionDraft,
+      name: promotionDraft.name.trim(),
+      productId: Number(promotionDraft.productId),
+      value: Number(promotionDraft.value),
+    };
+    if (!payload.name || !payload.productId || payload.value <= 0) return;
+
+    setIsMutating(true);
+    try {
+      const saved = editingPromotion
+        ? await updatePromotion(editingPromotion.id, payload)
+        : await addPromotion(payload);
+      if (!saved) return;
+      setFeedback((items) => [
+        { icon: editingPromotion ? '✏️' : '✅', text: `${payload.name} ${editingPromotion ? 'fue actualizada' : 'fue publicada'}.` },
+        ...items,
+      ]);
+      setEditingPromotion(null);
+      setPromotionDraft(emptyPromotionDraft);
+      setIsPromotionFormOpen(false);
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const confirmDeletePromotion = async () => {
+    if (!promotionToDelete) return;
+    setIsMutating(true);
+    try {
+      const deleted = await deletePromotion(promotionToDelete.id);
+      if (!deleted) return;
+      setFeedback((items) => [
+        { icon: '⏸️', text: `${promotionToDelete.title} fue desactivada.` },
+        ...items,
+      ]);
+      setPromotionToDelete(null);
+    } finally {
+      setIsMutating(false);
+    }
+  };
 
   const openPromotionSuggestion = (promotion) => {
     setSelectedSuggestion({
@@ -204,9 +213,9 @@ export default function CustomerMarketingScreen({
         <CustomerTabs active="customerMarketing" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
 
         <SummaryCard
-          title="Promoción activa"
-          amount="Combo desayuno"
-          subtitle="Café + pan dulce por $55.00"
+          title={promotions.length ? 'Promoción activa' : 'Promociones'}
+          amount={promotions[0]?.title || 'Sin promociones activas'}
+          subtitle={promotions[0] ? `${promotions[0].detail} · ${promotions[0].value}` : 'El administrador puede publicar una nueva promoción'}
           icon="⭐"
           isDarkMode={isDarkMode}
           theme={theme}
@@ -218,6 +227,23 @@ export default function CustomerMarketingScreen({
           ))}
         </View>
 
+        {canManage ? (
+          <Pressable
+            disabled={!recommendedProducts.length}
+            onPress={openCreatePromotion}
+            style={({ pressed }) => [
+              styles.manageButton,
+              {
+                backgroundColor: theme.accent,
+                opacity: !recommendedProducts.length ? 0.45 : pressed ? 0.84 : 1,
+              },
+            ]}
+          >
+            <AppIcon color="#ffffff" name="add-circle" size={18} />
+            <Text style={styles.manageButtonText}>Nueva promoción</Text>
+          </Pressable>
+        ) : null}
+
         <SectionTitle
           title="Promociones para sugerir"
           subtitle="Ofrece promociones al levantar pedidos"
@@ -228,14 +254,22 @@ export default function CustomerMarketingScreen({
         <View style={styles.promoList}>
           {promotions.map((promotion) => (
             <PromoCard
-              key={promotion.title}
+              canManage={canManage}
+              key={promotion.id || promotion.title}
               isDarkMode={isDarkMode}
+              onDelete={() => setPromotionToDelete(promotion)}
+              onEdit={() => openEditPromotion(promotion)}
               onSuggest={() => openPromotionSuggestion(promotion)}
               promotion={promotion}
               suggestedCount={suggestedPromos[promotion.title] || 0}
               theme={theme}
             />
           ))}
+          {!promotions.length ? (
+            <Text selectable style={[styles.emptyText, { color: theme.muted }]}>
+              No hay promociones vigentes para productos.
+            </Text>
+          ) : null}
         </View>
 
         <SectionTitle title="Productos recomendados" compact theme={theme} />
@@ -251,6 +285,11 @@ export default function CustomerMarketingScreen({
               theme={theme}
             />
           ))}
+          {!recommended.length ? (
+            <Text selectable style={[styles.emptyText, { color: theme.muted }]}>
+              No hay productos disponibles para recomendar.
+            </Text>
+          ) : null}
         </View>
 
         <View
@@ -264,7 +303,7 @@ export default function CustomerMarketingScreen({
         >
           <View style={styles.feedbackHeader}>
             <Text selectable style={[styles.feedbackTitle, { color: theme.title }]}>
-              Comentarios de clientes
+              Acciones de esta sesión
             </Text>
             <View style={[styles.todayBadge, { backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.10)' : '#ffffff' }]}>
               <Text selectable style={[styles.todayText, { color: theme.amber }]}>
@@ -281,6 +320,11 @@ export default function CustomerMarketingScreen({
               </Text>
             </View>
           ))}
+          {!feedback.length ? (
+            <Text selectable style={[styles.feedbackText, { color: theme.muted, paddingTop: 10 }]}>
+              Aún no se han agregado sugerencias al pedido.
+            </Text>
+          ) : null}
         </View>
       </View>
 
@@ -292,11 +336,31 @@ export default function CustomerMarketingScreen({
         suggestion={selectedSuggestion}
         theme={theme}
       />
+      <PromotionFormModal
+        draft={promotionDraft}
+        isDarkMode={isDarkMode}
+        isEditing={Boolean(editingPromotion)}
+        isOpen={isPromotionFormOpen}
+        isSaving={isMutating}
+        onCancel={closePromotionForm}
+        onChange={(changes) => setPromotionDraft((current) => ({ ...current, ...changes }))}
+        onSave={savePromotion}
+        products={recommendedProducts}
+        theme={theme}
+      />
+      <DeletePromotionModal
+        isDarkMode={isDarkMode}
+        isSaving={isMutating}
+        onCancel={() => !isMutating && setPromotionToDelete(null)}
+        onConfirm={confirmDeletePromotion}
+        promotion={promotionToDelete}
+        theme={theme}
+      />
     </ScreenBackground>
   );
 }
 
-function PromoCard({ isDarkMode, onSuggest, promotion, suggestedCount, theme }) {
+function PromoCard({ canManage, isDarkMode, onDelete, onEdit, onSuggest, promotion, suggestedCount, theme }) {
   const badgeColors =
     promotion.badgeType === 'active'
       ? {
@@ -384,6 +448,16 @@ function PromoCard({ isDarkMode, onSuggest, promotion, suggestedCount, theme }) 
       >
         <Text style={styles.suggestButtonText}>{suggestedCount > 0 ? 'Sugerir otra vez' : 'Sugerir al cliente'}</Text>
       </Pressable>
+      {canManage ? (
+        <View style={styles.manageActions}>
+          <Pressable onPress={onEdit} style={[styles.manageAction, { backgroundColor: theme.actionSoft }]}>
+            <Text style={[styles.manageActionText, { color: theme.amber }]}>Editar</Text>
+          </Pressable>
+          <Pressable onPress={onDelete} style={[styles.manageAction, { backgroundColor: '#fee2e2' }]}>
+            <Text style={[styles.manageActionText, { color: '#dc2626' }]}>Desactivar</Text>
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -430,6 +504,144 @@ function RecommendedCard({ isDarkMode, item, onSuggest, suggestedCount, theme })
         </Text>
       </View>
     </Pressable>
+  );
+}
+
+function PromotionFormModal({
+  draft,
+  isDarkMode,
+  isEditing,
+  isOpen,
+  isSaving,
+  onCancel,
+  onChange,
+  onSave,
+  products,
+  theme,
+}) {
+  const numericValue = Number(draft.value || 0);
+  const canSave = Boolean(draft.name.trim())
+    && Boolean(Number(draft.productId))
+    && numericValue > 0
+    && (draft.type !== 'Porcentaje' || numericValue <= 100);
+
+  return (
+    <Modal animationType="slide" onRequestClose={onCancel} transparent visible={isOpen}>
+      <View style={styles.sheetOverlay}>
+        <View style={[styles.promotionForm, { backgroundColor: isDarkMode ? '#231811' : '#ffffff', borderColor: theme.surfaceBorder }]}>
+          <View style={[styles.sheetGrabber, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.18)' : '#d6d3d1' }]} />
+          <Text selectable style={[styles.modalTitle, { color: theme.title }]}>
+            {isEditing ? 'Editar promoción' : 'Nueva promoción'}
+          </Text>
+          <Text selectable style={[styles.modalText, { color: theme.muted }]}>
+            La promoción estará vigente 30 días y se aplicará al producto seleccionado.
+          </Text>
+
+          <TextInput
+            onChangeText={(name) => onChange({ name })}
+            placeholder="Nombre de la promoción"
+            placeholderTextColor={theme.muted}
+            style={[styles.formInput, { backgroundColor: theme.actionSoft, color: theme.title }]}
+            value={draft.name}
+          />
+          <TextInput
+            onChangeText={(description) => onChange({ description })}
+            placeholder="Descripción"
+            placeholderTextColor={theme.muted}
+            style={[styles.formInput, { backgroundColor: theme.actionSoft, color: theme.title }]}
+            value={draft.description}
+          />
+          <TextInput
+            keyboardType="decimal-pad"
+            onChangeText={(value) => onChange({ value })}
+            placeholder={draft.type === 'Porcentaje' ? 'Descuento, por ejemplo 15' : 'Monto, por ejemplo 25'}
+            placeholderTextColor={theme.muted}
+            style={[styles.formInput, { backgroundColor: theme.actionSoft, color: theme.title }]}
+            value={draft.value}
+          />
+
+          <Text selectable style={[styles.formLabel, { color: theme.title }]}>Tipo</Text>
+          <View style={styles.formChips}>
+            {promotionTypes.map((type) => (
+              <Pressable
+                key={type}
+                onPress={() => onChange({ type })}
+                style={[styles.formChip, { backgroundColor: draft.type === type ? theme.accent : theme.actionSoft }]}
+              >
+                <Text style={[styles.formChipText, { color: draft.type === type ? '#ffffff' : theme.amber }]}>{type}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text selectable style={[styles.formLabel, { color: theme.title }]}>Producto</Text>
+          <View style={styles.formChips}>
+            {products.map((product) => (
+              <Pressable
+                key={product.id}
+                onPress={() => onChange({ productId: String(product.id) })}
+                style={[
+                  styles.formChip,
+                  { backgroundColor: String(draft.productId) === String(product.id) ? theme.accent : theme.actionSoft },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.formChipText,
+                    { color: String(draft.productId) === String(product.id) ? '#ffffff' : theme.amber },
+                  ]}
+                >
+                  {product.name}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {draft.type === 'Porcentaje' && numericValue > 100 ? (
+            <Text selectable style={styles.formError}>El porcentaje no puede superar 100.</Text>
+          ) : null}
+
+          <View style={styles.modalActions}>
+            <Pressable onPress={onCancel} style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.actionSoft }]}>
+              <Text style={[styles.cancelButtonText, { color: theme.title }]}>Cancelar</Text>
+            </Pressable>
+            <Pressable
+              disabled={!canSave || isSaving}
+              onPress={onSave}
+              style={[styles.modalButton, { backgroundColor: theme.accent, opacity: !canSave || isSaving ? 0.45 : 1 }]}
+            >
+              <Text style={styles.confirmButtonText}>{isSaving ? 'Guardando…' : 'Guardar'}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function DeletePromotionModal({ isDarkMode, isSaving, onCancel, onConfirm, promotion, theme }) {
+  return (
+    <Modal animationType="fade" onRequestClose={onCancel} transparent visible={Boolean(promotion)}>
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalCard, { backgroundColor: isDarkMode ? '#231811' : '#ffffff', borderColor: theme.surfaceBorder }]}>
+          <Text selectable style={[styles.modalTitle, { color: theme.title }]}>Desactivar promoción</Text>
+          <Text selectable style={[styles.modalText, { color: theme.muted }]}>
+            {promotion ? `${promotion.title} dejará de aparecer y ya no podrá aplicarse a pedidos nuevos.` : ''}
+          </Text>
+          <View style={styles.modalActions}>
+            <Pressable onPress={onCancel} style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.actionSoft }]}>
+              <Text style={[styles.cancelButtonText, { color: theme.title }]}>Conservar</Text>
+            </Pressable>
+            <Pressable
+              disabled={isSaving}
+              onPress={onConfirm}
+              style={[styles.modalButton, { backgroundColor: '#dc2626', opacity: isSaving ? 0.55 : 1 }]}
+            >
+              <Text style={styles.confirmButtonText}>{isSaving ? 'Desactivando…' : 'Desactivar'}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -526,6 +738,21 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 14,
   },
+  manageButton: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 15,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    marginTop: 14,
+    minHeight: 44,
+  },
+  manageButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '900',
+  },
   promoList: {
     gap: 10,
     paddingTop: 10,
@@ -611,6 +838,28 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 11,
     fontWeight: '900',
+  },
+  manageActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  manageAction: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 11,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 34,
+  },
+  manageActionText: {
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  emptyText: {
+    fontSize: 12,
+    lineHeight: 18,
+    paddingVertical: 10,
   },
   recommendedGrid: {
     flexDirection: 'row',
@@ -720,6 +969,63 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 24,
+  },
+  sheetOverlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.58)',
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  promotionForm: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1,
+    maxHeight: '92%',
+    padding: 22,
+  },
+  sheetGrabber: {
+    alignSelf: 'center',
+    borderRadius: 10,
+    height: 5,
+    marginBottom: 16,
+    width: 46,
+  },
+  formInput: {
+    borderCurve: 'continuous',
+    borderRadius: 14,
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 10,
+    minHeight: 44,
+    outlineStyle: 'none',
+    paddingHorizontal: 12,
+  },
+  formLabel: {
+    fontSize: 12,
+    fontWeight: '900',
+    marginTop: 14,
+  },
+  formChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 7,
+    marginTop: 8,
+  },
+  formChip: {
+    borderCurve: 'continuous',
+    borderRadius: 12,
+    minHeight: 34,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  formChipText: {
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  formError: {
+    color: '#dc2626',
+    fontSize: 11,
+    fontWeight: '800',
+    marginTop: 10,
   },
   modalCard: {
     borderCurve: 'continuous',

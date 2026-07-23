@@ -9,75 +9,29 @@ import ScreenBackground from '../components/ScreenBackground';
 import SectionTitle from '../components/SectionTitle';
 import StatCard from '../components/StatCard';
 import SummaryCard from '../components/SummaryCard';
-import { cashierModules, cashierMovements } from '../data/appData';
+import { cashierModules } from '../data/appData';
 
-const baseSales = 4850;
-const basePaidOrders = 18;
-const basePendingOrders = 3;
-const baseCancelledOrders = 1;
-
-const hourlySales = [
-  { label: '9a', value: 420 },
-  { label: '11a', value: 760 },
-  { label: '1p', value: 1180 },
-  { label: '3p', value: 940 },
-  { label: '5p', value: 680 },
-  { label: '7p', value: 870 },
+const hourlyBuckets = [
+  { label: '8-10', start: 8, end: 10 },
+  { label: '10-12', start: 10, end: 12 },
+  { label: '12-14', start: 12, end: 14 },
+  { label: '14-16', start: 14, end: 16 },
+  { label: '16-18', start: 16, end: 18 },
+  { label: '18-22', start: 18, end: 22 },
 ];
 
-const paymentMethods = [
-  { label: 'Efectivo', value: 1850, percent: 38, color: '#22c55e' },
-  { label: 'Tarjeta', value: 2240, percent: 46, color: '#f59e0b' },
-  { label: 'Transferencia', value: 760, percent: 16, color: '#38bdf8' },
-];
-
-const financeFlow = [
-  { label: 'Ingresos', value: 4850, percent: 100, color: '#22c55e' },
-  { label: 'Gastos', value: 1870, percent: 39, color: '#ef4444' },
-  { label: 'Utilidad', value: 2980, percent: 61, color: '#f59e0b' },
-];
-
-const paymentStatus = [
-  { icon: '✅', value: '14', label: 'Pagados' },
-  { icon: '⏳', value: '3', label: 'Pendientes' },
-  { icon: '❌', value: '1', label: 'Cancelado' },
-];
-
-const cashCut = [
-  { label: 'Efectivo esperado', value: '$1,850' },
-  { label: 'Tarjeta registrada', value: '$2,240' },
-  { label: 'Transferencias', value: '$760' },
-  { label: 'Total corte', value: '$4,850', strong: true },
-];
-
-const topProducts = [
-  { label: 'Café americano', value: 18, percent: 100 },
-  { label: 'Combo desayuno', value: 11, percent: 61 },
-  { label: 'Latte', value: 9, percent: 50 },
-  { label: 'Pan dulce', value: 8, percent: 44 },
-];
-
-const expenseCategories = [
-  { label: 'Insumos', value: '$950', percent: 51 },
-  { label: 'Empaque', value: '$420', percent: 22 },
-  { label: 'Limpieza', value: '$300', percent: 16 },
-  { label: 'Otros', value: '$200', percent: 11 },
-];
-
-const recentPayments = [
-  { order: '#24', detail: 'Mesa 5 · Tarjeta', value: '$220' },
-  { order: '#23', detail: 'Mesa 2 · Efectivo', value: '$145' },
-  { order: '#22', detail: 'Mesa 1 · Transferencia', value: '$310' },
-];
-
-const cashierAlerts = [
-  { icon: '⏳', text: '3 pedidos pendientes de pago.' },
-  { icon: '💵', text: 'Efectivo alto en caja: $1,850.' },
-  { icon: '📄', text: 'Corte pendiente por cerrar.' },
-];
+function isToday(value) {
+  const date = new Date(value || 0);
+  const today = new Date();
+  return !Number.isNaN(date.getTime())
+    && date.getFullYear() === today.getFullYear()
+    && date.getMonth() === today.getMonth()
+    && date.getDate() === today.getDate();
+}
 
 export default function CashierScreen({
   cashierExpenses = [],
+  cashierPurchases = [],
   customerOrders = [],
   goBack,
   isDarkMode,
@@ -85,21 +39,37 @@ export default function CashierScreen({
   theme,
   navigate,
 }) {
-  const paidOrders = customerOrders.filter((order) => order.cashierStatus === 'paid');
-  const pendingOrders = customerOrders.filter((order) => order.statusType === 'pending');
-  const cancelledOrders = customerOrders.filter((order) => order.statusType === 'cancelled');
-  const liveSales = paidOrders.reduce((total, order) => total + getNumericTotal(order), 0);
-  const salesTotal = baseSales + liveSales;
-  const expenseTotal = cashierExpenses.reduce((total, expense) => total + Number(expense.amount || 0), 0);
+  const paidOrders = customerOrders.filter((order) =>
+    (order.cashierStatus === 'paid' || order.statusType === 'paid') && isToday(order.paidAt || order.createdAt),
+  );
+  const pendingOrders = customerOrders.filter((order) => order.statusType === 'ready');
+  const cancelledOrders = customerOrders.filter((order) =>
+    order.statusType === 'cancelled' && isToday(order.createdAt),
+  );
+  const salesTotal = paidOrders.reduce((total, order) => total + getNumericTotal(order), 0);
+  const todayExpenses = cashierExpenses.filter((expense) => isToday(expense.createdAt));
+  const todayPurchases = cashierPurchases.filter((purchase) =>
+    purchase.type === 'paid' && isToday(purchase.createdAt),
+  );
+  const financialExpenses = [
+    ...todayExpenses,
+    ...todayPurchases.map((purchase) => ({ ...purchase, category: 'Suministros' })),
+  ];
+  const expenseTotal = financialExpenses.reduce((total, expense) => total + Number(expense.amount || 0), 0);
   const profitTotal = salesTotal - expenseTotal;
-  const paidCount = basePaidOrders + paidOrders.length;
-  const pendingCount = basePendingOrders + pendingOrders.length;
-  const cancelledCount = baseCancelledOrders + cancelledOrders.length;
+  const paidCount = paidOrders.length;
+  const pendingCount = pendingOrders.length;
+  const cancelledCount = cancelledOrders.length;
   const paymentMethodsData = getPaymentMethods(paidOrders, salesTotal);
   const financeFlowData = getFinanceFlow(salesTotal, expenseTotal, profitTotal);
-  const hourlySalesData = hourlySales.map((item, index) => ({
-    ...item,
-    value: item.value + Math.round(liveSales / hourlySales.length) + (index === hourlySales.length - 1 ? liveSales % hourlySales.length : 0),
+  const hourlySalesData = hourlyBuckets.map((bucket) => ({
+    label: bucket.label,
+    value: paidOrders.reduce((total, order) => {
+      const paidAt = new Date(order.paidAt || order.createdAt || 0);
+      return !Number.isNaN(paidAt.getTime()) && paidAt.getHours() >= bucket.start && paidAt.getHours() < bucket.end
+        ? total + getNumericTotal(order)
+        : total;
+    }, 0),
   }));
   const paymentStatusData = [
     { icon: '✅', value: String(paidCount), label: 'Pagados' },
@@ -117,15 +87,20 @@ export default function CashierScreen({
     { label: 'Transferencias', value: formatCompactCurrency(paymentMethodsData[2].value) },
     { label: 'Total corte', value: formatCompactCurrency(salesTotal), strong: true },
   ];
-  const expenseCategoriesData = getExpenseCategories(cashierExpenses);
+  const expenseCategoriesData = getExpenseCategories(financialExpenses);
   const recentPaymentsData = getRecentPayments(paidOrders);
   const topProductsData = getTopProducts(paidOrders);
   const latestPayment = paidOrders[0];
   const cashierAlertsData = [
     { icon: '⏳', text: `${pendingCount} pedidos pendientes de pago.` },
-    { icon: '💵', text: `Ganancia estimada: ${formatCompactCurrency(profitTotal)}.` },
-    { icon: '📄', text: 'Corte pendiente por cerrar.' },
+    { icon: '💵', text: `Utilidad estimada: ${formatCompactCurrency(profitTotal)}.` },
+    { icon: '📄', text: `${cashierExpenses.length} gastos y ${cashierPurchases.length} compras registradas.` },
   ];
+  const cashierMovements = [
+    ...paidOrders.slice(0, 2).map((order) => ({ icon: '✅', text: `${order.id} pagado con ${order.paymentMethod || 'método no indicado'}` })),
+    ...cashierExpenses.slice(0, 2).map((expense) => ({ icon: '🧾', text: `Gasto registrado: ${expense.description || expense.category || 'Sin descripción'}` })),
+    ...cashierPurchases.slice(0, 2).map((purchase) => ({ icon: '🛒', text: `Compra registrada: ${purchase.name || 'Insumo'}` })),
+  ].slice(0, 4);
 
   return (
     <ScreenBackground isDarkMode={isDarkMode} theme={theme} contentStyle={styles.screen}>
@@ -161,7 +136,7 @@ export default function CashierScreen({
         <SectionTitle title="Accesos rápidos" subtitle="Gestiona las funciones principales de caja" compact theme={theme} />
 
         <View style={styles.modulesGrid}>
-          {cashierModules.map((module) => (
+          {cashierModules.filter((module) => module.target).map((module) => (
             <ModuleCard
               key={module.title}
               item={module}
@@ -202,7 +177,7 @@ export default function CashierScreen({
                 },
               ]}
             >
-              <Text style={[styles.openBadgeText, { color: isDarkMode ? '#86efac' : '#15803d' }]}>Abierta</Text>
+              <Text style={[styles.openBadgeText, { color: isDarkMode ? '#86efac' : '#15803d' }]}>Sincronizada</Text>
             </View>
           </View>
 
@@ -284,6 +259,11 @@ export default function CashierScreen({
               </Text>
             </View>
           ))}
+          {!cashierMovements.length ? (
+            <Text selectable style={[styles.movementCopy, { color: theme.muted, marginTop: 10 }]}>
+              Aún no hay movimientos sincronizados.
+            </Text>
+          ) : null}
         </View>
       </View>
 
@@ -313,7 +293,7 @@ function InsightCard({ children, isDarkMode, style, theme, title }) {
 }
 
 function HourlySalesChart({ data, isDarkMode, theme }) {
-  const maxValue = Math.max(...data.map((item) => item.value));
+  const maxValue = Math.max(1, ...data.map((item) => item.value));
 
   return (
     <InsightCard isDarkMode={isDarkMode} theme={theme} title="Ventas por hora">
@@ -365,7 +345,7 @@ function AverageTicketCard({ isDarkMode, orderCount, salesTotal, theme }) {
       </Text>
       <View style={[styles.softPill, { backgroundColor: theme.actionSoft }]}>
         <Text selectable style={[styles.softPillText, { color: theme.amber }]}>
-          +8% vs ayer
+          Calculado con pagos sincronizados
         </Text>
       </View>
     </InsightCard>
@@ -416,6 +396,7 @@ function TopProductsCard({ data, isDarkMode, theme }) {
       {data.map((item) => (
         <CompactMetric key={item.label} item={item} isDarkMode={isDarkMode} theme={theme} />
       ))}
+      {!data.length ? <EmptyMetric theme={theme} /> : null}
     </InsightCard>
   );
 }
@@ -426,6 +407,7 @@ function ExpenseCategoriesCard({ data, isDarkMode, theme }) {
       {data.map((item) => (
         <CompactMetric key={item.label} item={item} isDarkMode={isDarkMode} theme={theme} />
       ))}
+      {!data.length ? <EmptyMetric theme={theme} /> : null}
     </InsightCard>
   );
 }
@@ -451,7 +433,16 @@ function RecentPaymentsCard({ data, isDarkMode, theme }) {
           </Text>
         </View>
       ))}
+      {!data.length ? <EmptyMetric theme={theme} /> : null}
     </InsightCard>
+  );
+}
+
+function EmptyMetric({ theme }) {
+  return (
+    <Text selectable style={[styles.metricHint, { color: theme.muted }]}>
+      Aún no hay registros sincronizados.
+    </Text>
   );
 }
 
@@ -537,18 +528,18 @@ function getPaymentMethods(paidOrders, salesTotal) {
     };
   }, {});
   const values = [
-    { label: 'Efectivo', value: 1850 + (live.Efectivo || 0), color: '#22c55e' },
-    { label: 'Tarjeta', value: 2240 + (live.Tarjeta || 0), color: '#f59e0b' },
+    { label: 'Efectivo', value: live.Efectivo || 0, color: '#22c55e' },
+    { label: 'Tarjeta', value: live.Tarjeta || 0, color: '#f59e0b' },
     {
       label: 'Transferencia',
-      value: 760 + (live.Transferencia || 0),
+      value: live.Transferencia || 0,
       color: '#38bdf8',
     },
   ];
 
   return values.map((item) => ({
     ...item,
-    percent: salesTotal ? Math.max(4, Math.round((item.value / salesTotal) * 100)) : 0,
+    percent: salesTotal && item.value ? Math.max(4, Math.round((item.value / salesTotal) * 100)) : 0,
   }));
 }
 
@@ -558,13 +549,13 @@ function getFinanceFlow(salesTotal, expenseTotal, profitTotal) {
     {
       label: 'Gastos',
       value: expenseTotal,
-      percent: salesTotal ? Math.max(4, Math.round((expenseTotal / salesTotal) * 100)) : 0,
+      percent: salesTotal && expenseTotal ? Math.min(100, Math.max(4, Math.round((expenseTotal / salesTotal) * 100))) : 0,
       color: '#ef4444',
     },
     {
       label: 'Utilidad',
       value: profitTotal,
-      percent: salesTotal ? Math.max(4, Math.round((profitTotal / salesTotal) * 100)) : 0,
+      percent: salesTotal && profitTotal ? Math.min(100, Math.max(4, Math.round((Math.abs(profitTotal) / salesTotal) * 100))) : 0,
       color: '#f59e0b',
     },
   ];
@@ -583,7 +574,7 @@ function getExpenseCategories(expenses) {
   const maxValue = Math.max(...entries.map(([, value]) => value), 1);
 
   if (!entries.length) {
-    return expenseCategories;
+    return [];
   }
 
   return entries.map(([label, value]) => ({
@@ -600,7 +591,7 @@ function getRecentPayments(paidOrders) {
     value: formatCompactCurrency(getNumericTotal(order)),
   }));
 
-  return livePayments.length ? livePayments : recentPayments;
+  return livePayments;
 }
 
 function getTopProducts(paidOrders) {
@@ -627,7 +618,7 @@ function getTopProducts(paidOrders) {
   const maxValue = Math.max(...liveItems.map((item) => item.value), 1);
 
   if (!liveItems.length) {
-    return topProducts;
+    return [];
   }
 
   return liveItems.map((item) => ({

@@ -11,28 +11,16 @@ import SectionTitle from '../components/SectionTitle';
 import StatCard from '../components/StatCard';
 import SummaryCard from '../components/SummaryCard';
 
-const fallbackMenuItems = [
-  { id: 'menu-coffee', category: 'Bebidas', icon: '☕', name: 'Café americano', price: 35, available: true, featured: true, type: 'Platillo', description: 'Bebida caliente' },
-  { id: 'menu-bread', category: 'Panadería', icon: '🥐', name: 'Pan dulce', price: 25, available: true, featured: false, type: 'Platillo', description: 'Panadería' },
-  { id: 'menu-breakfast-combo', category: 'Combos', icon: '🍳', name: 'Combo desayuno', price: 55, available: true, featured: true, type: 'Combo', description: 'Café + pan' },
-  { id: 'menu-hot-chocolate', category: 'Temporada', icon: '🍫', name: 'Chocolate caliente', price: 48, available: true, featured: false, type: 'Especial', description: 'Temporada' },
-];
-
 const emptyDraft = {
   available: true,
   category: 'Bebidas',
   description: '',
-  featured: false,
-  icon: '☕',
   name: '',
   price: '',
-  type: 'Platillo',
 };
 
 const quickActions = [
-  { icon: '➕', label: 'Agregar platillo', type: 'Platillo' },
-  { icon: '🎁', label: 'Agregar promoción', type: 'Combo' },
-  { icon: '⭐', label: 'Agregar menú especial', type: 'Especial', wide: true },
+  { icon: '➕', label: 'Agregar producto', wide: true },
 ];
 
 const filterOptions = [
@@ -43,6 +31,7 @@ const filterOptions = [
 
 export default function KitchenMenuScreen({
   addKitchenMenuItem,
+  categories = [],
   deleteKitchenMenuItem,
   goBack,
   isDarkMode,
@@ -61,18 +50,14 @@ export default function KitchenMenuScreen({
   const [draft, setDraft] = useState(emptyDraft);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [movements, setMovements] = useState([
-    { icon: '☕', text: 'Café americano marcado como destacado' },
-    { icon: '🎁', text: 'Combo desayuno disponible para pedidos' },
-  ]);
+  const [movements, setMovements] = useState([]);
+  const [isMutating, setIsMutating] = useState(false);
 
-  const menuItems = kitchenMenuItems.length ? kitchenMenuItems : fallbackMenuItems;
+  const menuItems = kitchenMenuItems;
   const availableCount = menuItems.filter((item) => item.available).length;
-  const hiddenCount = menuItems.length - availableCount;
-  const comboCount = menuItems.filter((item) => item.type === 'Combo').length;
-  const featuredCount = menuItems.filter((item) => item.featured).length;
+  const unavailableCount = menuItems.length - availableCount;
   const filteredItems = menuItems.filter((item) => {
-    const matchesQuery = `${item.name} ${item.category} ${item.type}`.toLowerCase().includes(query.trim().toLowerCase());
+    const matchesQuery = `${item.name} ${item.category}`.toLowerCase().includes(query.trim().toLowerCase());
     const matchesFilter =
       activeFilter === 'all' ||
       (activeFilter === 'available' && item.available) ||
@@ -83,22 +68,19 @@ export default function KitchenMenuScreen({
   const groupedItems = useMemo(() => groupByCategory(filteredItems), [filteredItems]);
   const stats = [
     { icon: '✅', value: String(availableCount), label: 'Activos' },
-    { icon: '🎁', value: String(comboCount), label: 'Combos' },
-    { icon: '⏸️', value: String(hiddenCount), label: 'Pausados' },
+    { icon: '🍽️', value: String(menuItems.length), label: 'Productos' },
+    { icon: '⏸️', value: String(unavailableCount), label: 'No disponibles' },
   ];
 
   const addMovement = (movement) => {
     setMovements((currentMovements) => [movement, ...currentMovements].slice(0, 5));
   };
 
-  const openNewItem = (type = 'Platillo') => {
+  const openNewItem = () => {
     setEditingItem(null);
     setDraft({
       ...emptyDraft,
-      category: type === 'Combo' ? 'Combos' : type === 'Especial' ? 'Temporada' : 'Bebidas',
-      featured: type !== 'Platillo',
-      icon: type === 'Combo' ? '🎁' : type === 'Especial' ? '⭐' : '☕',
-      type,
+      category: categories[0]?.nombre || categories[0]?.name || 'General',
     });
     setIsFormOpen(true);
   };
@@ -116,51 +98,53 @@ export default function KitchenMenuScreen({
     setIsFormOpen(false);
   };
 
-  const saveItem = () => {
+  const saveItem = async () => {
     if (!draft.name.trim() || Number(draft.price || 0) <= 0) {
       return;
     }
 
     const nextItem = {
+      active: Boolean(draft.available),
       available: Boolean(draft.available),
       category: draft.category.trim() || 'General',
       description: draft.description.trim() || draft.category.trim() || 'Producto del menú',
-      featured: Boolean(draft.featured),
-      icon: draft.icon.trim() || '☕',
       name: draft.name.trim(),
       price: Number(draft.price || 0),
-      type: draft.type.trim() || 'Platillo',
     };
 
-    if (editingItem) {
-      updateKitchenMenuItem?.(editingItem.id, (item) => ({ ...item, ...nextItem }));
-      syncDraftProduct(editingItem, nextItem);
-      addMovement({ icon: '✏️', text: `${nextItem.name} actualizado en menú` });
-      recordEvent?.({
-        detail: `${nextItem.name} fue editado en el menú.`,
-        icon: '✏️',
-        module: 'Cocina',
-        severity: 'info',
-        title: 'Producto actualizado',
-        type: 'activity',
-      });
-    } else {
-      addKitchenMenuItem?.({
-        ...nextItem,
-        id: `menu-${Date.now()}`,
-      });
-      addMovement({ icon: '➕', text: `${nextItem.name} agregado al menú` });
-      recordEvent?.({
-        detail: `${nextItem.name} se agregó al menú por $${Number(nextItem.price || 0).toFixed(2)}.`,
-        icon: '🍽️',
-        module: 'Cocina',
-        severity: 'success',
-        title: 'Producto agregado',
-        type: 'activity',
-      });
-    }
+    setIsMutating(true);
+    try {
+      if (editingItem) {
+        const updated = await updateKitchenMenuItem?.(editingItem.id, (item) => ({ ...item, ...nextItem }));
+        if (!updated) return;
+        syncDraftProduct(editingItem, updated);
+        addMovement({ icon: '✏️', text: `${nextItem.name} actualizado en menú` });
+        recordEvent?.({
+          detail: `${nextItem.name} fue editado en el menú.`,
+          icon: '✏️',
+          module: 'Cocina',
+          severity: 'info',
+          title: 'Producto actualizado',
+          type: 'activity',
+        });
+      } else {
+        const created = await addKitchenMenuItem?.(nextItem);
+        if (!created) return;
+        addMovement({ icon: '➕', text: `${nextItem.name} agregado al menú` });
+        recordEvent?.({
+          detail: `${nextItem.name} se agregó al menú por $${Number(nextItem.price || 0).toFixed(2)}.`,
+          icon: '🍽️',
+          module: 'Cocina',
+          severity: 'success',
+          title: 'Producto agregado',
+          type: 'activity',
+        });
+      }
 
-    closeForm();
+      closeForm();
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   const syncDraftProduct = (previousItem, nextItem) => {
@@ -180,70 +164,87 @@ export default function KitchenMenuScreen({
     }));
   };
 
-  const toggleAvailability = (item) => {
-    updateKitchenMenuItem?.(item.id, (currentItem) => ({
-      ...currentItem,
-      available: !currentItem.available,
-    }));
-    addMovement({
-      icon: item.available ? '⏸️' : '✅',
-      text: `${item.name} ${item.available ? 'pausado' : 'reactivado'} para pedidos`,
-    });
-    recordEvent?.({
-      detail: `${item.name} fue ${item.available ? 'pausado' : 'reactivado'} para pedidos.`,
-      icon: item.available ? '⏸️' : '✅',
-      module: 'Cocina',
-      severity: item.available ? 'warning' : 'success',
-      title: item.available ? 'Producto pausado' : 'Producto activo',
-      type: 'activity',
-    });
-    setSelectedItem(null);
+  const toggleAvailability = async (item) => {
+    const isActive = item.active !== false;
+    setIsMutating(true);
+    try {
+      const updated = await updateKitchenMenuItem?.(item.id, (currentItem) => ({
+        ...currentItem,
+        active: !isActive,
+      }));
+      if (!updated) return;
+      addMovement({
+        icon: isActive ? '⏸️' : '✅',
+        text: `${item.name} ${isActive ? 'pausado' : 'reactivado'} para pedidos`,
+      });
+      recordEvent?.({
+        detail: `${item.name} fue ${isActive ? 'pausado' : 'reactivado'} para pedidos.`,
+        icon: isActive ? '⏸️' : '✅',
+        module: 'Cocina',
+        severity: isActive ? 'warning' : 'success',
+        title: isActive ? 'Producto pausado' : 'Producto activo',
+        type: 'activity',
+      });
+      setSelectedItem(null);
+    } finally {
+      setIsMutating(false);
+    }
   };
 
-  const duplicateItem = (item) => {
+  const duplicateItem = async (item) => {
     const duplicate = {
       ...item,
-      featured: false,
-      id: `menu-${Date.now()}`,
       name: `${item.name} copia`,
     };
 
-    addKitchenMenuItem?.(duplicate);
-    addMovement({ icon: '📋', text: `${item.name} duplicado en menú` });
-    recordEvent?.({
-      detail: `${item.name} se duplicó como ${duplicate.name}.`,
-      icon: '📋',
-      module: 'Cocina',
-      severity: 'info',
-      title: 'Producto duplicado',
-      type: 'activity',
-    });
-    setSelectedItem(null);
+    setIsMutating(true);
+    try {
+      const created = await addKitchenMenuItem?.(duplicate);
+      if (!created) return;
+      addMovement({ icon: '📋', text: `${item.name} duplicado en menú` });
+      recordEvent?.({
+        detail: `${item.name} se duplicó como ${duplicate.name}.`,
+        icon: '📋',
+        module: 'Cocina',
+        severity: 'info',
+        title: 'Producto duplicado',
+        type: 'activity',
+      });
+      setSelectedItem(null);
+    } finally {
+      setIsMutating(false);
+    }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteTarget) {
       return;
     }
 
-    deleteKitchenMenuItem?.(deleteTarget.id);
-    updateCustomerDraft?.((currentDraft) => ({
-      ...currentDraft,
-      products: currentDraft.products.filter(
-        (product) => product.menuId !== deleteTarget.id && product.name !== deleteTarget.name,
-      ),
-    }));
-    addMovement({ icon: '🗑️', text: `${deleteTarget.name} eliminado del menú` });
-    recordEvent?.({
-      detail: `${deleteTarget.name} fue eliminado del menú y de pedidos en edición.`,
-      icon: '🗑️',
-      module: 'Cocina',
-      severity: 'warning',
-      title: 'Producto eliminado',
-      type: 'activity',
-    });
-    setDeleteTarget(null);
-    setSelectedItem(null);
+    setIsMutating(true);
+    try {
+      const deleted = await deleteKitchenMenuItem?.(deleteTarget.id);
+      if (!deleted) return;
+      updateCustomerDraft?.((currentDraft) => ({
+        ...currentDraft,
+        products: currentDraft.products.filter(
+          (product) => product.menuId !== deleteTarget.id && product.name !== deleteTarget.name,
+        ),
+      }));
+      addMovement({ icon: '🗑️', text: `${deleteTarget.name} eliminado del menú` });
+      recordEvent?.({
+        detail: `${deleteTarget.name} fue eliminado del menú y de pedidos en edición.`,
+        icon: '🗑️',
+        module: 'Cocina',
+        severity: 'warning',
+        title: 'Producto eliminado',
+        type: 'activity',
+      });
+      setDeleteTarget(null);
+      setSelectedItem(null);
+    } finally {
+      setIsMutating(false);
+    }
   };
 
   return (
@@ -265,7 +266,7 @@ export default function KitchenMenuScreen({
         <SummaryCard
           title="Menú disponible"
           amount={`${availableCount} productos`}
-          subtitle={`${featuredCount} destacados · ${comboCount} combos · ${hiddenCount} pausados`}
+          subtitle={`${menuItems.length} registrados · ${unavailableCount} no disponibles`}
           icon="📋"
           isDarkMode={isDarkMode}
           theme={theme}
@@ -281,14 +282,15 @@ export default function KitchenMenuScreen({
           {quickActions.map((action) => (
             <Pressable
               key={action.label}
-              onPress={() => openNewItem(action.type)}
+              disabled={!categories.length}
+              onPress={openNewItem}
               style={({ pressed }) => [
                 styles.actionButton,
                 action.wide && styles.wideAction,
                 {
                   backgroundColor: isDarkMode ? '#16a34a' : '#15803d',
                   boxShadow: '0 8px 18px rgba(21, 128, 61, 0.25)',
-                  opacity: pressed ? 0.86 : 1,
+                  opacity: !categories.length ? 0.45 : pressed ? 0.86 : 1,
                 },
               ]}
             >
@@ -418,9 +420,11 @@ export default function KitchenMenuScreen({
         theme={theme}
       />
       <MenuFormSheet
+        categories={categories}
         draft={draft}
         isDarkMode={isDarkMode}
         isOpen={isFormOpen}
+        isSaving={isMutating}
         onCancel={closeForm}
         onChange={(changes) => setDraft((currentDraft) => ({ ...currentDraft, ...changes }))}
         onSave={saveItem}
@@ -429,6 +433,7 @@ export default function KitchenMenuScreen({
       />
       <DeleteMenuItemModal
         isDarkMode={isDarkMode}
+        isSaving={isMutating}
         item={deleteTarget}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
@@ -439,6 +444,8 @@ export default function KitchenMenuScreen({
 }
 
 function MenuItemCard({ isDarkMode, item, onDelete, onDetail, onEdit, onToggle, theme }) {
+  const isActive = item.active !== false;
+  const statusLabel = !isActive ? 'Pausado' : item.available ? 'Disponible' : 'Sin stock';
   return (
     <Pressable
       onPress={onDetail}
@@ -461,7 +468,6 @@ function MenuItemCard({ isDarkMode, item, onDelete, onDetail, onEdit, onToggle, 
             <Text selectable style={[styles.itemName, { color: theme.title }]}>
               {item.name}
             </Text>
-            {item.featured ? <Text style={styles.featuredMark}>⭐</Text> : null}
           </View>
           <Text selectable style={[styles.itemDetail, { color: theme.muted }]}>
             {item.description || item.category} · ${Number(item.price || 0).toFixed(2)}
@@ -469,11 +475,8 @@ function MenuItemCard({ isDarkMode, item, onDelete, onDetail, onEdit, onToggle, 
           <View style={styles.badgeRow}>
             <View style={[styles.statusBadge, { backgroundColor: item.available ? '#dcfce7' : theme.warningBg }]}>
               <Text style={[styles.statusBadgeText, { color: item.available ? '#166534' : theme.warningText }]}>
-                {item.available ? 'Activo' : 'Pausado'}
+                {statusLabel}
               </Text>
-            </View>
-            <View style={[styles.typeBadge, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : theme.actionSoft }]}>
-              <Text style={[styles.typeBadgeText, { color: theme.amber }]}>{item.type}</Text>
             </View>
           </View>
         </View>
@@ -481,7 +484,7 @@ function MenuItemCard({ isDarkMode, item, onDelete, onDetail, onEdit, onToggle, 
 
       <View style={styles.menuActions}>
         <Pressable onPress={onToggle} style={[styles.editButton, { backgroundColor: theme.actionSoft }]}>
-          <Text style={[styles.editText, { color: theme.amber }]}>{item.available ? 'Pausar' : 'Activar'}</Text>
+          <Text style={[styles.editText, { color: theme.amber }]}>{isActive ? 'Pausar' : 'Activar'}</Text>
         </Pressable>
         <Pressable onPress={onEdit} style={[styles.editButton, { backgroundColor: theme.actionSoft }]}>
           <Text style={[styles.editText, { color: theme.amber }]}>Editar</Text>
@@ -522,7 +525,7 @@ function MenuDetailSheet({ isDarkMode, item, onClose, onDelete, onDuplicate, onE
                 {item.name}
               </Text>
               <Text selectable style={[styles.sheetCopy, { color: theme.muted }]}>
-                {item.category} · {item.type} · ${Number(item.price || 0).toFixed(2)}
+                {item.category} · ${Number(item.price || 0).toFixed(2)}
               </Text>
             </View>
           </View>
@@ -538,13 +541,13 @@ function MenuDetailSheet({ isDarkMode, item, onClose, onDelete, onDuplicate, onE
               Estado
             </Text>
             <Text selectable style={[styles.detailValue, { color: theme.title }]}>
-              {item.available ? 'Disponible para pedidos' : 'Pausado temporalmente'}
+              {item.active === false ? 'Pausado temporalmente' : item.available ? 'Disponible para pedidos' : 'Activo, pero sin stock'}
             </Text>
           </View>
 
           <View style={styles.sheetActionsGrid}>
             <ActionOption label="Editar" onPress={() => onEdit(item)} theme={theme} />
-            <ActionOption label={item.available ? 'Pausar' : 'Activar'} onPress={() => onToggle(item)} theme={theme} />
+            <ActionOption label={item.active === false ? 'Activar' : 'Pausar'} onPress={() => onToggle(item)} theme={theme} />
             <ActionOption label="Duplicar" onPress={() => onDuplicate(item)} theme={theme} />
             <ActionOption label="Eliminar" destructive onPress={() => onDelete(item)} theme={theme} />
           </View>
@@ -558,7 +561,7 @@ function MenuDetailSheet({ isDarkMode, item, onClose, onDelete, onDuplicate, onE
   );
 }
 
-function MenuFormSheet({ draft, isDarkMode, isOpen, onCancel, onChange, onSave, theme, title }) {
+function MenuFormSheet({ categories, draft, isDarkMode, isOpen, isSaving, onCancel, onChange, onSave, theme, title }) {
   const canSave = draft.name.trim() && Number(draft.price || 0) > 0;
 
   return (
@@ -576,15 +579,28 @@ function MenuFormSheet({ draft, isDarkMode, isOpen, onCancel, onChange, onSave, 
           <View style={styles.formGrid}>
             <FormInput label="Nombre" onChangeText={(value) => onChange({ name: value })} theme={theme} value={draft.name} />
             <FormInput keyboardType="numeric" label="Precio" onChangeText={(value) => onChange({ price: value })} theme={theme} value={String(draft.price)} />
-            <FormInput label="Icono" onChangeText={(value) => onChange({ icon: value })} theme={theme} value={draft.icon} />
-            <FormInput label="Categoría" onChangeText={(value) => onChange({ category: value })} theme={theme} value={draft.category} />
-            <FormInput label="Tipo" onChangeText={(value) => onChange({ type: value })} theme={theme} value={draft.type} />
             <FormInput label="Descripción" onChangeText={(value) => onChange({ description: value })} theme={theme} value={draft.description} />
+          </View>
+
+          <Text selectable style={[styles.categoryTitle, { color: theme.title }]}>Categoría</Text>
+          <View style={styles.categoryOptions}>
+            {categories.map((category) => {
+              const name = category.nombre || category.name;
+              const active = draft.category === name;
+              return (
+                <Pressable
+                  key={category.id_categoria || category.id || name}
+                  onPress={() => onChange({ category: name })}
+                  style={[styles.categoryOption, { backgroundColor: active ? theme.accent : theme.actionSoft }]}
+                >
+                  <Text style={[styles.categoryOptionText, { color: active ? '#ffffff' : theme.amber }]}>{name}</Text>
+                </Pressable>
+              );
+            })}
           </View>
 
           <View style={styles.toggleRow}>
             <TogglePill active={draft.available} label={draft.available ? 'Disponible' : 'Pausado'} onPress={() => onChange({ available: !draft.available })} theme={theme} />
-            <TogglePill active={draft.featured} label={draft.featured ? 'Destacado' : 'No destacado'} onPress={() => onChange({ featured: !draft.featured })} theme={theme} />
           </View>
 
           {!canSave ? (
@@ -595,7 +611,7 @@ function MenuFormSheet({ draft, isDarkMode, isOpen, onCancel, onChange, onSave, 
 
           <View style={styles.modalActions}>
             <SheetSecondaryButton isDarkMode={isDarkMode} label="Cancelar" onPress={onCancel} theme={theme} />
-            <SheetPrimaryButton disabled={!canSave} label="Guardar" onPress={onSave} theme={theme} />
+            <SheetPrimaryButton disabled={!canSave || isSaving} label={isSaving ? 'Guardando…' : 'Guardar'} onPress={onSave} theme={theme} />
           </View>
         </View>
       </View>
@@ -603,7 +619,7 @@ function MenuFormSheet({ draft, isDarkMode, isOpen, onCancel, onChange, onSave, 
   );
 }
 
-function DeleteMenuItemModal({ isDarkMode, item, onCancel, onConfirm, theme }) {
+function DeleteMenuItemModal({ isDarkMode, isSaving, item, onCancel, onConfirm, theme }) {
   return (
     <Modal animationType="fade" onRequestClose={onCancel} transparent visible={Boolean(item)}>
       <View style={styles.modalOverlay}>
@@ -616,8 +632,8 @@ function DeleteMenuItemModal({ isDarkMode, item, onCancel, onConfirm, theme }) {
           </Text>
           <View style={styles.modalActions}>
             <SheetSecondaryButton isDarkMode={isDarkMode} label="Cancelar" onPress={onCancel} theme={theme} />
-            <Pressable onPress={onConfirm} style={[styles.modalPrimary, { backgroundColor: '#dc2626' }]}>
-              <Text style={styles.modalPrimaryText}>Eliminar</Text>
+            <Pressable disabled={isSaving} onPress={onConfirm} style={[styles.modalPrimary, { backgroundColor: '#dc2626', opacity: isSaving ? 0.55 : 1 }]}>
+              <Text style={styles.modalPrimaryText}>{isSaving ? 'Eliminando…' : 'Eliminar'}</Text>
             </Pressable>
           </View>
         </View>
@@ -678,14 +694,11 @@ function SheetPrimaryButton({ disabled = false, label, onPress, theme }) {
 
 function buildDraftFromItem(item) {
   return {
-    available: Boolean(item.available),
+    available: item.active !== false,
     category: item.category || 'General',
     description: item.description || '',
-    featured: Boolean(item.featured),
-    icon: item.icon || '☕',
     name: item.name || '',
     price: String(item.price || ''),
-    type: item.type || 'Platillo',
   };
 }
 
@@ -1098,6 +1111,27 @@ const styles = StyleSheet.create({
     minHeight: 28,
     outlineStyle: 'none',
     paddingTop: 3,
+  },
+  categoryTitle: {
+    fontSize: 12,
+    fontWeight: '900',
+    marginTop: 14,
+  },
+  categoryOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  categoryOption: {
+    borderCurve: 'continuous',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  categoryOptionText: {
+    fontSize: 10,
+    fontWeight: '900',
   },
   toggleRow: {
     flexDirection: 'row',

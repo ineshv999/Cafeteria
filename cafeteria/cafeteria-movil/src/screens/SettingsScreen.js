@@ -19,7 +19,9 @@ export default function SettingsScreen({
   appSettings = defaultSettings,
   goBack,
   isDarkMode,
+  isSyncing = false,
   navigate,
+  refreshData,
   setIsDarkMode,
   theme,
   updateAppSetting,
@@ -35,6 +37,11 @@ export default function SettingsScreen({
   const resetSettings = () => {
     Object.entries(defaultSettings).forEach(([key, value]) => updateAppSetting(key, value));
     setModal('resetDone');
+  };
+
+  const runManualSync = async () => {
+    await refreshData?.();
+    setModal('syncDone');
   };
 
   return (
@@ -152,12 +159,12 @@ export default function SettingsScreen({
             value={appSettings.autoSync ? 'Activa' : 'Manual'}
           />
           <ActionCard
-            detail="Genera una copia local simulada de la informacion."
-            icon="💾"
-            onPress={() => setModal('backup')}
+            detail="Consulta ahora pedidos, inventario y avisos de la API."
+            icon="↻"
+            onPress={runManualSync}
             theme={theme}
-            title="Crear respaldo"
-            value="Ahora"
+            title="Sincronizar ahora"
+            value={isSyncing ? 'Cargando' : 'Actualizar'}
           />
           <ActionCard
             detail="Vuelve a la configuracion recomendada."
@@ -189,9 +196,9 @@ export default function SettingsScreen({
         isDarkMode={isDarkMode}
         onClose={() => setModal(null)}
         theme={theme}
-        title="Respaldo creado"
-        visible={modal === 'backup'}
-        description="Se genero un respaldo de prueba con pedidos, caja, inventario y menu."
+        title="Sincronización completa"
+        visible={modal === 'syncDone'}
+        description="Los datos se actualizaron desde la API."
       />
       <ConfirmModal
         description="Esto regresara las preferencias de alertas y sincronizacion a su estado recomendado."

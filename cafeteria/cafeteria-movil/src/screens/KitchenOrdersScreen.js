@@ -1,4 +1,4 @@
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useState } from 'react';
 
 import AppHeader from '../components/AppHeader';
@@ -10,41 +10,29 @@ import ScreenBackground from '../components/ScreenBackground';
 import SectionTitle from '../components/SectionTitle';
 import StatCard from '../components/StatCard';
 import SummaryCard from '../components/SummaryCard';
-import { kitchenOrders } from '../data/appData';
-
-const fallbackOrders = kitchenOrders.map((order, index) => ({
-  ...order,
-  amount: index === 0 ? '$180.00' : '$205.00',
-  kitchenStage: order.statusType === 'progress' ? 'preparing' : 'queue',
-  notes: 'Sin observaciones.',
-  products: order.detail.replace(' · ', ': '),
-  table: order.detail.split(' · ')[0],
-}));
 
 export default function KitchenOrdersScreen({
   customerOrders = [],
   goBack,
   isDarkMode,
+  markOrderReady,
+  prepareOrder,
+  reportKitchenDelay,
   setIsDarkMode,
   theme,
   navigate,
   recordEvent,
-  updateCustomerOrder,
 }) {
-  const [localOrders, setLocalOrders] = useState(fallbackOrders);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [decision, setDecision] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [delayTarget, setDelayTarget] = useState(null);
   const [delayNote, setDelayNote] = useState('');
-  const [movements, setMovements] = useState([
-    { icon: '✅', text: 'Pedido #14 marcado como listo' },
-    { icon: '🔥', text: 'Pedido #16 continúa en preparación' },
-  ]);
+  const [movements, setMovements] = useState([]);
 
-  const liveOrders = customerOrders
-    .filter((order) => order.cashierStatus === 'paid' && ['kitchen', 'ready'].includes(order.statusType))
+  const orders = customerOrders
+    .filter((order) => ['pending', 'kitchen', 'ready'].includes(order.statusType))
     .map(normalizeOrder);
-  const orders = liveOrders.length ? liveOrders : localOrders;
   const queueCount = orders.filter((order) => order.kitchenStage === 'queue').length;
   const preparingCount = orders.filter((order) => order.kitchenStage === 'preparing').length;
   const readyCount = orders.filter((order) => order.kitchenStage === 'ready' || order.statusType === 'ready').length;
@@ -55,101 +43,90 @@ export default function KitchenOrdersScreen({
     { icon: '✅', value: String(readyCount), label: 'Listos' },
   ];
 
-  const updateKitchenOrder = (orderId, updater) => {
-    if (updateCustomerOrder && customerOrders.some((order) => order.id === orderId)) {
-      updateCustomerOrder(orderId, updater);
-      return;
-    }
-
-    setLocalOrders((currentOrders) => currentOrders.map((order) => (order.id === orderId ? updater(order) : order)));
-  };
-
-  const confirmDecision = () => {
+  const confirmDecision = async () => {
     if (!decision) {
       return;
     }
 
-    if (decision.type === 'prepare') {
-      updateKitchenOrder(decision.order.id, (order) => ({
-        ...order,
-        kitchenStage: 'preparing',
-        status: 'En preparación',
-        statusType: 'kitchen',
-        stepsDone: Math.max(order.stepsDone || 2, 2),
-      }));
-      setMovements((currentMovements) => [
-        { icon: '🔥', text: `${decision.order.id} pasó a preparación.` },
-        ...currentMovements,
-      ]);
-      recordEvent?.({
-        detail: `${decision.order.id} pasó a preparación en cocina.`,
-        icon: '🔥',
-        module: 'Cocina',
-        severity: 'info',
-        title: 'Pedido en preparación',
-        type: 'activity',
-      });
-    }
+    try {
+      setIsSubmitting(true);
 
-    if (decision.type === 'ready') {
-      updateKitchenOrder(decision.order.id, (order) => ({
-        ...order,
-        action: 'Entregar',
-        actionType: 'deliver',
-        kitchenStage: 'ready',
-        status: 'Listo',
-        statusType: 'ready',
-        stepsDone: 3,
-      }));
-      setMovements((currentMovements) => [
-        { icon: '✅', text: `${decision.order.id} marcado como listo.` },
-        ...currentMovements,
-      ]);
-      recordEvent?.({
-        detail: `${decision.order.id} quedó listo para entregar al cliente.`,
-        icon: '✅',
-        module: 'Cocina',
-        severity: 'success',
-        title: 'Pedido listo',
-        type: 'notification',
-      });
-    }
+      if (decision.type === 'prepare') {
+        await prepareOrder?.(decision.order.apiId ?? decision.order.id);
+        setMovements((currentMovements) => [
+          { icon: '🔥', text: `${decision.order.id} pasó a preparación.` },
+          ...currentMovements,
+        ]);
+        recordEvent?.({
+          detail: `${decision.order.id} pasó a preparación en cocina.`,
+          icon: '🔥',
+          module: 'Cocina',
+          severity: 'info',
+          title: 'Pedido en preparación',
+          type: 'activity',
+        });
+      }
 
-    setDecision(null);
+      if (decision.type === 'ready') {
+        await markOrderReady?.(decision.order.apiId ?? decision.order.id);
+        setMovements((currentMovements) => [
+          { icon: '✅', text: `${decision.order.id} marcado como listo.` },
+          ...currentMovements,
+        ]);
+        recordEvent?.({
+          detail: `${decision.order.id} quedó listo para cobrar en caja.`,
+          icon: '✅',
+          module: 'Cocina',
+          severity: 'success',
+          title: 'Pedido listo',
+          type: 'notification',
+        });
+      }
+
+      setDecision(null);
+    } catch (error) {
+      Alert.alert(
+        'No se pudo actualizar el pedido',
+        error?.userMessage || error?.message || 'Revisa la conexión con la API e inténtalo de nuevo.',
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const saveDelayNote = () => {
+  const saveDelayNote = async () => {
     const cleanNote = delayNote.trim();
 
     if (!delayTarget || !cleanNote) {
       return;
     }
 
-    updateKitchenOrder(delayTarget.id, (order) => ({
-      ...order,
-      hasKitchenNotice: true,
-      kitchenNote: cleanNote,
-      notes: `${order.notes || 'Sin observaciones.'}\nCocina: ${cleanNote}`.trim(),
-      waiterNotice: {
-        createdAt: 'Ahora',
-        message: cleanNote,
-        type: 'delay',
-      },
-    }));
-    setMovements((currentMovements) => [
-      { icon: '⚠️', text: `${delayTarget.id}: ${cleanNote}` },
-      ...currentMovements,
-    ]);
-    recordEvent?.({
-      detail: `${delayTarget.id}: ${cleanNote}`,
-      icon: '⏳',
-      module: 'Cocina',
-      severity: 'warning',
-      title: 'Demora reportada',
-      type: 'notification',
-    });
-    setDelayTarget(null);
-    setDelayNote('');
+    try {
+      setIsSubmitting(true);
+      const updated = await reportKitchenDelay?.(delayTarget.apiId ?? delayTarget.id, cleanNote);
+      if (!updated) return;
+      setMovements((currentMovements) => [
+        { icon: '⚠️', text: `${delayTarget.id}: ${cleanNote}` },
+        ...currentMovements,
+      ]);
+      recordEvent?.({
+        detail: `${delayTarget.id}: ${cleanNote}`,
+        icon: '⏳',
+        module: 'Cocina',
+        severity: 'warning',
+        title: 'Demora reportada',
+        type: 'notification',
+      });
+      setDelayTarget(null);
+      setDelayNote('');
+    } catch (error) {
+      Alert.alert(
+        'No se pudo reportar la demora',
+        error?.userMessage || error?.message || 'Revisa la conexión con la API e inténtalo de nuevo.',
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -254,12 +231,14 @@ export default function KitchenOrdersScreen({
       <KitchenDecisionModal
         decision={decision}
         isDarkMode={isDarkMode}
+        isSubmitting={isSubmitting}
         onCancel={() => setDecision(null)}
         onConfirm={confirmDecision}
         theme={theme}
       />
       <DelayNoteSheet
         isDarkMode={isDarkMode}
+        isSubmitting={isSubmitting}
         note={delayNote}
         onCancel={() => {
           setDelayTarget(null);
@@ -477,7 +456,7 @@ function OrderDetailModal({ isDarkMode, onClose, order, theme }) {
   );
 }
 
-function KitchenDecisionModal({ decision, isDarkMode, onCancel, onConfirm, theme }) {
+function KitchenDecisionModal({ decision, isDarkMode, isSubmitting = false, onCancel, onConfirm, theme }) {
   const isPrepare = decision?.type === 'prepare';
 
   return (
@@ -490,7 +469,7 @@ function KitchenDecisionModal({ decision, isDarkMode, onCancel, onConfirm, theme
           <Text selectable style={[styles.modalCopy, { color: theme.muted }]}>
             {isPrepare
               ? `¿Tomar ${decision?.order.id} y pasarlo a preparación?`
-              : `¿Confirmar que ${decision?.order.id} está listo para entregar?`}
+              : `¿Confirmar que ${decision?.order.id} está listo para pasar a caja?`}
           </Text>
           <View style={styles.modalActions}>
             <Pressable
@@ -506,16 +485,17 @@ function KitchenDecisionModal({ decision, isDarkMode, onCancel, onConfirm, theme
               <Text style={[styles.modalSecondaryText, { color: theme.title }]}>Cancelar</Text>
             </Pressable>
             <Pressable
+              disabled={isSubmitting}
               onPress={onConfirm}
               style={({ pressed }) => [
                 styles.modalPrimary,
                 {
                   backgroundColor: isPrepare ? theme.accent : '#16a34a',
-                  opacity: pressed ? 0.86 : 1,
+                  opacity: isSubmitting ? 0.6 : pressed ? 0.86 : 1,
                 },
               ]}
             >
-              <Text style={styles.modalPrimaryText}>Confirmar</Text>
+              <Text style={styles.modalPrimaryText}>{isSubmitting ? 'Guardando…' : 'Confirmar'}</Text>
             </Pressable>
           </View>
         </View>
@@ -524,7 +504,7 @@ function KitchenDecisionModal({ decision, isDarkMode, onCancel, onConfirm, theme
   );
 }
 
-function DelayNoteSheet({ isDarkMode, note, onCancel, onChange, onSave, order, theme }) {
+function DelayNoteSheet({ isDarkMode, isSubmitting, note, onCancel, onChange, onSave, order, theme }) {
   return (
     <Modal animationType="slide" onRequestClose={onCancel} transparent visible={Boolean(order)}>
       <View style={styles.sheetOverlay}>
@@ -568,16 +548,17 @@ function DelayNoteSheet({ isDarkMode, note, onCancel, onChange, onSave, order, t
               <Text style={[styles.modalSecondaryText, { color: theme.title }]}>Cancelar</Text>
             </Pressable>
             <Pressable
+              disabled={isSubmitting || !note.trim()}
               onPress={onSave}
               style={({ pressed }) => [
                 styles.modalPrimary,
                 {
                   backgroundColor: theme.accent,
-                  opacity: pressed ? 0.86 : 1,
+                  opacity: isSubmitting || !note.trim() ? 0.5 : pressed ? 0.86 : 1,
                 },
               ]}
             >
-              <Text style={styles.modalPrimaryText}>Guardar nota</Text>
+              <Text style={styles.modalPrimaryText}>{isSubmitting ? 'Guardando…' : 'Guardar nota'}</Text>
             </Pressable>
           </View>
         </View>

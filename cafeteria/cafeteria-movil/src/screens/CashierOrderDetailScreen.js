@@ -1,4 +1,4 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useState } from 'react';
 
 import AppHeader from '../components/AppHeader';
@@ -11,6 +11,9 @@ import SummaryCard from '../components/SummaryCard';
 const paymentOptions = ['Efectivo', 'Tarjeta', 'Transferencia'];
 
 export default function CashierOrderDetailScreen({
+  cancelOrder,
+  canCancelOrders = false,
+  chargeOrder,
   customerOrders,
   goBack,
   isDarkMode,
@@ -18,14 +21,16 @@ export default function CashierOrderDetailScreen({
   setIsDarkMode,
   theme,
   navigate,
-  updateCustomerOrder,
 }) {
   const selectedOrder =
     customerOrders.find((order) => order.id === selectedCashierOrderId) ||
-    customerOrders.find((order) => order.statusType === 'pending') ||
+    customerOrders.find((order) => order.statusType === 'ready') ||
     customerOrders[0];
   const [paymentMethod, setPaymentMethod] = useState(selectedOrder?.paymentMethod || 'Efectivo');
+  const [amountReceived, setAmountReceived] = useState('');
+  const [paymentReference, setPaymentReference] = useState('');
   const [decision, setDecision] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!selectedOrder) {
     return (
@@ -56,45 +61,46 @@ export default function CashierOrderDetailScreen({
   const subtotal = selectedOrder.subtotal ?? getNumericTotal(selectedOrder) / 1.16;
   const tax = selectedOrder.tax ?? getNumericTotal(selectedOrder) - subtotal;
   const total = selectedOrder.total ?? getNumericTotal(selectedOrder);
-  const isPending = selectedOrder.statusType === 'pending';
+  const isPending = selectedOrder.statusType === 'ready';
   const isCancelled = selectedOrder.statusType === 'cancelled';
+  const receivedValue = Number(amountReceived || 0);
+  const change = paymentMethod === 'Efectivo' && receivedValue >= total ? receivedValue - total : 0;
 
-  const confirmDecision = () => {
+  const confirmDecision = async () => {
     if (decision === 'print') {
       setDecision(null);
       return;
     }
 
-    if (decision === 'send') {
-      updateCustomerOrder(selectedOrder.id, (order) => ({
-        ...order,
-        action: 'Ver detalle',
-        actionType: 'detail',
-        cashierStatus: 'paid',
-        paidAt: 'Hoy',
-        paymentMethod,
-        status: 'En cocina',
-        statusType: 'kitchen',
-        stepsDone: Math.max(order.stepsDone || 1, 2),
-      }));
-      setDecision(null);
-      navigate('cashierOrders');
+    if (decision === 'send' && paymentMethod === 'Efectivo' && receivedValue < total) {
+      Alert.alert('Monto insuficiente', `Ingresa al menos ${formatCurrency(total)} para completar el cobro.`);
       return;
     }
 
-    if (decision === 'cancel') {
-      updateCustomerOrder(selectedOrder.id, (order) => ({
-        ...order,
-        action: 'Detalle',
-        actionType: 'detail',
-        cashierStatus: 'cancelled',
-        paymentMethod: null,
-        status: 'Cancelado',
-        statusType: 'cancelled',
-        stepsDone: 1,
-      }));
+    try {
+      setIsSubmitting(true);
+
+      if (decision === 'send') {
+        await chargeOrder?.(selectedOrder.apiId ?? selectedOrder.id, {
+          amountReceived: paymentMethod === 'Efectivo' ? receivedValue : total,
+          paymentMethod,
+          reference: paymentReference.trim() || undefined,
+        });
+      }
+
+      if (decision === 'cancel') {
+        await cancelOrder?.(selectedOrder.apiId ?? selectedOrder.id);
+      }
+
       setDecision(null);
       navigate('cashierOrders');
+    } catch (error) {
+      Alert.alert(
+        decision === 'send' ? 'No se pudo cobrar el pedido' : 'No se pudo cancelar el pedido',
+        error?.userMessage || error?.message || 'Revisa la conexión con la API e inténtalo de nuevo.',
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -113,7 +119,7 @@ export default function CashierOrderDetailScreen({
         <AppHeader
           eyebrow="Caja"
           title="Detalle pedido"
-          subtitle="Ticket, pago y envío a cocina"
+          subtitle="Ticket y cobro del pedido listo"
           icon="🧾"
           isDarkMode={isDarkMode}
           theme={theme}
@@ -146,7 +152,7 @@ export default function CashierOrderDetailScreen({
                 Información del pedido
               </Text>
               <Text selectable style={[styles.ticketSubtitle, { color: theme.muted }]}>
-                Resumen completo antes de enviar a cocina
+                Resumen completo antes de cobrar
               </Text>
             </View>
             <StatusBadge isDarkMode={isDarkMode} order={selectedOrder} theme={theme} />
@@ -154,7 +160,7 @@ export default function CashierOrderDetailScreen({
 
           <View style={[styles.customerBox, { backgroundColor: theme.actionSoft }]}>
             <InfoBlock label="Cliente / Mesa" value={selectedOrder.table || selectedOrder.detail.split(' · ')[0]} theme={theme} />
-            <InfoBlock label="Atendió" value={selectedOrder.servedBy || 'Mesero Fer'} theme={theme} />
+            <InfoBlock label="Atendió" value={selectedOrder.servedBy || 'Mesero'} theme={theme} />
           </View>
 
           <Text selectable style={[styles.productsTitle, { color: theme.title }]}>
@@ -227,12 +233,38 @@ export default function CashierOrderDetailScreen({
                 );
               })}
             </View>
+            {isPending && paymentMethod === 'Efectivo' ? (
+              <View style={styles.paymentInputGroup}>
+                <Text selectable style={[styles.label, { color: theme.muted }]}>Monto recibido</Text>
+                <TextInput
+                  keyboardType="decimal-pad"
+                  onChangeText={setAmountReceived}
+                  placeholder={formatCurrency(total)}
+                  placeholderTextColor={theme.muted}
+                  style={[styles.paymentInput, { backgroundColor: theme.actionSoft, borderColor: theme.surfaceBorder, color: theme.title }]}
+                  value={amountReceived}
+                />
+                <Text selectable style={[styles.changeText, { color: theme.amber }]}>Cambio: {formatCurrency(change)}</Text>
+              </View>
+            ) : null}
+            {isPending && paymentMethod !== 'Efectivo' ? (
+              <View style={styles.paymentInputGroup}>
+                <Text selectable style={[styles.label, { color: theme.muted }]}>Referencia (opcional)</Text>
+                <TextInput
+                  onChangeText={setPaymentReference}
+                  placeholder="Folio o referencia"
+                  placeholderTextColor={theme.muted}
+                  style={[styles.paymentInput, { backgroundColor: theme.actionSoft, borderColor: theme.surfaceBorder, color: theme.title }]}
+                  value={paymentReference}
+                />
+              </View>
+            ) : null}
           </View>
         </View>
 
         <View style={styles.actionButtons}>
           <Pressable onPress={() => setDecision('print')} style={[styles.actionButton, styles.printButton]}>
-            <Text style={styles.printText}>Imprimir</Text>
+            <Text style={styles.printText}>Ver ticket</Text>
           </Pressable>
           <Pressable
             disabled={!isPending}
@@ -245,11 +277,11 @@ export default function CashierOrderDetailScreen({
               },
             ]}
           >
-            <Text style={styles.sendText}>{isPending ? 'Confirmar y enviar' : 'Ya procesado'}</Text>
+            <Text style={styles.sendText}>{isPending ? 'Confirmar cobro' : 'Ya procesado'}</Text>
           </Pressable>
         </View>
 
-        {isPending && (
+        {isPending && canCancelOrders && (
           <Pressable onPress={() => setDecision('cancel')} style={[styles.cancelFullButton, { backgroundColor: '#dc2626' }]}>
             <Text style={styles.cancelFullText}>Cancelar pedido</Text>
           </Pressable>
@@ -266,7 +298,7 @@ export default function CashierOrderDetailScreen({
         >
           <AppIcon color={isCancelled ? '#ef4444' : theme.amber} name={isCancelled ? 'close-circle' : 'warning'} size={20} />
           <Text selectable style={[styles.alertText, { color: isCancelled ? '#991b1b' : theme.title }]}>
-            {isCancelled ? 'Este pedido fue cancelado por caja' : 'Pendiente el tema de facturas'}
+            {isCancelled ? 'Este pedido fue cancelado' : isPending ? 'El pedido está listo para cobrar' : 'El pedido ya fue procesado'}
           </Text>
         </View>
       </View>
@@ -274,6 +306,7 @@ export default function CashierOrderDetailScreen({
       <DecisionModal
         decision={decision}
         isDarkMode={isDarkMode}
+        isSubmitting={isSubmitting}
         onCancel={() => setDecision(null)}
         onConfirm={confirmDecision}
         order={selectedOrder}
@@ -362,17 +395,17 @@ function TotalRow({ final = false, isDarkMode, label, theme, value }) {
   );
 }
 
-function DecisionModal({ decision, isDarkMode, onCancel, onConfirm, order, paymentMethod, theme }) {
+function DecisionModal({ decision, isDarkMode, isSubmitting = false, onCancel, onConfirm, order, paymentMethod, theme }) {
   const isPrintDecision = decision === 'print';
   const copy = {
     cancel: `¿Seguro que deseas cancelar ${order?.id}? Este cambio se reflejará en Cliente/Mesero.`,
-    print: `El ticket de ${order?.id} quedará listo para impresión.`,
-    send: `¿Confirmar pago en ${paymentMethod} y enviar ${order?.id} a cocina?`,
+    print: `Vista previa del ticket de ${order?.id}.`,
+    send: `¿Confirmar el cobro de ${order?.id} con ${paymentMethod}?`,
   };
   const title = {
     cancel: 'Cancelar pedido',
-    print: 'Imprimir ticket',
-    send: 'Confirmar pedido',
+    print: 'Vista del ticket',
+    send: 'Confirmar cobro',
   };
 
   return (
@@ -395,7 +428,7 @@ function DecisionModal({ decision, isDarkMode, onCancel, onConfirm, order, payme
           <Text selectable style={[styles.modalCopy, { color: theme.muted }]}>
             {copy[decision]}
           </Text>
-          {isPrintDecision && <TicketPreview isDarkMode={isDarkMode} order={order} paymentMethod={paymentMethod} />}
+          {isPrintDecision && <TicketPreview isDarkMode={isDarkMode} order={order} paymentMethod={paymentMethod} theme={theme} />}
           <View style={styles.modalActions}>
             <Pressable
               onPress={onCancel}
@@ -410,16 +443,17 @@ function DecisionModal({ decision, isDarkMode, onCancel, onConfirm, order, payme
               <Text style={[styles.modalSecondaryText, { color: theme.title }]}>Volver</Text>
             </Pressable>
             <Pressable
+              disabled={isSubmitting}
               onPress={onConfirm}
               style={({ pressed }) => [
                 styles.modalPrimary,
                 {
                   backgroundColor: decision === 'cancel' ? '#dc2626' : decision === 'print' ? '#16a34a' : theme.accent,
-                  opacity: pressed ? 0.86 : 1,
+                  opacity: isSubmitting ? 0.6 : pressed ? 0.86 : 1,
                 },
               ]}
             >
-              <Text style={styles.modalPrimaryText}>Confirmar</Text>
+              <Text style={styles.modalPrimaryText}>{isSubmitting ? 'Procesando…' : 'Confirmar'}</Text>
             </Pressable>
           </View>
         </View>
@@ -428,7 +462,7 @@ function DecisionModal({ decision, isDarkMode, onCancel, onConfirm, order, payme
   );
 }
 
-function TicketPreview({ isDarkMode, order, paymentMethod }) {
+function TicketPreview({ isDarkMode, order, paymentMethod, theme }) {
   const productItems = getProductItems(order);
   const subtotal = order?.subtotal ?? getNumericTotal(order) / 1.16;
   const tax = order?.tax ?? getNumericTotal(order) - subtotal;
@@ -462,7 +496,7 @@ function TicketPreview({ isDarkMode, order, paymentMethod }) {
       <View style={styles.receiptMetaGrid}>
         <ReceiptMeta label="Folio" value={order?.id || 'Pedido'} />
         <ReceiptMeta label="Mesa" value={table} />
-        <ReceiptMeta label="Atendio" value={order?.servedBy || 'Mesero Fer'} />
+        <ReceiptMeta label="Atendió" value={order?.servedBy || 'Mesero'} />
         <ReceiptMeta label="Pago" value={paymentMethod} />
       </View>
 
@@ -495,7 +529,7 @@ function TicketPreview({ isDarkMode, order, paymentMethod }) {
           Gracias por tu compra
         </Text>
         <Text selectable style={styles.receiptMuted}>
-          Facturacion pendiente de configurar
+          Comprobante generado por Cafetería
         </Text>
       </View>
     </View>
@@ -684,6 +718,22 @@ const styles = StyleSheet.create({
   paymentText: {
     fontSize: 9,
     fontWeight: '800',
+  },
+  paymentInputGroup: {
+    gap: 6,
+    marginTop: 10,
+  },
+  paymentInput: {
+    borderRadius: 12,
+    borderWidth: 1,
+    fontSize: 13,
+    minHeight: 42,
+    paddingHorizontal: 12,
+  },
+  changeText: {
+    fontSize: 12,
+    fontWeight: '900',
+    textAlign: 'right',
   },
   actionButtons: {
     flexDirection: 'row',
