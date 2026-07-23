@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/icons.css') }}">
   <title>CoffeeAdmin - Gestión de Usuarios</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/usuarios.css') }}">
@@ -506,16 +508,28 @@
       border: 1px solid rgba(212, 165, 116, 0.2);
     }
 
-    .badge-role.admin {
+    .badge-role.administrador {
       background: rgba(198, 40, 40, 0.1);
       color: var(--danger);
       border-color: rgba(198, 40, 40, 0.2);
     }
 
-    .badge-role.barista {
+    .badge-role.mesero {
       background: rgba(46, 125, 50, 0.1);
       color: var(--success);
       border-color: rgba(46, 125, 50, 0.2);
+    }
+
+    .badge-role.cocina {
+      background: rgba(239, 108, 0, 0.1);
+      color: #EF6C00;
+      border-color: rgba(239, 108, 0, 0.2);
+    }
+
+    .badge-role.caja {
+      background: rgba(21, 101, 192, 0.1);
+      color: #1565C0;
+      border-color: rgba(21, 101, 192, 0.2);
     }
 
     /* Badge de estado */
@@ -975,7 +989,7 @@
       <div class="user-profile-badge">
               <a href="{{ url_for('logout') }}" class="btn-logout">
                   <button type="button" class="btn-logout-btn">
-                      🚪 Cerrar sesión
+                      <i class="bi bi-box-arrow-right ui-icon" aria-hidden="true"></i> Cerrar sesión
                   </button>
               </a>
         <span>
@@ -991,13 +1005,13 @@
     <main class="content-body">
       
       <div class="page-title">
-        <h2>👥 Gestión de Usuarios</h2>
+        <h2><i class="bi bi-people ui-icon" aria-hidden="true"></i> Gestión de Usuarios</h2>
       </div>
 
       <!-- Tarjetas de Métricas -->
       <section class="metrics-row">
         <div class="metric-card">
-          <div class="metric-icon">👤</div>
+          <div class="metric-icon"><i class="bi bi-person ui-icon" aria-hidden="true"></i></div>
           <span>Total Usuarios</span>
           <p class="metric-value">{{ usuarios|length }}</p>
         </div>
@@ -1006,9 +1020,9 @@
       <!-- Panel de Usuarios -->
       <section class="panel-card">
         <div class="panel-header">
-          <h3 class="panel-title">📋 Usuarios Registrados</h3>
+          <h3 class="panel-title"><i class="bi bi-clipboard2-data ui-icon" aria-hidden="true"></i> Usuarios Registrados</h3>
           <button class="btn-primary" type="button" onclick="toggleForm()">
-            ➕ Nuevo Usuario
+            <i class="bi bi-plus-lg ui-icon" aria-hidden="true"></i> Nuevo Usuario
           </button>
         </div>
 
@@ -1016,17 +1030,17 @@
         <div class="user-form-card" id="formUsuario">
           {% if error %}
             <div class="alert-error">
-              ⚠️ {{ error }}
+              <i class="bi bi-exclamation-triangle ui-icon" aria-hidden="true"></i> {{ error }}
             </div>
           {% endif %}
           
           {% if success %}
             <div class="alert-success">
-              ✅ {{ success }}
+              <i class="bi bi-check-circle ui-icon" aria-hidden="true"></i> {{ success }}
             </div>
           {% endif %}
 
-          <h3>📝 Registrar Nuevo Usuario</h3>
+          <h3><i class="bi bi-pencil-square ui-icon" aria-hidden="true"></i> Registrar Nuevo Usuario</h3>
 
           <form method="POST" action="{{ url_for('usuarios') }}" id="usuarioForm" onsubmit="return validateForm()">
             <div class="form-group full-width">
@@ -1041,19 +1055,22 @@
 
             <div class="form-group">
               <label>Contraseña <span class="required">*</span></label>
-              <input type="password" name="password" placeholder="Mínimo 6 caracteres" required minlength="6">
+              <input type="password" name="password" placeholder="Mínimo 8 caracteres" required minlength="8">
             </div>
 
             <div class="form-group">
               <label>Rol <span class="required">*</span></label>
               <select name="id_rol" required>
                 <option value="">Seleccionar rol</option>
-                <option value="1">👑 Administrador</option>
-                <option value="2">☕ Barista</option>
+                {% for rol_opcion in roles %}
+                  <option value="{{ rol_opcion.id_rol }}">{{ rol_opcion.etiqueta }}</option>
+                {% else %}
+                  <option value="" disabled>No se pudieron cargar los roles</option>
+                {% endfor %}
               </select>
             </div>
 
-            <button type="submit">💾 Guardar Usuario</button>
+            <button type="submit"><i class="bi bi-floppy ui-icon" aria-hidden="true"></i> Guardar Usuario</button>
           </form>
         </div>
 
@@ -1078,21 +1095,18 @@
                       </div>
                     </td>
                     <td>
-                      <span class="badge-role {% if u.id_rol == 1 %}admin{% else %}barista{% endif %}">
-                        {% if u.id_rol == 1 %}
-                          👑 Administrador
-                        {% else %}
-                          ☕ Barista
-                        {% endif %}
+                      {% set rol_usuario = roles_por_id.get(u.id_rol) %}
+                      <span class="badge-role {{ rol_usuario.css_class if rol_usuario else '' }}">
+                        {{ rol_usuario.etiqueta if rol_usuario else 'Rol desconocido' }}
                       </span>
                     </td>
                     <td>
                       <div class="action-buttons">
                         <a href="{{ url_for('editar_usuario', id=u.id_usuario) }}" class="btn-action-icon edit">
-                          ✏️ Editar
+                          <i class="bi bi-pencil ui-icon" aria-hidden="true"></i> Editar
                         </a>
                         <a href="{{ url_for('eliminar_usuario', id=u.id_usuario) }}" class="btn-action-icon delete" onclick="return confirm('¿Estás seguro de eliminar al usuario "{{ u.nombre_completo }}"?')">
-                          🗑️ Eliminar
+                          <i class="bi bi-trash3 ui-icon" aria-hidden="true"></i> Eliminar
                         </a>
                       </div>
                     </td>
@@ -1102,7 +1116,7 @@
                 <tr>
                   <td colspan="5">
                     <div class="empty-state">
-                      <div class="empty-icon">📭</div>
+                      <div class="empty-icon"><i class="bi bi-inbox ui-icon" aria-hidden="true"></i></div>
                       <p>No hay usuarios registrados</p>
                       <p class="empty-sub">Haz clic en "Nuevo Usuario" para agregar el primero</p>
                     </div>
@@ -1126,7 +1140,7 @@
       form.classList.toggle('active');
       
       if (form.classList.contains('active')) {
-        btn.innerHTML = '✕ Cerrar Formulario';
+        btn.innerHTML = '<i class="bi bi-x-lg ui-icon" aria-hidden="true"></i> Cerrar Formulario';
         btn.style.background = 'linear-gradient(135deg, #EF5350, #C62828)';
         setTimeout(() => {
           form.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1134,7 +1148,7 @@
           if (firstInput) firstInput.focus();
         }, 100);
       } else {
-        btn.innerHTML = '➕ Nuevo Usuario';
+        btn.innerHTML = '<i class="bi bi-plus-lg ui-icon" aria-hidden="true"></i> Nuevo Usuario';
         btn.style.background = '';
       }
     }
@@ -1165,7 +1179,7 @@
       }
 
       // Validar contraseña
-      if (!password.value.trim() || password.value.length < 6) {
+      if (!password.value.trim() || password.value.length < 8) {
         password.classList.add('error');
         isValid = false;
       } else {
@@ -1225,12 +1239,13 @@
         button.textContent = '⏳ Guardando...';
         setTimeout(() => {
           button.disabled = false;
-          button.textContent = '💾 Guardar Usuario';
+          button.innerHTML = '<i class="bi bi-floppy ui-icon" aria-hidden="true"></i> Guardar Usuario';
         }, 5000);
       }
     });
   </script>
 
   <script src="{{ url_for('static', filename='js/usuarios.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
 </body>
 </html>

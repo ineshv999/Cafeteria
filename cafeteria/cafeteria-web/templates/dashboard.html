@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/icons.css') }}">
   <title>CoffeeAdmin - Dashboard General</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -35,6 +37,18 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     body {
@@ -80,6 +94,8 @@
       font-size: 22px;
       font-weight: 700;
       letter-spacing: -0.5px;
+      white-space: nowrap;
+      transition: opacity 0.2s ease, width 0.3s ease;
     }
 
     .sidebar-menu {
@@ -116,6 +132,55 @@
       box-shadow: 0 0 20px rgba(212, 165, 116, 0.1);
     }
 
+    body.sidebar-collapsed aside {
+      width: 88px;
+      padding-right: 14px;
+      padding-left: 14px;
+    }
+
+    body.sidebar-collapsed .sidebar-logo {
+      justify-content: center;
+      gap: 0;
+    }
+
+    body.sidebar-collapsed .sidebar-logo h1 {
+      width: 0;
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    body.sidebar-collapsed .sidebar-item a {
+      justify-content: center;
+      gap: 0;
+      padding-right: 12px;
+      padding-left: 12px;
+      font-size: 0;
+    }
+
+    body.sidebar-collapsed .sidebar-item a:hover {
+      transform: translateY(-2px);
+    }
+
+    body.sidebar-collapsed .main-wrapper {
+      margin-left: 88px;
+    }
+
+    .sidebar-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      visibility: hidden;
+      background: rgba(45, 27, 15, 0.42);
+      opacity: 0;
+      backdrop-filter: blur(2px);
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .sidebar-backdrop.active {
+      visibility: visible;
+      opacity: 1;
+    }
+
     .sidebar-item a svg {
       width: 20px;
       height: 20px;
@@ -127,6 +192,7 @@
       margin-left: 280px;
       min-height: 100vh;
       padding: 0;
+      transition: margin-left 0.3s ease;
     }
 
     /* Header Mejorado */
@@ -311,9 +377,260 @@
     /* Charts Grid Mejorado */
     .charts-grid {
       display: grid;
-      grid-template-columns: 2fr 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 24px;
       margin-top: 8px;
+    }
+
+    .stat-chart-card {
+      position: relative;
+      overflow: hidden;
+      cursor: zoom-in;
+      transform-origin: center;
+      will-change: transform;
+    }
+
+    .stat-chart-card:hover:not(.is-modal-open) {
+      z-index: 5;
+      transform: translateY(-5px) scale(1.04);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .stat-chart-card.is-modal-open {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      z-index: 2001;
+      width: min(960px, calc(100vw - 48px));
+      max-height: calc(100vh - 48px);
+      overflow-y: auto;
+      cursor: default;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 24px 70px rgba(45, 27, 15, 0.3);
+      animation: chartModalIn 0.25s ease both;
+    }
+
+    .stat-chart-card.is-modal-open .chart-canvas,
+    .stat-chart-card.is-modal-open .chart-empty-state {
+      height: 360px;
+    }
+
+    .chart-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      visibility: hidden;
+      background: rgba(45, 27, 15, 0.58);
+      opacity: 0;
+      backdrop-filter: blur(4px);
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+
+    .chart-modal-backdrop.is-visible {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    body.chart-modal-open {
+      overflow: hidden;
+    }
+
+    .chart-modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 3;
+      width: 34px;
+      height: 34px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 50%;
+      background: var(--bg-light);
+      color: var(--text-secondary);
+      font-size: 17px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .chart-modal-close:hover {
+      background: #FFEBEE;
+      color: var(--danger);
+      transform: rotate(90deg);
+    }
+
+    .stat-chart-card.is-modal-open .chart-modal-close {
+      display: inline-flex;
+    }
+
+    .stat-chart-card.is-modal-open .chart-header {
+      padding-right: 38px;
+    }
+
+    @keyframes chartModalIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -47%) scale(0.94);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    .stat-chart-card::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      height: 4px;
+      background: var(--chart-color);
+    }
+
+    .stat-chart-card.expenses {
+      --chart-color: var(--danger);
+    }
+
+    .stat-chart-card.profits {
+      --chart-color: var(--success);
+    }
+
+    .stat-chart-card.products {
+      --chart-color: var(--info);
+    }
+
+    .chart-heading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chart-heading-icon {
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      color: var(--chart-color);
+      background: color-mix(in srgb, var(--chart-color) 12%, white);
+      font-size: 18px;
+    }
+
+    .chart-heading h3 {
+      margin: 0;
+    }
+
+    .chart-heading p {
+      margin: 2px 0 0;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .chart-period-filter {
+      min-width: 118px;
+      padding: 8px 32px 8px 12px;
+      border: 1px solid rgba(93, 64, 55, 0.18);
+      border-radius: 9px;
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .chart-period-filter:focus {
+      border-color: var(--success);
+      box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.12);
+    }
+
+    .chart-total {
+      margin: 8px 0 18px;
+      color: var(--text-primary);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+    }
+
+    .chart-canvas {
+      position: relative;
+      height: 170px;
+      transition: height 0.3s ease;
+    }
+
+    .products-chart-canvas {
+      min-height: 170px;
+      height: 170px;
+    }
+
+    .category-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 18px;
+    }
+
+    .category-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 10px;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 999px;
+      background: var(--bg-light);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .category-legend-color {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--category-color);
+    }
+
+    .chart-empty-state {
+      height: 170px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      border: 1px dashed rgba(198, 40, 40, 0.28);
+      border-radius: 12px;
+      background: rgba(198, 40, 40, 0.035);
+      color: var(--text-muted);
+      text-align: center;
+      transition: height 0.3s ease;
+    }
+
+    .chart-empty-state .ui-icon {
+      margin-bottom: 10px;
+      color: var(--danger);
+      font-size: 28px;
+    }
+
+    .chart-empty-state strong {
+      margin-bottom: 4px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .chart-empty-state span {
+      max-width: 230px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .chart-caption {
+      margin: 12px 0 0;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
     }
 
     .chart-card {
@@ -489,6 +806,29 @@
         transform: translateX(0);
       }
 
+      body.sidebar-collapsed aside {
+        width: 280px;
+        padding: 24px 20px;
+      }
+
+      body.sidebar-collapsed .sidebar-logo {
+        justify-content: flex-start;
+        gap: 12px;
+      }
+
+      body.sidebar-collapsed .sidebar-logo h1 {
+        width: auto;
+        overflow: visible;
+        opacity: 1;
+      }
+
+      body.sidebar-collapsed .sidebar-item a {
+        justify-content: flex-start;
+        gap: 14px;
+        padding: 12px 16px;
+        font-size: 14px;
+      }
+
       .main-wrapper {
         margin-left: 0;
       }
@@ -511,6 +851,30 @@
 
       .metric-value {
         font-size: 24px;
+      }
+
+      .chart-header {
+        align-items: flex-start;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .chart-period-filter {
+        width: 100%;
+      }
+
+      .stat-chart-card:hover:not(.is-modal-open) {
+        transform: translateY(-3px) scale(1.015);
+      }
+
+      .stat-chart-card.is-modal-open {
+        width: calc(100vw - 24px);
+        max-height: calc(100vh - 24px);
+      }
+
+      .stat-chart-card.is-modal-open .chart-canvas,
+      .stat-chart-card.is-modal-open .chart-empty-state {
+        height: 300px;
       }
 
       .bar-chart-mock {
@@ -721,7 +1085,7 @@
 <body>
 
   <!-- Sidebar Fijo Izquierdo -->
-  <aside>
+  <aside id="mainSidebar">
     <div class="sidebar-logo">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3" />
@@ -768,13 +1132,14 @@
       </li>
     </ul>
   </aside>
+  <div class="sidebar-backdrop" aria-hidden="true"></div>
 
   <!-- Envoltura derecha -->
   <div class="main-wrapper">
     
     <!-- Encabezado de control superior -->
     <header>
-      <button class="menu-toggle" onclick="document.querySelector('aside').classList.toggle('active')">
+      <button class="menu-toggle" type="button" aria-label="Mostrar u ocultar menú" aria-expanded="true" aria-controls="mainSidebar">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
@@ -783,7 +1148,7 @@
       <div class="user-profile-badge">
               <a href="{{ url_for('logout') }}" class="btn-logout">
                   <button type="button" class="btn-logout-btn">
-                      🚪 Cerrar sesión
+                      <i class="bi bi-box-arrow-right ui-icon" aria-hidden="true"></i> Cerrar sesión
                   </button>
               </a>
         <span>
@@ -799,159 +1164,205 @@
     <main class="content-body">
       
       <div class="page-title">
-        <h2>📊 Panel de Control General</h2>
+        <h2><i class="bi bi-bar-chart ui-icon" aria-hidden="true"></i> Panel de Control General</h2>
       </div>
 
       <!-- Tarjetas de Métricas Mejoradas -->
       <section class="metrics-row">
         <div class="metric-card">
-          <span>👥 Usuarios</span>
+          <span><i class="bi bi-people ui-icon" aria-hidden="true"></i> Usuarios</span>
           <p class="metric-value positive">{{ estadisticas.usuarios }}</p>
-          <div class="metric-icon">👤</div>
+          <div class="metric-icon"><i class="bi bi-person ui-icon" aria-hidden="true"></i></div>
         </div>
 
         <div class="metric-card">
-          <span>📦 Productos</span>
+          <span><i class="bi bi-box-seam ui-icon" aria-hidden="true"></i> Productos</span>
           <p class="metric-value">{{ estadisticas.productos }}</p>
-          <div class="metric-icon">📦</div>
+          <div class="metric-icon"><i class="bi bi-box-seam ui-icon" aria-hidden="true"></i></div>
         </div>
 
         <div class="metric-card">
-          <span>🏷️ Categorías</span>
+          <span><i class="bi bi-tag ui-icon" aria-hidden="true"></i> Categorías</span>
           <p class="metric-value">{{ estadisticas.categorias }}</p>
-          <div class="metric-icon">🏷️</div>
+          <div class="metric-icon"><i class="bi bi-tag ui-icon" aria-hidden="true"></i></div>
         </div>
 
         <div class="metric-card">
-          <span>⚠️ Stock Bajo</span>
+          <span><i class="bi bi-exclamation-triangle ui-icon" aria-hidden="true"></i> Stock Bajo</span>
           <p class="metric-value negative">{{ estadisticas.stock_bajo }}</p>
-          <div class="metric-icon">⚠️</div>
+          <div class="metric-icon"><i class="bi bi-exclamation-triangle ui-icon" aria-hidden="true"></i></div>
         </div>
 
         <div class="metric-card">
-          <span>💰 Ganancias</span>
+          <span><i class="bi bi-cash-stack ui-icon" aria-hidden="true"></i> Ganancias</span>
           <p class="metric-value positive">${{ "{:,.2f}".format(estadisticas.ganancias) }}</p>
-          <div class="metric-icon">💰</div>
+          <div class="metric-icon"><i class="bi bi-cash-stack ui-icon" aria-hidden="true"></i></div>
         </div>
 
         <div class="metric-card">
-          <span>📋 Pedidos</span>
+          <span><i class="bi bi-clipboard2-data ui-icon" aria-hidden="true"></i> Pedidos</span>
           <p class="metric-value">{{ estadisticas.ordenes }}</p>
-          <div class="metric-icon">📋</div>
+          <div class="metric-icon"><i class="bi bi-clipboard2-data ui-icon" aria-hidden="true"></i></div>
         </div>
 
         <div class="metric-card">
-          <span>🪑 Mesas Ocupadas</span>
+          <span><i class="bi bi-grid-3x3 ui-icon" aria-hidden="true"></i> Mesas Ocupadas</span>
           <p class="metric-value">{{ estadisticas.mesas_ocupadas }}</p>
-          <div class="metric-icon">🪑</div>
+          <div class="metric-icon"><i class="bi bi-grid-3x3 ui-icon" aria-hidden="true"></i></div>
         </div>
       </section>
 
-      <!-- Sección de Gráficas Mejorada -->
+      <!-- Gráficas principales -->
       <section class="charts-grid">
-        
-        <!-- Gráfica de Barras Mejorada -->
-        <div class="chart-card">
+
+        <article class="chart-card stat-chart-card expenses">
           <div class="chart-header">
-            <h3>📈 Análisis Financiero Semanal</h3>
-            <div class="chart-legend">
-              <div class="legend-item">
-                <span class="dot-ganancia"></span> Ganancias
-              </div>
-              <div class="legend-item">
-                <span class="dot-perdida"></span> Pérdidas
+            <div class="chart-heading">
+              <span class="chart-heading-icon">
+                <i class="bi bi-wallet2 ui-icon" aria-hidden="true"></i>
+              </span>
+              <div>
+                <h3>Gastos detallados</h3>
+                <p>Total registrado</p>
               </div>
             </div>
           </div>
-
-          <div class="bar-chart-mock">
-            <div class="bar-group">
-              <div class="bars-container">
-                <div class="bar ganancia" style="height: {{ (estadisticas.ganancias / 100) if estadisticas.ganancias > 0 else 5 }}%;"></div>
-                <div class="bar perdida" style="height: {{ (estadisticas.stock_bajo * 10) if estadisticas.stock_bajo > 0 else 5 }}%;"></div>
-              </div>
-              <span class="bar-label">Ventas</span>
+          <p class="chart-total">${{ "{:,.2f}".format(estadisticas.get("gastos", 0)) }}</p>
+          {% if estadisticas.get("gastos_detalle") %}
+            <div class="chart-canvas">
+              <canvas id="gastosChart" aria-label="Gráfica de gastos por categoría"></canvas>
             </div>
-
-            <div class="bar-group">
-              <div class="bars-container">
-                <div class="bar ganancia" style="height: {{ (estadisticas.ordenes * 15) if estadisticas.ordenes > 0 else 5 }}%;"></div>
-                <div class="bar perdida" style="height: {{ (estadisticas.mesas_ocupadas * 20) if estadisticas.mesas_ocupadas > 0 else 5 }}%;"></div>
-              </div>
-              <span class="bar-label">Pedidos</span>
+          {% else %}
+            <div class="chart-empty-state">
+              <i class="bi bi-receipt-cutoff ui-icon" aria-hidden="true"></i>
+              <strong>Sin gastos registrados</strong>
+              <span>Cuando la API registre gastos por categoría, aparecerán en esta gráfica.</span>
             </div>
+          {% endif %}
+        </article>
 
-            <div class="bar-group">
-              <div class="bars-container">
-                <div class="bar ganancia" style="height: {{ (estadisticas.productos * 10) if estadisticas.productos > 0 else 5 }}%;"></div>
-                <div class="bar perdida" style="height: {{ (estadisticas.categorias * 20) if estadisticas.categorias > 0 else 5 }}%;"></div>
-              </div>
-              <span class="bar-label">Inventario</span>
-            </div>
-
-            <div class="bar-group">
-              <div class="bars-container">
-                <div class="bar ganancia" style="height: {{ (estadisticas.usuarios * 20) if estadisticas.usuarios > 0 else 5 }}%;"></div>
-                <div class="bar perdida" style="height: {{ (estadisticas.stock_bajo * 15) if estadisticas.stock_bajo > 0 else 5 }}%;"></div>
-              </div>
-              <span class="bar-label">Usuarios</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Panel de Insumos Mejorado -->
-        <div class="chart-card">
+        <article class="chart-card stat-chart-card profits">
           <div class="chart-header">
-            <h3>📊 Merma e Insumos</h3>
-          </div>
-          <div class="breakdown-list">
-            {% for item in estadisticas.insumos %}
-              <div class="breakdown-item">
-                <div class="breakdown-item-info">
-                  <p>{{ item.producto }}</p>
-                  <span>{{ item.descripcion }}</span>
-                </div>
-                <span class="breakdown-amount {{ item.tipo }}">
-                  {% if item.tipo == "plus" %}
-                    +${{ item.monto }}
-                  {% else %}
-                    -${{ item.monto }}
-                  {% endif %}
-                </span>
+            <div class="chart-heading">
+              <span class="chart-heading-icon">
+                <i class="bi bi-graph-up-arrow ui-icon" aria-hidden="true"></i>
+              </span>
+              <div>
+                <h3>Ganancias</h3>
+                <p>Total acumulado</p>
               </div>
-            {% endfor %}
+            </div>
+            <label>
+              <span class="sr-only">Agrupar ganancias por periodo</span>
+              <select id="gananciasPeriodo" class="chart-period-filter">
+                <option value="day">Por día</option>
+                <option value="week">Por semana</option>
+                <option value="month">Por mes</option>
+              </select>
+            </label>
           </div>
-        </div>
+          <p id="gananciasTotal" class="chart-total">${{ "{:,.2f}".format(estadisticas.ganancias) }}</p>
+          <div class="chart-canvas">
+            <canvas id="gananciasChart" aria-label="Gráfica de ganancias"></canvas>
+          </div>
+        </article>
+
+        <article class="chart-card stat-chart-card products">
+          <div class="chart-header">
+            <div class="chart-heading">
+              <span class="chart-heading-icon">
+                <i class="bi bi-box-seam ui-icon" aria-hidden="true"></i>
+              </span>
+              <div>
+                <h3>Productos</h3>
+                <p>Stock disponible por producto y categoría</p>
+              </div>
+            </div>
+          </div>
+          <p class="chart-total">{{ estadisticas.productos }}</p>
+          <div id="productCategoryLegend" class="category-legend" aria-label="Categorías de productos"></div>
+          <div class="chart-canvas products-chart-canvas">
+            <canvas id="productosChart" aria-label="Gráfica de stock por producto y categoría"></canvas>
+          </div>
+          <p class="chart-caption">Top 5 de productos con mayor stock</p>
+        </article>
 
       </section>
 
     </main>
   </div>
 
+  <div id="chartModalBackdrop" class="chart-modal-backdrop" aria-hidden="true"></div>
+
   <script>
-    // Toggle sidebar en móvil
-    document.querySelector('.menu-toggle').addEventListener('click', function(e) {
-      e.stopPropagation();
-      document.querySelector('aside').classList.toggle('active');
+    const sidebar = document.getElementById('mainSidebar');
+    const sidebarToggle = document.querySelector('.menu-toggle');
+    const sidebarBackdrop = document.querySelector('.sidebar-backdrop');
+    const sidebarBreakpoint = 768;
+
+    sidebar.querySelectorAll('.sidebar-item a').forEach((link) => {
+      link.title = link.textContent.trim();
     });
 
-    // Cerrar sidebar al hacer clic fuera en móvil
+    const isMobileSidebar = () => window.innerWidth <= sidebarBreakpoint;
+
+    const closeMobileSidebar = () => {
+      sidebar.classList.remove('active');
+      sidebarBackdrop.classList.remove('active');
+      sidebarBackdrop.setAttribute('aria-hidden', 'true');
+      sidebarToggle.setAttribute('aria-expanded', 'false');
+    };
+
+    const applySavedSidebarState = () => {
+      if (isMobileSidebar()) {
+        document.body.classList.remove('sidebar-collapsed');
+        closeMobileSidebar();
+        return;
+      }
+
+      const collapsed = localStorage.getItem('coffeeadmin-sidebar-collapsed') === 'true';
+      document.body.classList.toggle('sidebar-collapsed', collapsed);
+      sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+    };
+
+    sidebarToggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+
+      if (isMobileSidebar()) {
+        const open = !sidebar.classList.contains('active');
+        sidebar.classList.toggle('active', open);
+        sidebarBackdrop.classList.toggle('active', open);
+        sidebarBackdrop.setAttribute('aria-hidden', String(!open));
+        sidebarToggle.setAttribute('aria-expanded', String(open));
+        return;
+      }
+
+      const collapsed = document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('coffeeadmin-sidebar-collapsed', String(collapsed));
+      sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+    });
+
+    sidebarBackdrop.addEventListener('click', closeMobileSidebar);
+
     document.addEventListener('click', function(e) {
-      const aside = document.querySelector('aside');
-      const toggle = document.querySelector('.menu-toggle');
-      if (window.innerWidth <= 768 && 
-          !aside.contains(e.target) && 
-          !toggle.contains(e.target) &&
-          aside.classList.contains('active')) {
-        aside.classList.remove('active');
+      if (isMobileSidebar() &&
+          !sidebar.contains(e.target) &&
+          !sidebarToggle.contains(e.target)) {
+        closeMobileSidebar();
       }
     });
 
+    window.addEventListener('resize', applySavedSidebarState);
+    applySavedSidebarState();
+
     // Datos para Chart.js (si se necesita en el futuro)
     const dashboardData = {{ estadisticas|tojson }};
+    const productosData = {{ productos_dashboard|tojson }};
+    const pedidosData = {{ pedidos_dashboard|tojson }};
     console.log('Dashboard Data:', dashboardData);
   </script>
 
   <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
 </body>
 </html>

@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/icons.css') }}">
   <title>CoffeeAdmin - Editar Usuario</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/usuarios.css') }}">
@@ -580,13 +582,13 @@
         <span class="separator">›</span>
         <span style="color: var(--text-primary); font-weight: 500;">Editar: {{ usuario_editar.nombre_completo }}</span>
       </div>
-      <h2>✏️ Editar Usuario</h2>
+      <h2><i class="bi bi-pencil ui-icon" aria-hidden="true"></i> Editar Usuario</h2>
     </div>
 
     <!-- Formulario -->
     <div class="form-container">
       <div class="form-title">
-        👤 Editar Usuario
+        <i class="bi bi-person ui-icon" aria-hidden="true"></i> Editar Usuario
         <span class="badge">ID: {{ usuario_editar.id_usuario }}</span>
       </div>
 
@@ -599,12 +601,8 @@
           <div class="name">{{ usuario_editar.nombre_completo }}</div>
           <div class="detail">
             {{ usuario_editar.email }}
-            <span class="badge-role">
-              {% if usuario_editar.id_rol == 1 %}
-                👑 Administrador
-              {% else %}
-                ☕ Barista
-              {% endif %}
+            <span class="badge-role {{ rol_usuario.css_class if rol_usuario else '' }}">
+              {{ rol_usuario.etiqueta if rol_usuario else 'Rol desconocido' }}
             </span>
           </div>
         </div>
@@ -643,15 +641,19 @@
           <div class="form-group">
             <label>Rol <span class="required">*</span></label>
             <select name="id_rol" required>
-              <option value="1" {% if usuario_editar.id_rol == 1 %}selected{% endif %}>
-                👑 Administrador
-              </option>
-              <option value="2" {% if usuario_editar.id_rol == 2 %}selected{% endif %}>
-                ☕ Barista
-              </option>
+              {% for rol_opcion in roles %}
+                <option
+                  value="{{ rol_opcion.id_rol }}"
+                  {% if usuario_editar.id_rol == rol_opcion.id_rol %}selected{% endif %}
+                >
+                  {{ rol_opcion.etiqueta }}
+                </option>
+              {% else %}
+                <option value="" disabled selected>No se pudieron cargar los roles</option>
+              {% endfor %}
             </select>
             <span class="help-text">
-              <span class="icon">ℹ️</span> El rol determina los permisos del usuario
+              <span class="icon"><i class="bi bi-info-circle ui-icon" aria-hidden="true"></i></span> El rol determina los permisos del usuario
             </span>
           </div>
 
@@ -660,14 +662,14 @@
             <label>Estado <span class="required">*</span></label>
             <select name="activo" required>
               <option value="true" {% if usuario_editar.activo %}selected{% endif %}>
-                ✅ Activo
+                Activo
               </option>
               <option value="false" {% if not usuario_editar.activo %}selected{% endif %}>
-                ❌ Inactivo
+                Inactivo
               </option>
             </select>
             <span class="help-text">
-              <span class="icon">ℹ️</span> Los usuarios inactivos no pueden iniciar sesión
+              <span class="icon"><i class="bi bi-info-circle ui-icon" aria-hidden="true"></i></span> Los usuarios inactivos no pueden iniciar sesión
             </span>
           </div>
 
@@ -678,20 +680,20 @@
               type="password" 
               name="password" 
               placeholder="Dejar vacío para mantener la contraseña actual"
-              minlength="6"
+              minlength="8"
             >
             <span class="help-text">
-              <span class="icon">🔒</span> Mínimo 6 caracteres. Solo si deseas cambiarla
+              <span class="icon"><i class="bi bi-lock ui-icon" aria-hidden="true"></i></span> Mínimo 8 caracteres. Solo si deseas cambiarla
             </span>
           </div>
 
           <!-- Errores -->
           {% if error %}
-            <div class="alert-error">⚠️ {{ error }}</div>
+            <div class="alert-error"><i class="bi bi-exclamation-triangle ui-icon" aria-hidden="true"></i> {{ error }}</div>
           {% endif %}
 
           {% if success %}
-            <div class="alert-success">✅ {{ success }}</div>
+            <div class="alert-success"><i class="bi bi-check-circle ui-icon" aria-hidden="true"></i> {{ success }}</div>
           {% endif %}
 
           <!-- Botones -->
@@ -700,7 +702,7 @@
               ← Cancelar
             </a>
             <button type="submit" class="btn-primary">
-              💾 Actualizar Usuario
+              <i class="bi bi-floppy ui-icon" aria-hidden="true"></i> Actualizar Usuario
             </button>
           </div>
 
@@ -736,10 +738,10 @@
       }
 
       // Validar contraseña (si se ingresó)
-      if (password.value.trim() && password.value.length < 6) {
+      if (password.value.trim() && password.value.length < 8) {
         password.classList.add('error');
         isValid = false;
-        alert('La contraseña debe tener al menos 6 caracteres');
+        alert('La contraseña debe tener al menos 8 caracteres');
       } else {
         password.classList.remove('error');
       }
@@ -781,5 +783,6 @@
   </script>
 
   <script src="{{ url_for('static', filename='js/usuarios.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
 </body>
 </html>

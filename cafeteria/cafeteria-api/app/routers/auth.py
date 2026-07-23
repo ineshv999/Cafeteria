@@ -3,7 +3,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.schemas.auth import TokenResponse
+from app.auth.dependencies import obtener_usuario_actual
+from app.schemas.auth import AuthMeResponse, AuthMeUpdate, TokenResponse
 from app.services.auth_service import AuthService
 
 router = APIRouter(
@@ -34,3 +35,20 @@ def login(
         )
 
     return respuesta
+
+
+@router.get("/me", response_model=AuthMeResponse)
+def obtener_perfil(
+    usuario=Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db),
+):
+    return AuthService.obtener_usuario_actual(db, usuario["id"])
+
+
+@router.put("/me", response_model=AuthMeResponse)
+def actualizar_perfil(
+    datos: AuthMeUpdate,
+    usuario=Depends(obtener_usuario_actual),
+    db: Session = Depends(get_db),
+):
+    return AuthService.actualizar_usuario_actual(db, usuario["id"], datos)

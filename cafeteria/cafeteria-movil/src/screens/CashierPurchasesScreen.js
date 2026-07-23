@@ -2,7 +2,7 @@ import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { useState } from 'react';
 
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
+import AppIcon from '../components/AppIcon';
 import CashierTabs from '../components/CashierTabs';
 import EmptyState from '../components/EmptyState';
 import MockStatusBar from '../components/MockStatusBar';
@@ -340,7 +340,7 @@ export default function CashierPurchasesScreen({
                     },
                   ]}
                 >
-                  <Text style={styles.supplyChipIcon}>{supply.icon}</Text>
+                  <AppIcon color={theme.amber} name={supply.icon} size={18} />
                 </Pressable>
               );
             })}
@@ -470,7 +470,6 @@ export default function CashierPurchasesScreen({
         <MovementCard movements={movements} theme={theme} />
       </View>
 
-      <BottomNav active="cashier" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
 
       <ConfirmPurchaseModal
         draft={draft}
@@ -523,7 +522,7 @@ function FormInput({ icon, isDarkMode, keyboardType = 'default', label, onChange
         },
       ]}
     >
-      <Text style={styles.inputIcon}>{icon}</Text>
+      <AppIcon color={theme.amber} name={icon} size={18} />
       <View style={styles.inputCopy}>
         <Text selectable style={[styles.inputText, { color: theme.muted }]}>
           {label}
@@ -582,7 +581,7 @@ function PurchaseCard({ isDarkMode, onDelete, onDetail, onEdit, onRegister, purc
       <View style={styles.purchaseMain}>
         <View style={styles.purchaseLeft}>
           <View style={[styles.itemIcon, { backgroundColor: theme.softIcon }]}>
-            <Text style={styles.itemIconText}>{purchase.icon}</Text>
+            <AppIcon color={theme.amber} name={purchase.icon} size={21} />
           </View>
           <View style={styles.purchaseCopy}>
             <Text selectable style={[styles.purchaseName, { color: theme.title }]}>
@@ -779,7 +778,7 @@ function PurchasePreview({ draft, theme }) {
   return (
     <View style={[styles.previewBox, { backgroundColor: theme.actionSoft }]}>
       <View style={[styles.itemIcon, { backgroundColor: theme.softIcon }]}>
-        <Text style={styles.itemIconText}>{draft.icon || '📦'}</Text>
+        <AppIcon color={theme.amber} name={draft.icon || 'cube'} size={22} />
       </View>
       <View style={styles.previewCopy}>
         <Text selectable style={[styles.purchaseName, { color: theme.title }]}>
@@ -819,7 +818,7 @@ function MovementCard({ movements, theme }) {
 
       {movements.slice(0, 5).map((movement, index) => (
         <View key={`${movement.text}-${index}`} style={styles.movementItem}>
-          <Text style={styles.movementIcon}>{movement.icon}</Text>
+          <AppIcon color={theme.amber} name={movement.icon} size={18} />
           <Text selectable style={[styles.movementCopy, { color: theme.muted }]}>
             {movement.text}
           </Text>

@@ -1,11 +1,12 @@
 from decimal import Decimal
+import os
 from pathlib import Path
 import sys
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from app.auth.security import hash_password
-from app.database import Base, SessionLocal, engine
+from app.database import SessionLocal
 from app.models import Categoria, Mesa, Producto, Rol, Usuario
 
 
@@ -13,25 +14,25 @@ DEMO_USERS = [
     {
         "nombre_completo": "Usuario Mesero",
         "email": "mesero@cafeteria.local",
-        "password": "Mesero123!",
+        "password_env": "SEED_MESERO_PASSWORD",
         "rol": "mesero",
     },
     {
         "nombre_completo": "Usuario Cocina",
         "email": "cocina@cafeteria.local",
-        "password": "Cocina123!",
+        "password_env": "SEED_COCINA_PASSWORD",
         "rol": "cocina",
     },
     {
         "nombre_completo": "Usuario Caja",
         "email": "caja@cafeteria.local",
-        "password": "Caja123!",
+        "password_env": "SEED_CAJA_PASSWORD",
         "rol": "caja",
     },
     {
         "nombre_completo": "Usuario Administrador",
         "email": "admin@cafeteria.local",
-        "password": "Admin123!",
+        "password_env": "SEED_ADMIN_PASSWORD",
         "rol": "administrador",
     },
 ]
@@ -115,6 +116,11 @@ def get_or_create_product(db, categoria):
 
 def get_or_create_users(db, roles_by_name):
     for demo_user in DEMO_USERS:
+        password = os.getenv(demo_user["password_env"])
+        if not password:
+            raise RuntimeError(
+                f"Falta la variable {demo_user['password_env']} para crear usuarios."
+            )
         usuario = (
             db.query(Usuario)
             .filter(Usuario.email == demo_user["email"])
@@ -124,7 +130,7 @@ def get_or_create_users(db, roles_by_name):
 
         if usuario:
             usuario.nombre_completo = demo_user["nombre_completo"]
-            usuario.password_hash = hash_password(demo_user["password"])
+            usuario.password_hash = hash_password(password)
             usuario.activo = True
             usuario.id_rol = rol.id_rol
             continue
@@ -132,7 +138,7 @@ def get_or_create_users(db, roles_by_name):
         usuario = Usuario(
             nombre_completo=demo_user["nombre_completo"],
             email=demo_user["email"],
-            password_hash=hash_password(demo_user["password"]),
+            password_hash=hash_password(password),
             activo=True,
             id_rol=rol.id_rol
         )
@@ -140,8 +146,6 @@ def get_or_create_users(db, roles_by_name):
 
 
 def main():
-    Base.metadata.create_all(bind=engine)
-
     db = SessionLocal()
     try:
         roles_by_name = {
@@ -177,9 +181,7 @@ def main():
         print("Datos demo listos para Postman.")
         print(f"id_mesa={mesa.id_mesa}")
         print(f"id_producto={producto.id_producto}")
-        print("mesero=mesero@cafeteria.local / Mesero123!")
-        print("cocina=cocina@cafeteria.local / Cocina123!")
-        print("caja=caja@cafeteria.local / Caja123!")
+        print("Usuarios creados con contraseñas proporcionadas mediante SEED_*.")
     finally:
         db.close()
 

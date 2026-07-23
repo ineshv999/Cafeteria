@@ -2,6 +2,7 @@ export const themes = {
   light: {
     statusBar: 'dark',
     background: '#fffaf0',
+    degradado: ['#f8e7b5', '#fff5d8', '#fffdf8'],
     topTint: '#fef3c7',
     midTint: '#fff7ed',
     bottomTint: '#ffffff',
@@ -31,6 +32,7 @@ export const themes = {
   dark: {
     statusBar: 'light',
     background: '#0a0a0a',
+    degradado: ['#1a130d', '#21170f', '#17110d'],
     topTint: '#1c120b',
     midTint: '#171717',
     bottomTint: '#0a0a0a',

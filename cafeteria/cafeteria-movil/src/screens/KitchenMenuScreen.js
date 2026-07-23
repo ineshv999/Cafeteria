@@ -2,7 +2,7 @@ import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { useMemo, useState } from 'react';
 
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
+import AppIcon from '../components/AppIcon';
 import EmptyState from '../components/EmptyState';
 import KitchenTabs from '../components/KitchenTabs';
 import MockStatusBar from '../components/MockStatusBar';
@@ -293,7 +293,7 @@ export default function KitchenMenuScreen({
               ]}
             >
               <Text style={styles.actionText}>
-                {action.icon} {action.label}
+                <AppIcon color={theme.amber} name={action.icon} size={18} /> {action.label}
               </Text>
             </Pressable>
           ))}
@@ -309,7 +309,7 @@ export default function KitchenMenuScreen({
             },
           ]}
         >
-          <Text style={styles.searchIcon}>🔎</Text>
+          <AppIcon color={theme.muted} name="search" size={18} />
           <TextInput
             onChangeText={setQuery}
             placeholder="Buscar producto..."
@@ -397,7 +397,7 @@ export default function KitchenMenuScreen({
           </View>
           {movements.map((movement, index) => (
             <View key={`${movement.text}-${index}`} style={styles.movementItem}>
-              <Text style={styles.movementIcon}>{movement.icon}</Text>
+              <AppIcon color={theme.amber} name={movement.icon} size={18} />
               <Text selectable style={[styles.movementCopy, { color: theme.muted }]}>
                 {movement.text}
               </Text>
@@ -406,7 +406,6 @@ export default function KitchenMenuScreen({
         </View>
       </View>
 
-      <BottomNav active="kitchen" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
 
       <MenuDetailSheet
         isDarkMode={isDarkMode}
@@ -455,7 +454,7 @@ function MenuItemCard({ isDarkMode, item, onDelete, onDetail, onEdit, onToggle, 
     >
       <View style={styles.menuLeft}>
         <View style={[styles.itemIcon, { backgroundColor: theme.softIcon }]}>
-          <Text style={styles.itemIconText}>{item.icon}</Text>
+          <AppIcon color={theme.amber} name={item.icon} size={22} />
         </View>
         <View style={styles.itemText}>
           <View style={styles.itemTitleRow}>
@@ -516,7 +515,7 @@ function MenuDetailSheet({ isDarkMode, item, onClose, onDelete, onDuplicate, onE
           <View style={[styles.sheetGrabber, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.18)' : '#d6d3d1' }]} />
           <View style={styles.sheetHeader}>
             <View style={[styles.sheetIcon, { backgroundColor: theme.softIcon }]}>
-              <Text style={styles.sheetIconText}>{item.icon}</Text>
+              <AppIcon color={theme.amber} name={item.icon} size={22} />
             </View>
             <View style={styles.sheetTitleWrap}>
               <Text selectable style={[styles.sheetTitle, { color: theme.title }]}>

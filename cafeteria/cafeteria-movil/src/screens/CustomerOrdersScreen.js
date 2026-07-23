@@ -2,7 +2,7 @@ import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { useState } from 'react';
 
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
+import AppIcon from '../components/AppIcon';
 import CustomerTabs from '../components/CustomerTabs';
 import EmptyState from '../components/EmptyState';
 import MockStatusBar from '../components/MockStatusBar';
@@ -242,7 +242,7 @@ export default function CustomerOrdersScreen({
 
           {comments.map((comment, index) => (
             <View key={`${comment.text}-${index}`} style={styles.commentItem}>
-              <Text style={styles.commentIcon}>{comment.icon}</Text>
+              <AppIcon color={theme.amber} name={comment.icon} size={18} />
               <Text selectable style={[styles.commentText, { color: theme.muted }]}>
                 {comment.text}
               </Text>
@@ -251,7 +251,6 @@ export default function CustomerOrdersScreen({
         </View>
       </View>
 
-      <BottomNav active="customerOrders" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
 
       <OrderDetailModal
         isDarkMode={isDarkMode}
@@ -341,7 +340,7 @@ function OrderCard({ isDarkMode, onAction, order, theme }) {
             },
           ]}
         >
-          <Text style={styles.kitchenNoticeIcon}>⚠️</Text>
+          <AppIcon color={theme.amber} name="warning" size={19} />
           <View style={styles.kitchenNoticeCopy}>
             <Text selectable style={[styles.kitchenNoticeTitle, { color: theme.title }]}>
               Aviso de cocina

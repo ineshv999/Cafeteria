@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/icons.css') }}">
   <title>CoffeeAdmin - Editar Producto</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -606,13 +608,13 @@
         <span class="separator">›</span>
         <span style="color: var(--text-primary); font-weight: 500;">Editar: {{ producto.nombre }}</span>
       </div>
-      <h2>✏️ Editar Producto</h2>
+      <h2><i class="bi bi-pencil ui-icon" aria-hidden="true"></i> Editar Producto</h2>
     </div>
 
     <!-- Formulario -->
     <div class="form-container">
       <div class="form-title">
-        📝 Editar Producto
+        <i class="bi bi-pencil-square ui-icon" aria-hidden="true"></i> Editar Producto
         <span class="badge">ID: {{ producto.id_producto }}</span>
       </div>
 
@@ -634,8 +636,8 @@
 
           <!-- Descripción -->
           <div class="form-group full-width">
-            <label>Descripción</label>
-            <input type="text" name="descripcion" value="{{ producto.descripcion }}" placeholder="Descripción del producto">
+            <label>Descripción <span class="required">*</span></label>
+            <input type="text" name="descripcion" value="{{ producto.descripcion or '' }}" placeholder="Descripción del producto" required>
           </div>
 
           <!-- Stock -->
@@ -661,21 +663,21 @@
           <div class="form-group">
             <label>Estado</label>
             <select name="activo">
-              <option value="true" {% if producto.activo %}selected{% endif %}>✅ Activo</option>
-              <option value="false" {% if not producto.activo %}selected{% endif %}>❌ Inactivo</option>
+              <option value="true" {% if producto.activo %}selected{% endif %}>Activo</option>
+              <option value="false" {% if not producto.activo %}selected{% endif %}>Inactivo</option>
             </select>
           </div>
 
           <!-- Sección de Imagen -->
           <div class="image-section">
-            <span class="image-label">🖼️ Imagen del Producto</span>
+            <span class="image-label"><i class="bi bi-image ui-icon" aria-hidden="true"></i> Imagen del Producto</span>
 
             <img src="http://127.0.0.1:8000/{{ producto.imagen }}" width="200" height="200" id="preview" class="image-preview" alt="{{ producto.nombre }}">
 
             <div class="file-input-wrapper">
               <input type="file" name="imagen" id="imagen" accept="image/*">
               <span class="file-input-label">
-                <span class="icon">📤</span> Seleccionar nueva imagen
+                <span class="icon"><i class="bi bi-upload ui-icon" aria-hidden="true"></i></span> Seleccionar nueva imagen
               </span>
             </div>
             <span class="file-name" id="fileName">No se ha seleccionado ningún archivo</span>
@@ -684,11 +686,11 @@
 
           <!-- Errores -->
           {% if error %}
-            <div class="alert-error">⚠️ {{ error }}</div>
+            <div class="alert-error"><i class="bi bi-exclamation-triangle ui-icon" aria-hidden="true"></i> {{ error }}</div>
           {% endif %}
 
           {% if success %}
-            <div class="alert-success">✅ {{ success }}</div>
+            <div class="alert-success"><i class="bi bi-check-circle ui-icon" aria-hidden="true"></i> {{ success }}</div>
           {% endif %}
 
           <!-- Botones -->
@@ -697,7 +699,7 @@
               ← Cancelar
             </a>
             <button type="submit" class="btn-primary">
-              💾 Actualizar Producto
+              <i class="bi bi-floppy ui-icon" aria-hidden="true"></i> Actualizar Producto
             </button>
           </div>
 
@@ -720,7 +722,7 @@
       }
 
       // Mostrar nombre del archivo
-      fileNameSpan.textContent = "📎 " + archivo.name + " (" + (archivo.size / 1024).toFixed(1) + " KB)";
+      fileNameSpan.textContent = archivo.name + " (" + (archivo.size / 1024).toFixed(1) + " KB)";
 
       // Previsualizar imagen
       const lector = new FileReader();
@@ -797,5 +799,6 @@
     });
   </script>
 
+  <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
 </body>
 </html>

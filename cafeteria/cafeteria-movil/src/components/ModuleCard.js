@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import AppIcon from './AppIcon';
 
 export default function ModuleCard({ item, isDarkMode, theme, onPress }) {
   return (
@@ -13,7 +14,7 @@ export default function ModuleCard({ item, isDarkMode, theme, onPress }) {
       ]}
     >
       <View style={[styles.moduleIconWrap, { backgroundColor: theme.softIcon }]}>
-        <Text style={styles.moduleIcon}>{item.icon}</Text>
+        <AppIcon color={theme.amber} name={item.icon} size={23} />
       </View>
       <Text selectable style={[styles.moduleTitle, { color: theme.title }]}>
         {item.title}

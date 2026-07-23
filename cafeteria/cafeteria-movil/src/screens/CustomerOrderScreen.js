@@ -2,7 +2,7 @@ import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { useState } from 'react';
 
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
+import AppIcon from '../components/AppIcon';
 import CustomerTabs from '../components/CustomerTabs';
 import MockStatusBar from '../components/MockStatusBar';
 import ScreenBackground from '../components/ScreenBackground';
@@ -278,7 +278,7 @@ export default function CustomerOrderScreen({
             >
               <View style={styles.productLeft}>
                 <View style={[styles.itemIcon, { backgroundColor: theme.softIcon }]}>
-                  <Text style={styles.itemIconText}>{product.icon}</Text>
+                  <AppIcon color={theme.amber} name={product.icon} size={22} />
                 </View>
                 <View style={styles.productCopy}>
                   <Text selectable style={[styles.productName, { color: theme.title }]}>
@@ -413,7 +413,6 @@ export default function CustomerOrderScreen({
         </View>
       </View>
 
-      <BottomNav active="customerOrder" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
       <DecisionModal
         decision={decision}
         isDarkMode={isDarkMode}
@@ -477,7 +476,7 @@ function OrderDetailsModal({ isDarkMode, isOpen, onClose, products, theme, total
             {products.map((product) => (
               <View key={product.name} style={[styles.detailRow, { borderBottomColor: isDarkMode ? 'rgba(255,255,255,0.08)' : '#eeeeee' }]}>
                 <View style={[styles.detailIcon, { backgroundColor: theme.softIcon }]}>
-                  <Text style={styles.detailIconText}>{product.icon}</Text>
+                  <AppIcon color={theme.amber} name={product.icon} size={19} />
                 </View>
                 <View style={styles.detailCopy}>
                   <Text selectable style={[styles.detailName, { color: theme.title }]}>

@@ -95,6 +95,24 @@ class ApiService:
 
         return []
 
+    @staticmethod
+    def obtener_roles(token):
+        try:
+            response = requests.get(
+                f"{Config.API_URL}/roles/",
+                headers={
+                    "Authorization": f"Bearer {token}"
+                },
+                timeout=10
+            )
+        except requests.exceptions.RequestException:
+            return []
+
+        if response.status_code != 200:
+            return []
+
+        return response.json()
+
 
     @staticmethod
     def eliminar_usuario(token, id_usuario):
@@ -245,16 +263,19 @@ class ApiService:
     
     @staticmethod
     def obtener_dashboard(token):
+        try:
+            response = requests.get(
+                f"{Config.API_URL}/dashboard/",
+                headers={
+                    "Authorization": f"Bearer {token}"
+                },
+                timeout=10
+            )
+        except requests.exceptions.RequestException:
+            return None
 
-        response = requests.get(
-
-            f"{Config.API_URL}/dashboard/",
-
-            headers={
-                "Authorization": f"Bearer {token}"
-            }
-
-        )
+        if response.status_code in (401, 403):
+            return {"token_expirado": True}
 
         if response.status_code != 200:
             return None

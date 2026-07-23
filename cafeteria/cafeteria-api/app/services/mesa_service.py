@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
 from app.models.mesa import Mesa
+from app.models.pedido import Pedido
 
 
 class MesaService:
@@ -36,11 +37,14 @@ class MesaService:
 
     @staticmethod
     def obtener(db: Session, id_mesa: int):
-        return (
+        mesa = (
             db.query(Mesa)
             .filter(Mesa.id_mesa == id_mesa)
             .first()
         )
+        if not mesa:
+            raise HTTPException(status_code=404, detail="Mesa no encontrada.")
+        return mesa
 
     @staticmethod
     def crear(db: Session, datos):
@@ -81,12 +85,6 @@ class MesaService:
     def eliminar(db: Session, id_mesa: int):
 
         mesa = MesaService.obtener(db, id_mesa)
-
-        if not mesa:
-            raise HTTPException(
-                status_code=404,
-                detail="Mesa no encontrada."
-            )
 
         pedidos = (
             db.query(Pedido)
@@ -154,6 +152,21 @@ class MesaService:
                 detail="Ese número de mesa ya existe."
 
             )
+
+        if datos.estado == "Libre":
+            pedido_activo = (
+                db.query(Pedido.id_pedido)
+                .filter(
+                    Pedido.id_mesa == id_mesa,
+                    Pedido.estado.in_(["Pendiente", "En preparación", "Listo"]),
+                )
+                .first()
+            )
+            if pedido_activo:
+                raise HTTPException(
+                    status_code=409,
+                    detail="No se puede liberar una mesa con un pedido activo.",
+                )
 
         mesa.numero = datos.numero
         mesa.capacidad = datos.capacidad

@@ -1,76 +1,69 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { BlurView } from 'expo-blur';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 const defaultItems = [
-  { icon: '🏠', label: 'Inicio', target: 'dashboard' },
-  { icon: '👨‍🍳', label: 'Cocina', target: 'kitchen' },
-  { icon: '📦', label: 'Stock', target: 'kitchenInventory' },
-  { icon: '👤', label: 'Perfil', target: 'profile' },
+  { icon: 'home-outline', activeIcon: 'home', label: 'Inicio', target: 'dashboard' },
+  { icon: 'restaurant-outline', activeIcon: 'restaurant', label: 'Cocina', target: 'kitchen' },
+  { icon: 'cube-outline', activeIcon: 'cube', label: 'Stock', target: 'kitchenInventory' },
+  { icon: 'person-outline', activeIcon: 'person', label: 'Perfil', target: 'profile' },
+];
+
+const cashierItems = [
+  { icon: 'home-outline', activeIcon: 'home', label: 'Inicio', target: 'dashboard' },
+  { icon: 'cash-outline', activeIcon: 'cash', label: 'Caja', target: 'cashier' },
+  { icon: 'receipt-outline', activeIcon: 'receipt', label: 'Pedidos', target: 'cashierOrders' },
+  { icon: 'person-outline', activeIcon: 'person', label: 'Perfil', target: 'profile' },
+];
+
+const customerItems = [
+  { icon: 'home-outline', activeIcon: 'home', label: 'Inicio', target: 'customer' },
+  { icon: 'document-text-outline', activeIcon: 'document-text', label: 'Pedidos', target: 'customerOrders' },
+  { icon: 'megaphone-outline', activeIcon: 'megaphone', label: 'Promo', target: 'customerMarketing' },
+  { icon: 'person-outline', activeIcon: 'person', label: 'Perfil', target: 'profile' },
+];
+
+const customerOrderItems = [
+  { icon: 'home-outline', activeIcon: 'home', label: 'Inicio', target: 'customer' },
+  { icon: 'create-outline', activeIcon: 'create', label: 'Pedido', target: 'customerOrder' },
+  { icon: 'receipt-outline', activeIcon: 'receipt', label: 'Mis pedidos', target: 'customerOrders' },
+  { icon: 'person-outline', activeIcon: 'person', label: 'Perfil', target: 'profile' },
 ];
 
 export default function BottomNav({ active, isDarkMode, navigate, theme }) {
   const items =
     active === 'cashier'
-      ? [
-          { icon: '🏠', label: 'Inicio', target: 'dashboard' },
-          { icon: '💵', label: 'Caja', target: 'cashier' },
-          { icon: '🧾', label: 'Pedidos', target: 'cashierOrders' },
-          { icon: '👤', label: 'Perfil', target: 'profile' },
-        ]
+      ? cashierItems
       : active === 'cashierOrders'
-        ? [
-            { icon: '🏠', label: 'Inicio', target: 'dashboard' },
-            { icon: '💵', label: 'Caja', target: 'cashier' },
-            { icon: '🧾', label: 'Pedidos', target: 'cashierOrders' },
-            { icon: '👤', label: 'Perfil', target: 'profile' },
-          ]
+        ? cashierItems
         : active === 'customer'
-          ? [
-              { icon: '🏠', label: 'Inicio', target: 'customer' },
-              { icon: '📝', label: 'Pedidos', target: 'customerOrders' },
-              { icon: '📢', label: 'Promo', target: 'customerMarketing' },
-              { icon: '👤', label: 'Perfil', target: 'profile' },
-            ]
+          ? customerItems
           : active === 'customerOrder'
-            ? [
-                { icon: '🏠', label: 'Inicio', target: 'customer' },
-                { icon: '📝', label: 'Pedido', target: 'customerOrder' },
-                { icon: '🧾', label: 'Mis pedidos', target: 'customerOrders' },
-                { icon: '👤', label: 'Perfil', target: 'profile' },
-              ]
+            ? customerOrderItems
             : active === 'customerOrders'
-              ? [
-                  { icon: '🏠', label: 'Inicio', target: 'customer' },
-                  { icon: '🧾', label: 'Pedidos', target: 'customerOrders' },
-                  { icon: '📢', label: 'Promo', target: 'customerMarketing' },
-                  { icon: '👤', label: 'Perfil', target: 'profile' },
-                ]
+              ? customerItems
               : active === 'customerMarketing'
-                ? [
-                    { icon: '🏠', label: 'Inicio', target: 'customer' },
-                    { icon: '📝', label: 'Pedido', target: 'customerOrder' },
-                    { icon: '📢', label: 'Promo', target: 'customerMarketing' },
-                    { icon: '👤', label: 'Perfil', target: 'profile' },
-                  ]
+                ? customerOrderItems
                 : active === 'kitchenOrders'
-                  ? [
-                      { icon: '🏠', label: 'Inicio', target: 'dashboard' },
-                      { icon: '👨‍🍳', label: 'Cocina', target: 'kitchen' },
-                      { icon: '📦', label: 'Stock', target: 'kitchenInventory' },
-                      { icon: '👤', label: 'Perfil', target: 'profile' },
-                    ]
+                  ? defaultItems
       : defaultItems;
 
   return (
-    <View
+    <BlurView
+      experimentalBlurMethod="dimezisBlurView"
+      intensity={isDarkMode ? 42 : 58}
+      tint={isDarkMode ? 'dark' : 'light'}
       style={[
         styles.bottomNav,
         {
-          backgroundColor: theme.surface,
-          borderColor: theme.surfaceBorder,
+          backgroundColor: isDarkMode ? 'rgba(48, 36, 28, 0.68)' : 'rgba(255, 255, 255, 0.66)',
+          borderColor: isDarkMode ? 'rgba(255, 244, 220, 0.16)' : 'rgba(255, 255, 255, 0.82)',
           boxShadow: isDarkMode ? '0 10px 28px rgba(0, 0, 0, 0.35)' : '0 10px 28px rgba(0, 0, 0, 0.12)',
         },
       ]}
     >
+      <View pointerEvents="none" style={[styles.glassBubble, styles.glassBubbleLeft, { backgroundColor: isDarkMode ? 'rgba(217, 119, 6, 0.14)' : 'rgba(255, 255, 255, 0.5)' }]} />
+      <View pointerEvents="none" style={[styles.glassBubble, styles.glassBubbleRight, { backgroundColor: isDarkMode ? 'rgba(245, 158, 11, 0.12)' : 'rgba(248, 231, 181, 0.48)' }]} />
       {items.map((item) => {
         const isActive = item.target === active;
 
@@ -99,14 +92,18 @@ export default function BottomNav({ active, isDarkMode, navigate, theme }) {
             }}
             style={styles.navItem}
           >
-            <Text style={[styles.navIcon, { color: isActive ? theme.amber : theme.navInactive }]}>{item.icon}</Text>
+            <Ionicons
+              color={isActive ? theme.amber : theme.navInactive}
+              name={isActive ? item.activeIcon : item.icon}
+              size={20}
+            />
             <Text selectable style={[styles.navLabel, { color: isActive ? theme.amber : theme.navInactive }]}>
               {item.label}
             </Text>
           </Pressable>
         );
       })}
-    </View>
+    </BlurView>
   );
 }
 
@@ -123,14 +120,28 @@ const styles = StyleSheet.create({
     left: 31,
     position: 'absolute',
     right: 31,
+    overflow: 'hidden',
     zIndex: 3,
+  },
+  glassBubble: {
+    borderRadius: 999,
+    position: 'absolute',
+  },
+  glassBubbleLeft: {
+    height: 72,
+    left: -18,
+    top: -38,
+    width: 112,
+  },
+  glassBubbleRight: {
+    bottom: -42,
+    height: 78,
+    right: 18,
+    width: 126,
   },
   navItem: {
     alignItems: 'center',
     minWidth: 42,
-  },
-  navIcon: {
-    fontSize: 19,
   },
   navLabel: {
     fontSize: 10,

@@ -1,8 +1,8 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useMemo, useState } from 'react';
 
-import BottomNav from '../components/BottomNav';
 import EmptyState from '../components/EmptyState';
+import AppIcon from '../components/AppIcon';
 import MockStatusBar from '../components/MockStatusBar';
 import ScreenBackground from '../components/ScreenBackground';
 import SectionTitle from '../components/SectionTitle';
@@ -52,7 +52,7 @@ export default function NotificationsScreen({
             </Text>
           </View>
           <View style={[styles.headerIcon, { backgroundColor: isDarkMode ? theme.accent : theme.accentAlt, boxShadow: theme.logoShadow }]}>
-            <Text style={styles.headerIconText}>🔔</Text>
+            <AppIcon color={theme.amber} name="notifications" size={24} />
           </View>
         </View>
 
@@ -66,7 +66,7 @@ export default function NotificationsScreen({
         />
 
         <View style={[styles.searchBox, { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, boxShadow: theme.cardShadow }]}>
-          <Text style={styles.searchIcon}>🔎</Text>
+          <AppIcon color={theme.muted} name="search" size={18} />
           <TextInput
             onChangeText={setQuery}
             placeholder="Buscar aviso..."
@@ -114,7 +114,6 @@ export default function NotificationsScreen({
         )}
       </View>
 
-      <BottomNav active="notifications" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
     </ScreenBackground>
   );
 }
@@ -136,7 +135,7 @@ function NotificationCard({ isDarkMode, navigate, notification, theme }) {
       ]}
     >
       <View style={[styles.notificationIcon, { backgroundColor: colors.bg }]}>
-        <Text style={styles.notificationIconText}>{notification.icon}</Text>
+        <AppIcon color={theme.amber} name={notification.icon} size={19} />
       </View>
       <View style={styles.notificationCopy}>
         <View style={styles.notificationTop}>

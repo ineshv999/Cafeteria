@@ -35,6 +35,7 @@ class ReporteService:
 
         ventas = (
             db.query(func.sum(Pedido.total))
+            .filter(Pedido.estado == "Pagado")
             .scalar()
             or 0
         )
@@ -48,7 +49,10 @@ class ReporteService:
         productos_vendidos = (
             db.query(
                 func.sum(DetallePedido.cantidad)
-            ).scalar()
+            )
+            .join(Pedido, Pedido.id_pedido == DetallePedido.id_pedido)
+            .filter(Pedido.estado == "Pagado")
+            .scalar()
             or 0
         )
 

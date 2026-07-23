@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import AppIcon from './AppIcon';
 
 export default function AppHeader({ eyebrow, title, subtitle, icon, isDarkMode, theme, titleSize }) {
   return (
@@ -25,7 +26,7 @@ export default function AppHeader({ eyebrow, title, subtitle, icon, isDarkMode, 
           },
         ]}
       >
-        <Text style={styles.profileIcon}>{icon}</Text>
+        <AppIcon color="#ffffff" name={icon} size={25} />
       </View>
     </View>
   );

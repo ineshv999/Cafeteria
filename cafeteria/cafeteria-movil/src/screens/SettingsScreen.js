@@ -1,8 +1,8 @@
 import { Modal, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useState } from 'react';
 
-import BottomNav from '../components/BottomNav';
 import MockStatusBar from '../components/MockStatusBar';
+import AppIcon from '../components/AppIcon';
 import ScreenBackground from '../components/ScreenBackground';
 import SectionTitle from '../components/SectionTitle';
 
@@ -55,7 +55,7 @@ export default function SettingsScreen({
             </Text>
           </View>
           <View style={[styles.headerIcon, { backgroundColor: isDarkMode ? theme.accent : theme.accentAlt, boxShadow: theme.logoShadow }]}>
-            <Text style={styles.headerIconText}>⚙️</Text>
+            <AppIcon color={theme.amber} name="settings" size={24} />
           </View>
         </View>
 
@@ -72,7 +72,7 @@ export default function SettingsScreen({
             </Text>
           </View>
           <View style={styles.summaryIcon}>
-            <Text style={styles.summaryIconText}>🔔</Text>
+            <AppIcon color={theme.amber} name="notifications" size={21} />
           </View>
         </View>
 
@@ -184,7 +184,6 @@ export default function SettingsScreen({
         </View>
       </View>
 
-      <BottomNav active="profile" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
 
       <InfoModal
         isDarkMode={isDarkMode}
@@ -219,7 +218,7 @@ function SettingSwitch({ description, icon, isDarkMode, label, onValueChange, th
   return (
     <View style={styles.switchRow}>
       <View style={[styles.switchIcon, { backgroundColor: theme.softIcon }]}>
-        <Text style={styles.switchIconText}>{icon}</Text>
+        <AppIcon color={theme.amber} name={icon} size={20} />
       </View>
       <View style={styles.switchCopy}>
         <Text selectable style={[styles.switchTitle, { color: theme.title }]}>
@@ -254,7 +253,7 @@ function ActionCard({ detail, icon, onPress, theme, title, value }) {
       ]}
     >
       <View style={[styles.actionIcon, { backgroundColor: theme.softIcon }]}>
-        <Text style={styles.actionIconText}>{icon}</Text>
+        <AppIcon color={theme.amber} name={icon} size={20} />
       </View>
       <View style={styles.actionCopy}>
         <Text selectable style={[styles.actionTitle, { color: theme.title }]}>

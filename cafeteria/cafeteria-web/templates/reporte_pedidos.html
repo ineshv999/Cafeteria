@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/icons.css') }}">
   <title>CoffeeAdmin - Reporte de Pedidos</title>
   <style>
     * {
@@ -348,7 +350,7 @@
   <div class="container">
     <!-- Título con contador -->
     <div class="page-header">
-      <h2>📋 Reporte de Pedidos</h2>
+      <h2><i class="bi bi-clipboard2-data ui-icon" aria-hidden="true"></i> Reporte de Pedidos</h2>
       <span class="count-badge">8 pedidos</span>
     </div>
 
@@ -395,10 +397,10 @@
         name="fecha_fin"
         value="{{ request.args.get('fecha_fin','') }}">
 
-      <button type="submit">🔎 Buscar</button>
+      <button type="submit"><i class="bi bi-search ui-icon" aria-hidden="true"></i> Buscar</button>
 
       <a href="{{ url_for('reporte_pedidos') }}">
-        <button type="button">🧹 Limpiar filtros</button>
+        <button type="button"><i class="bi bi-eraser ui-icon" aria-hidden="true"></i> Limpiar filtros</button>
       </a>
     </form>
 
@@ -421,11 +423,11 @@
               {% if pedido.estado == "Pendiente" %}
               <span class="status-badge status-pendiente">⏳ Pendiente</span>
               {% elif pedido.estado == "Preparando" %}
-              <span class="status-badge status-preparando">👨‍🍳 Preparando</span>
+              <span class="status-badge status-preparando"><i class="bi bi-person-workspace ui-icon" aria-hidden="true"></i> Preparando</span>
               {% elif pedido.estado == "Entregado" %}
-              <span class="status-badge status-entregado">✅ Entregado</span>
+              <span class="status-badge status-entregado"><i class="bi bi-check-circle ui-icon" aria-hidden="true"></i> Entregado</span>
               {% elif pedido.estado == "Cancelado" %}
-              <span class="status-badge status-cancelado">❌ Cancelado</span>
+              <span class="status-badge status-cancelado"><i class="bi bi-x-circle ui-icon" aria-hidden="true"></i> Cancelado</span>
               {% else %}
               <span class="status-badge">{{ pedido.estado }}</span>
               {% endif %}
@@ -440,8 +442,8 @@
 
     <!-- Botones de exportación -->
     <div class="export-section">
-      <button id="btnPDF">📄 Exportar PDF</button>
-      <button id="btnExcel">📊 Exportar Excel</button>
+      <button id="btnPDF"><i class="bi bi-file-earmark-pdf ui-icon" aria-hidden="true"></i> Exportar PDF</button>
+      <button id="btnExcel"><i class="bi bi-bar-chart ui-icon" aria-hidden="true"></i> Exportar Excel</button>
     </div>
   </div>
 

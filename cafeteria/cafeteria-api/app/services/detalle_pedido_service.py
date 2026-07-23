@@ -11,7 +11,24 @@ from app.models.producto import Producto
 class DetallePedidoService:
 
     @staticmethod
-    def crear(db: Session, datos):
+    def _validar_acceso(pedido, usuario_id, puede_gestionar_todos):
+        if (
+            usuario_id is not None
+            and not puede_gestionar_todos
+            and pedido.id_usuario != usuario_id
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="No puedes modificar o consultar pedidos de otro mesero."
+            )
+
+    @staticmethod
+    def crear(
+        db: Session,
+        datos,
+        usuario_id: int | None = None,
+        puede_gestionar_todos: bool = False,
+    ):
 
         pedido = (
             db.query(Pedido)
@@ -25,10 +42,16 @@ class DetallePedidoService:
                 detail="Pedido no encontrado."
             )
 
-        if pedido.estado in ["Pagado", "Listo"]:
+        DetallePedidoService._validar_acceso(
+            pedido,
+            usuario_id,
+            puede_gestionar_todos,
+        )
+
+        if pedido.estado != "Pendiente":
             raise HTTPException(
-                status_code=400,
-                detail="El pedido ya no puede modificarse."
+                status_code=409,
+                detail="Solo se puede modificar un pedido pendiente."
             )
 
         producto = (
@@ -82,8 +105,19 @@ class DetallePedidoService:
     @staticmethod
     def listar_por_pedido(
         db: Session,
-        id_pedido: int
+        id_pedido: int,
+        usuario_id: int | None = None,
+        puede_gestionar_todos: bool = False,
     ):
+
+        pedido = db.query(Pedido).filter(Pedido.id_pedido == id_pedido).first()
+        if not pedido:
+            raise HTTPException(status_code=404, detail="Pedido no encontrado.")
+        DetallePedidoService._validar_acceso(
+            pedido,
+            usuario_id,
+            puede_gestionar_todos,
+        )
 
         detalles = (
             db.query(DetallePedido)
@@ -101,6 +135,10 @@ class DetallePedidoService:
 
                 "id_detalle": d.id_detalle,
 
+                "id_pedido": d.id_pedido,
+
+                "id_producto": d.id_producto,
+
                 "cantidad": d.cantidad,
 
                 "precio_unitario": d.precio_unitario,
@@ -116,7 +154,9 @@ class DetallePedidoService:
     @staticmethod
     def eliminar(
         db: Session,
-        id_detalle: int
+        id_detalle: int,
+        usuario_id: int | None = None,
+        puede_gestionar_todos: bool = False,
     ):
 
         detalle = (
@@ -143,10 +183,16 @@ class DetallePedidoService:
                 detail="Pedido no encontrado."
             )
 
-        if pedido.estado in ["Pagado", "Listo"]:
+        DetallePedidoService._validar_acceso(
+            pedido,
+            usuario_id,
+            puede_gestionar_todos,
+        )
+
+        if pedido.estado != "Pendiente":
             raise HTTPException(
-                status_code=400,
-                detail="El pedido ya no puede modificarse."
+                status_code=409,
+                detail="Solo se puede modificar un pedido pendiente."
             )
 
         pedido.total = max(

@@ -2,7 +2,7 @@ import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { useState } from 'react';
 
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
+import AppIcon from '../components/AppIcon';
 import CashierTabs from '../components/CashierTabs';
 import MockStatusBar from '../components/MockStatusBar';
 import ScreenBackground from '../components/ScreenBackground';
@@ -243,7 +243,8 @@ export default function CashierAccountsScreen({
               },
             ]}
           >
-            <Text style={styles.actionText}>➕ Registrar gasto</Text>
+            <AppIcon color="#ffffff" name="add-circle" size={18} />
+            <Text style={styles.actionText}>Registrar gasto</Text>
           </Pressable>
 
           <Pressable
@@ -257,7 +258,8 @@ export default function CashierAccountsScreen({
               },
             ]}
           >
-            <Text style={styles.actionText}>📄 Ver corte</Text>
+            <AppIcon color="#ffffff" name="document-text" size={18} />
+            <Text style={styles.actionText}>Ver corte</Text>
           </Pressable>
         </View>
 
@@ -347,7 +349,7 @@ export default function CashierAccountsScreen({
 
           {movements.slice(0, 5).map((movement, index) => (
             <View key={`${movement.text}-${index}`} style={styles.movementItem}>
-              <Text style={styles.movementIcon}>{movement.icon}</Text>
+              <AppIcon color={theme.amber} name={movement.icon} size={18} />
               <Text selectable style={[styles.movementCopy, { color: theme.muted }]}>
                 {movement.text}
               </Text>
@@ -356,7 +358,6 @@ export default function CashierAccountsScreen({
         </View>
       </View>
 
-      <BottomNav active="cashier" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
 
       <ExpenseModal
         draft={expenseDraft}
@@ -475,7 +476,7 @@ function ExpenseBreakdown({ expenses, isDarkMode, onDelete, onEdit, theme }) {
       {expenses.slice(0, 4).map((expense, index) => (
         <View key={expense.id || `${expense.description}-${index}`} style={styles.expenseRow}>
           <View style={[styles.expenseIcon, { backgroundColor: theme.softIcon }]}>
-            <Text style={styles.expenseIconText}>🧾</Text>
+            <AppIcon color={theme.amber} name="receipt" size={20} />
           </View>
           <View style={styles.expenseCopy}>
             <Text selectable style={[styles.expenseDescription, { color: theme.title }]}>

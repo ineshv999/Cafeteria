@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
+import AppIcon from '../components/AppIcon';
 import KitchenTabs from '../components/KitchenTabs';
 import MockStatusBar from '../components/MockStatusBar';
 import ModuleCard from '../components/ModuleCard';
@@ -176,7 +176,7 @@ export default function KitchenScreen({ customerOrders = [], goBack, isDarkMode,
                   },
                 ]}
               >
-                <Text style={styles.stockIcon}>{item.icon}</Text>
+                <AppIcon color={theme.amber} name={item.icon} size={20} />
                 <View style={styles.stockCopy}>
                   <Text selectable style={[styles.stockName, { color: theme.title }]}>
                     {item.name}
@@ -230,7 +230,7 @@ export default function KitchenScreen({ customerOrders = [], goBack, isDarkMode,
 
           {kitchenMovements.map((movement) => (
             <View key={movement.text} style={styles.movementItem}>
-              <Text style={styles.movementIcon}>{movement.icon}</Text>
+              <AppIcon color={theme.amber} name={movement.icon} size={18} />
               <Text selectable style={[styles.movementCopy, { color: theme.muted }]}>
                 {movement.text}
               </Text>
@@ -239,7 +239,6 @@ export default function KitchenScreen({ customerOrders = [], goBack, isDarkMode,
         </View>
       </View>
 
-      <BottomNav active="kitchen" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
     </ScreenBackground>
   );
 }

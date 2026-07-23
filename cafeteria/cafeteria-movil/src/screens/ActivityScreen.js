@@ -1,8 +1,8 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useState } from 'react';
 
-import BottomNav from '../components/BottomNav';
 import EmptyState from '../components/EmptyState';
+import AppIcon from '../components/AppIcon';
 import MockStatusBar from '../components/MockStatusBar';
 import ScreenBackground from '../components/ScreenBackground';
 import SectionTitle from '../components/SectionTitle';
@@ -45,7 +45,7 @@ export default function ActivityScreen({
             </Text>
           </View>
           <View style={[styles.headerIcon, { backgroundColor: isDarkMode ? theme.accent : theme.accentAlt, boxShadow: theme.logoShadow }]}>
-            <Text style={styles.headerIconText}>🧾</Text>
+            <AppIcon color={theme.amber} name="receipt" size={24} />
           </View>
         </View>
 
@@ -59,7 +59,7 @@ export default function ActivityScreen({
         />
 
         <View style={[styles.searchBox, { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, boxShadow: theme.cardShadow }]}>
-          <Text style={styles.searchIcon}>🔎</Text>
+          <AppIcon color={theme.muted} name="search" size={18} />
           <TextInput
             onChangeText={setQuery}
             placeholder="Buscar en actividad..."
@@ -107,7 +107,6 @@ export default function ActivityScreen({
         )}
       </View>
 
-      <BottomNav active="activity" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
     </ScreenBackground>
   );
 }
@@ -133,7 +132,7 @@ function ActivityRow({ event, index, isDarkMode, theme }) {
       >
         <View style={styles.eventHeader}>
           <View style={[styles.eventIcon, { backgroundColor: colors.bg }]}>
-            <Text style={styles.eventIconText}>{event.icon}</Text>
+            <AppIcon color={theme.amber} name={event.icon} size={19} />
           </View>
           <View style={styles.eventCopy}>
             <Text selectable style={[styles.eventTitle, { color: theme.title }]}>

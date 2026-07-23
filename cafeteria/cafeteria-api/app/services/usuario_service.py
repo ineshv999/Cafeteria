@@ -43,9 +43,15 @@ class UsuarioService:
 
     @staticmethod
     def obtener(db: Session, id_usuario: int):
-        return db.query(Usuario).filter(
+        usuario = db.query(Usuario).filter(
             Usuario.id_usuario == id_usuario
         ).first()
+        if not usuario:
+            raise HTTPException(
+                status_code=404,
+                detail="Usuario no encontrado."
+            )
+        return usuario
 
     @staticmethod
     def crear(db: Session, datos):
@@ -68,9 +74,8 @@ class UsuarioService:
 
         usuario = UsuarioService.obtener(db, id_usuario)
 
-        if usuario:
-            db.delete(usuario)
-            db.commit()
+        db.delete(usuario)
+        db.commit()
 
         return usuario
 

@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/icons.css') }}">
   <title>CoffeeAdmin - Reportes</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1036,7 +1038,7 @@
       <div class="user-profile-badge">
         <a href="{{ url_for('logout') }}" class="btn-logout">
           <button type="button" class="btn-logout-btn">
-            🚪 Cerrar sesión
+            <i class="bi bi-box-arrow-right ui-icon" aria-hidden="true"></i> Cerrar sesión
           </button>
         </a>
         <span>
@@ -1052,43 +1054,43 @@
     <main class="content-body">
       
       <div class="page-title">
-        <h2>📊 Panel de Reportes</h2>
+        <h2><i class="bi bi-bar-chart ui-icon" aria-hidden="true"></i> Panel de Reportes</h2>
       </div>
 
       <!-- Tarjetas de Métricas -->
       <section class="metrics-row">
         <div class="metric-card">
-          <div class="metric-icon">👥</div>
+          <div class="metric-icon"><i class="bi bi-people ui-icon" aria-hidden="true"></i></div>
           <span>Usuarios</span>
           <p class="metric-value positive">{{ reporte.get("usuarios",0) }}</p>
         </div>
 
         <div class="metric-card">
-          <div class="metric-icon">📦</div>
+          <div class="metric-icon"><i class="bi bi-box-seam ui-icon" aria-hidden="true"></i></div>
           <span>Productos</span>
           <p class="metric-value">{{ reporte.get("productos",0) }}</p>
         </div>
 
         <div class="metric-card">
-          <div class="metric-icon">🏷️</div>
+          <div class="metric-icon"><i class="bi bi-tag ui-icon" aria-hidden="true"></i></div>
           <span>Categorías</span>
           <p class="metric-value">{{ reporte.get("categorias",0) }}</p>
         </div>
 
         <div class="metric-card">
-          <div class="metric-icon">⚠️</div>
+          <div class="metric-icon"><i class="bi bi-exclamation-triangle ui-icon" aria-hidden="true"></i></div>
           <span>Stock Bajo</span>
           <p class="metric-value negative">{{ reporte.get("poco_stock",0) }}</p>
         </div>
 
         <div class="metric-card">
-          <div class="metric-icon">💰</div>
+          <div class="metric-icon"><i class="bi bi-cash-stack ui-icon" aria-hidden="true"></i></div>
           <span>Ventas</span>
           <p class="metric-value positive">${{ "{:,.2f}".format(reporte.get("ventas",0)) }}</p>
         </div>
 
         <div class="metric-card">
-          <div class="metric-icon">📋</div>
+          <div class="metric-icon"><i class="bi bi-clipboard2-data ui-icon" aria-hidden="true"></i></div>
           <span>Pedidos</span>
           <p class="metric-value">{{ reporte.get("pedidos",0) }}</p>
         </div>
@@ -1099,7 +1101,7 @@
         <!-- Reporte de Ventas -->
         <div class="report-card">
           <div class="card-header">
-            <h3>📈 Resumen de Ventas</h3>
+            <h3><i class="bi bi-graph-up-arrow ui-icon" aria-hidden="true"></i> Resumen de Ventas</h3>
             <span class="badge">Últimos 30 días</span>
           </div>
           <div class="report-list">
@@ -1181,33 +1183,33 @@
 
       <div class="reports-available">
         <div class="section-title">
-          📑 Reportes Disponibles
+          <i class="bi bi-files ui-icon" aria-hidden="true"></i> Reportes Disponibles
         </div>
 
         <div class="reports-grid-modern">
           <!-- Reporte Productos -->
           <div class="report-modern-card productos">
-            <span class="report-icon">📦</span>
+            <span class="report-icon"><i class="bi bi-box-seam ui-icon" aria-hidden="true"></i></span>
             <h4>Productos y Inventario</h4>
             <p>
               Consulta todos los productos registrados con filtros
               y exportación a PDF y Excel.
             </p>
             <a href="{{ url_for('reporte_productos') }}" class="btn-report">
-              📋 Abrir Reporte
+              <i class="bi bi-clipboard2-data ui-icon" aria-hidden="true"></i> Abrir Reporte
             </a>
           </div>
 
           <!-- Reporte Pedidos -->
           <div class="report-modern-card pedidos">
-            <span class="report-icon">🧾</span>
+            <span class="report-icon"><i class="bi bi-receipt ui-icon" aria-hidden="true"></i></span>
             <h4>Pedidos</h4>
             <p>
               Consulta pedidos por mesa, estado y fechas con
               opciones de exportación.
             </p>
             <a href="{{ url_for('reporte_pedidos') }}" class="btn-report">
-              📋 Abrir Reporte
+              <i class="bi bi-clipboard2-data ui-icon" aria-hidden="true"></i> Abrir Reporte
             </a>
           </div>
         </div>
@@ -1215,7 +1217,7 @@
         <!-- Sección de Exportación de Resumen mejorada -->
         <div class="export-summary-section">
           <div class="export-info">
-            <span class="export-icon">📊</span>
+            <span class="export-icon"><i class="bi bi-bar-chart ui-icon" aria-hidden="true"></i></span>
             <div class="export-text">
               <h4>Exportar Resumen General</h4>
               <p>Descarga el resumen completo de todos los reportes en formato PDF o Excel</p>
@@ -1223,10 +1225,10 @@
           </div>
           <div class="export-actions">
             <a href="{{ url_for('exportar_pdf') }}" class="btn-export-resumen pdf">
-              📄 Exportar Resumen PDF
+              <i class="bi bi-file-earmark-pdf ui-icon" aria-hidden="true"></i> Exportar Resumen PDF
             </a>
             <a href="{{ url_for('exportar_excel') }}" class="btn-export-resumen excel">
-              📊 Exportar Resumen Excel
+              <i class="bi bi-bar-chart ui-icon" aria-hidden="true"></i> Exportar Resumen Excel
             </a>
           </div>
         </div>
@@ -1277,5 +1279,6 @@
   </script>
 
   <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
 </body>
 </html>

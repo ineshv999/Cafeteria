@@ -8,13 +8,13 @@ toggle.addEventListener("click",()=>{
 
         password.type="text";
 
-        toggle.innerHTML="🙈";
+        toggle.innerHTML='<i class="bi bi-eye-slash ui-icon" aria-hidden="true"></i>';
 
     }else{
 
         password.type="password";
 
-        toggle.innerHTML="👁";
+        toggle.innerHTML='<i class="bi bi-eye ui-icon" aria-hidden="true"></i>';
 
     }
 

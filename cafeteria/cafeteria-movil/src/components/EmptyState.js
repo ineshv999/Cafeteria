@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import AppIcon from './AppIcon';
 
 export default function EmptyState({ actionLabel, icon = '☕', onAction, subtitle, theme, title }) {
   return (
@@ -13,7 +14,7 @@ export default function EmptyState({ actionLabel, icon = '☕', onAction, subtit
       ]}
     >
       <View style={[styles.emptyIcon, { backgroundColor: theme.softIcon }]}>
-        <Text style={styles.emptyIconText}>{icon}</Text>
+        <AppIcon color={theme.amber} name={icon} size={30} />
       </View>
       <Text selectable style={[styles.emptyTitle, { color: theme.title }]}>
         {title}

@@ -1,15 +1,69 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useState } from 'react';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useMemo, useState } from 'react';
 
 import MockStatusBar from '../components/MockStatusBar';
 import ScreenBackground from '../components/ScreenBackground';
+import AppIcon from '../components/AppIcon';
+
+const ROLE_PASSWORDS = {
+  admin: 'admin123',
+  cashier: 'caja1',
+  kitchen: 'cocina1',
+  waiter: 'mesero1',
+};
 
 export default function LoginScreen({ isDarkMode, loginAsRole, navigate, roleOptions = [], setIsDarkMode, theme }) {
-  const [selectedRoleId, setSelectedRoleId] = useState(roleOptions[0]?.id || 'admin');
-  const selectedRole = roleOptions.find((role) => role.id === selectedRoleId) || roleOptions[0];
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const demoAccounts = useMemo(
+    () => roleOptions.map((role) => ({ ...role, password: ROLE_PASSWORDS[role.id] || 'coffee123' })),
+    [roleOptions],
+  );
+
+  const handleLogin = () => {
+    const normalizedIdentifier = identifier.trim().toLowerCase();
+
+    if (!normalizedIdentifier || !password.trim()) {
+      Alert.alert('Campos vacíos', 'Ingresa tu usuario y contraseña para continuar.');
+      return;
+    }
+
+    const account = demoAccounts.find(
+      (role) => role.email.toLowerCase() === normalizedIdentifier || role.name.toLowerCase() === normalizedIdentifier,
+    );
+
+    if (!account) {
+      Alert.alert('Usuario no registrado', 'El usuario no existe en el sistema.');
+      return;
+    }
+
+    if (account.password !== password) {
+      Alert.alert('Error de acceso', 'Usuario o contraseña incorrecta.');
+      return;
+    }
+
+    if (loginAsRole) {
+      loginAsRole(account.id);
+      return;
+    }
+
+    navigate('dashboard');
+  };
+
+  const fillAccount = (account) => {
+    setIdentifier(account.email);
+    setPassword(account.password);
+  };
 
   return (
-    <ScreenBackground isDarkMode={isDarkMode} theme={theme} contentStyle={styles.screen}>
+    <ScreenBackground
+      contentStyle={styles.screen}
+      gradientColors={isDarkMode ? ['#1a130d', '#21170f', '#17110d'] : ['#f8e7b5', '#fff5d8', '#fffdf8']}
+      isDarkMode={isDarkMode}
+      theme={theme}
+    >
       <View style={styles.content}>
         <MockStatusBar
           isDarkMode={isDarkMode}
@@ -19,120 +73,118 @@ export default function LoginScreen({ isDarkMode, loginAsRole, navigate, roleOpt
           theme={theme}
         />
 
-        <View style={styles.logoContainer}>
+        <View style={styles.card}>
           <View
             style={[
-              styles.logoCircle,
+              styles.logo,
               {
                 backgroundColor: isDarkMode ? '#92400e' : theme.accent,
-                borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0)',
                 boxShadow: theme.logoShadow,
               },
             ]}
           >
-            <Text style={styles.coffeeIcon}>☕</Text>
+            <AppIcon color="#ffffff" name="cafe" size={29} />
           </View>
-        </View>
 
-        <View style={styles.titleSection}>
-          <Text selectable style={[styles.title, { color: theme.title }]}>
-            CoffeeAdmin
-          </Text>
-          <Text selectable style={[styles.subtitle, { color: theme.subtitle }]}>
-            Controla pedidos, caja e inventario
-          </Text>
-        </View>
+          <Text selectable style={[styles.title, { color: theme.title }]}>CoffeeAdmin</Text>
+          <Text selectable style={[styles.subtitle, { color: theme.subtitle }]}>Controla pedidos, caja e inventario</Text>
 
-        <View style={styles.formSection}>
-          <LoginInput icon="✉" placeholder="Correo o usuario" theme={theme} />
-          <LoginInput icon="🔒" placeholder="Contraseña" secureTextEntry theme={theme} />
-        </View>
+          <View style={styles.form}>
+            <LoginInput
+              icon="✉"
+              onChangeText={setIdentifier}
+              placeholder="Correo o usuario"
+              theme={theme}
+              value={identifier}
+            />
 
-        <View style={styles.roleSection}>
-          <Text selectable style={[styles.roleHeading, { color: theme.title }]}>
-            Entrar como
-          </Text>
-          <View style={styles.roleGrid}>
-            {roleOptions.map((role) => {
-              const isActive = role.id === selectedRoleId;
+            <LoginInput
+              icon="🔒"
+              onChangeText={setPassword}
+              onTogglePassword={() => setShowPassword((current) => !current)}
+              placeholder="Contraseña"
+              secureTextEntry={!showPassword}
+              showPassword={showPassword}
+              theme={theme}
+              value={password}
+            />
 
-              return (
-                <Pressable
-                  key={role.id}
-                  onPress={() => setSelectedRoleId(role.id)}
-                  style={({ pressed }) => [
-                    styles.roleCard,
-                    {
-                      backgroundColor: isActive ? theme.accent : theme.surface,
-                      borderColor: isActive ? theme.accent : theme.surfaceBorder,
-                      boxShadow: isActive ? '0 10px 22px rgba(217, 119, 6, 0.22)' : theme.cardShadow,
-                      opacity: pressed ? 0.86 : 1,
-                    },
-                  ]}
-                >
-                  <Text style={styles.roleIcon}>{role.icon}</Text>
-                  <Text selectable style={[styles.roleLabel, { color: isActive ? '#ffffff' : theme.title }]}>
-                    {role.label}
-                  </Text>
-                  <Text selectable style={[styles.roleDescription, { color: isActive ? 'rgba(255,255,255,0.78)' : theme.muted }]}>
-                    {role.description}
-                  </Text>
-                </Pressable>
-              );
-            })}
+            <Pressable
+              accessibilityRole="button"
+              onPress={handleLogin}
+              style={({ pressed }) => [
+                styles.loginButton,
+                {
+                  backgroundColor: isDarkMode ? theme.accent : theme.accentAlt,
+                  boxShadow: theme.strongShadow,
+                  opacity: pressed ? 0.86 : 1,
+                },
+              ]}
+            >
+              <Text style={styles.loginText}>Iniciar sesión</Text>
+              <Text style={styles.loginArrow}>→</Text>
+            </Pressable>
           </View>
-        </View>
 
-        <Pressable
-          onPress={() => {
-            if (loginAsRole && selectedRole) {
-              loginAsRole(selectedRole.id);
-              return;
-            }
+          <Text selectable style={[styles.accessText, { color: theme.muted }]}>Acceso según rol: Mesero, Caja, Cocina o Admin</Text>
 
-            navigate('dashboard');
-          }}
-          style={({ pressed }) => [
-            styles.loginButton,
-            {
-              backgroundColor: isDarkMode ? theme.accent : theme.accentAlt,
-              boxShadow: isDarkMode
-                ? '0 14px 30px rgba(217, 119, 6, 0.35)'
-                : '0 12px 25px rgba(120, 53, 15, 0.35)',
-              opacity: pressed ? 0.88 : 1,
-            },
-          ]}
-        >
-          <Text style={styles.loginText}>Iniciar sesión</Text>
-          <Text style={styles.loginArrow}>➜</Text>
-        </Pressable>
+          <View style={[styles.brandCard, { backgroundColor: theme.surfaceAlt }]}>
+            <Text selectable style={[styles.brandTitle, { color: theme.title }]}>Tu cafetería de confianza</Text>
+            <Text selectable style={[styles.brandCopy, { color: theme.muted }]}>Cálido y sencillo para pasar un buen rato</Text>
+          </View>
 
-        <Text selectable style={[styles.roleText, { color: theme.muted }]}>
-          Los permisos cambian según el rol seleccionado
-        </Text>
+          <View
+            style={[
+              styles.credentials,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.surfaceBorder,
+                boxShadow: theme.cardShadow,
+              },
+            ]}
+          >
+            <Text selectable style={[styles.credentialsTitle, { color: theme.title }]}>Credenciales de prueba</Text>
+            <Text selectable style={[styles.credentialsNote, { color: theme.muted }]}>Selecciona cualquiera de los roles disponibles</Text>
 
-        <View
-          style={[
-            styles.designCard,
-            {
-              backgroundColor: theme.surfaceAlt,
-              borderColor: isDarkMode ? 'rgba(245, 158, 11, 0.14)' : 'rgba(120, 53, 15, 0)',
-            },
-          ]}
-        >
-          <Text selectable style={[styles.cardTitle, { color: theme.title }]}>
-            Tu cafetería de confianza
-          </Text>
-          <Text selectable style={[styles.cardCopy, { color: theme.muted }]}>
-            Cálido y sencillo para pasar un buen rato
-          </Text>
+            {demoAccounts.map((account, index) => (
+              <Pressable
+                accessibilityHint="Llena automáticamente el formulario"
+                accessibilityRole="button"
+                key={account.id}
+                onPress={() => fillAccount(account)}
+                style={({ pressed }) => [
+                  styles.accountRow,
+                  {
+                    borderBottomColor: theme.inputBorder,
+                    borderBottomWidth: index === demoAccounts.length - 1 ? 0 : 1,
+                    opacity: pressed ? 0.65 : 1,
+                  },
+                ]}
+              >
+                <View style={[styles.accountIcon, { backgroundColor: theme.softIcon }]}>
+                  <AppIcon color={theme.amber} name={account.icon} size={19} />
+                </View>
+                <View style={styles.accountInfo}>
+                  <Text selectable style={[styles.accountRole, { color: theme.title }]}>{account.label}</Text>
+                  <Text selectable style={[styles.accountEmail, { color: theme.muted }]}>{account.email}</Text>
+                </View>
+                <View style={[styles.passwordBadge, { backgroundColor: theme.surfaceAlt }]}>
+                  <Text selectable style={[styles.passwordBadgeText, { color: theme.accent }]}>{account.password}</Text>
+                </View>
+              </Pressable>
+            ))}
+
+            <Text selectable style={[styles.credentialsHelp, { color: theme.muted }]}>Toca una cuenta para llenar automáticamente los campos.</Text>
+          </View>
         </View>
       </View>
     </ScreenBackground>
   );
 }
 
-function LoginInput({ icon, placeholder, secureTextEntry, theme }) {
+function LoginInput({ icon, onChangeText, onTogglePassword, placeholder, secureTextEntry, showPassword, theme, value }) {
+  const isPassword = Boolean(onTogglePassword);
+
   return (
     <View
       style={[
@@ -144,163 +196,105 @@ function LoginInput({ icon, placeholder, secureTextEntry, theme }) {
         },
       ]}
     >
-      <Text style={[styles.inputIcon, { color: theme.amber }]}>{icon}</Text>
+      <AppIcon color={theme.amber} name={icon} size={17} />
       <TextInput
+        autoCapitalize="none"
+        autoCorrect={false}
+        keyboardType={isPassword ? 'default' : 'email-address'}
+        onChangeText={onChangeText}
+        onSubmitEditing={isPassword ? undefined : null}
         placeholder={placeholder}
         placeholderTextColor={theme.muted}
         secureTextEntry={secureTextEntry}
-        autoCapitalize="none"
-        keyboardType={secureTextEntry ? 'default' : 'email-address'}
         style={[styles.input, { color: theme.statusText }]}
+        value={value}
       />
+      {isPassword && (
+        <Pressable
+          accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={onTogglePassword}
+          style={({ pressed }) => [styles.passwordToggle, { opacity: pressed ? 0.55 : 1 }]}
+        >
+          <Text style={[styles.passwordToggleText, { color: theme.muted }]}>{showPassword ? 'Ocultar' : 'Mostrar'}</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    minHeight: 860,
-  },
+  screen: { minHeight: 860 },
   content: {
     flex: 1,
     minHeight: 860,
-    paddingBottom: 24,
-    paddingHorizontal: 36,
-    paddingTop: 36,
+    paddingBottom: 32,
+    paddingHorizontal: 24,
+    paddingTop: 28,
     position: 'relative',
     zIndex: 1,
   },
-  logoContainer: {
-    alignItems: 'center',
-    paddingTop: 52,
+  card: {
+    alignSelf: 'center',
+    maxWidth: 440,
+    paddingTop: 44,
+    width: '100%',
   },
-  logoCircle: {
+  logo: {
     alignItems: 'center',
-    borderRadius: 48,
-    borderWidth: 1,
-    height: 96,
+    alignSelf: 'center',
+    borderRadius: 32,
+    height: 64,
     justifyContent: 'center',
-    width: 96,
+    marginBottom: 14,
+    width: 64,
   },
-  coffeeIcon: {
-    color: '#ffffff',
-    fontSize: 44,
-  },
-  titleSection: {
-    alignItems: 'center',
-    gap: 8,
-    paddingTop: 32,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '900',
-  },
-  subtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  formSection: {
-    gap: 16,
-    paddingTop: 32,
-  },
+  logoIcon: { fontSize: 28 },
+  title: { fontSize: 26, fontWeight: '900', textAlign: 'center' },
+  subtitle: { fontSize: 12, marginBottom: 26, marginTop: 4, textAlign: 'center' },
+  form: { gap: 12 },
   inputBox: {
     alignItems: 'center',
     borderCurve: 'continuous',
-    borderRadius: 18,
+    borderRadius: 15,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 14,
-    height: 56,
-    paddingHorizontal: 18,
+    gap: 11,
+    height: 52,
+    paddingHorizontal: 15,
     width: '100%',
   },
-  inputIcon: {
-    fontSize: 18,
-    width: 20,
-  },
-  input: {
-    flex: 1,
-    fontSize: 14,
-    height: '100%',
-  },
+  inputIcon: { fontSize: 16, textAlign: 'center', width: 19 },
+  input: { flex: 1, fontSize: 14, height: '100%', minWidth: 0 },
+  passwordToggle: { alignItems: 'center', height: 40, justifyContent: 'center', paddingLeft: 8 },
+  passwordToggleText: { fontSize: 11, fontWeight: '800' },
   loginButton: {
     alignItems: 'center',
     borderCurve: 'continuous',
-    borderRadius: 18,
+    borderRadius: 15,
     flexDirection: 'row',
-    gap: 10,
-    height: 58,
+    gap: 8,
+    height: 52,
     justifyContent: 'center',
-    marginTop: 22,
-    width: '100%',
+    marginTop: 2,
   },
-  roleSection: {
-    gap: 10,
-    paddingTop: 22,
-  },
-  roleHeading: {
-    fontSize: 13,
-    fontWeight: '900',
-    textAlign: 'center',
-  },
-  roleGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  roleCard: {
-    borderCurve: 'continuous',
-    borderRadius: 18,
-    borderWidth: 1,
-    flexBasis: '47%',
-    flexGrow: 1,
-    gap: 4,
-    minHeight: 96,
-    padding: 12,
-  },
-  roleIcon: {
-    fontSize: 21,
-  },
-  roleLabel: {
-    fontSize: 12,
-    fontWeight: '900',
-  },
-  roleDescription: {
-    fontSize: 10,
-    lineHeight: 14,
-  },
-  loginText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  loginArrow: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '800',
-    lineHeight: 20,
-  },
-  roleText: {
-    fontSize: 12,
-    marginTop: 20,
-    textAlign: 'center',
-  },
-  designCard: {
-    alignItems: 'center',
-    borderCurve: 'continuous',
-    borderRadius: 24,
-    borderWidth: 1,
-    gap: 4,
-    marginTop: 42,
-    padding: 16,
-  },
-  cardTitle: {
-    fontSize: 12,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  cardCopy: {
-    fontSize: 12,
-    textAlign: 'center',
-  },
+  loginText: { color: '#ffffff', fontSize: 14, fontWeight: '800' },
+  loginArrow: { color: '#ffffff', fontSize: 18, fontWeight: '800' },
+  accessText: { fontSize: 11, marginTop: 14, textAlign: 'center' },
+  brandCard: { alignItems: 'center', borderCurve: 'continuous', borderRadius: 16, marginTop: 18, padding: 13 },
+  brandTitle: { fontSize: 12, fontWeight: '800' },
+  brandCopy: { fontSize: 11, marginTop: 2 },
+  credentials: { borderCurve: 'continuous', borderRadius: 18, borderWidth: 1, marginTop: 16, padding: 14 },
+  credentialsTitle: { fontSize: 15, fontWeight: '900' },
+  credentialsNote: { fontSize: 11, marginBottom: 8, marginTop: 2 },
+  accountRow: { alignItems: 'center', flexDirection: 'row', gap: 10, minHeight: 58, paddingVertical: 8 },
+  accountIcon: { alignItems: 'center', borderRadius: 11, height: 38, justifyContent: 'center', width: 38 },
+  accountIconText: { fontSize: 18 },
+  accountInfo: { flex: 1, minWidth: 0 },
+  accountRole: { fontSize: 12.5, fontWeight: '800' },
+  accountEmail: { fontSize: 10.5, marginTop: 2 },
+  passwordBadge: { borderRadius: 9, paddingHorizontal: 9, paddingVertical: 6 },
+  passwordBadgeText: { fontSize: 11, fontWeight: '800' },
+  credentialsHelp: { fontSize: 10.5, marginTop: 10, textAlign: 'center' },
 });

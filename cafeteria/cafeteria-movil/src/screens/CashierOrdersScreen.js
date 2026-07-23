@@ -2,7 +2,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useState } from 'react';
 
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
+import AppIcon from '../components/AppIcon';
 import CashierTabs from '../components/CashierTabs';
 import EmptyState from '../components/EmptyState';
 import MockStatusBar from '../components/MockStatusBar';
@@ -246,7 +246,7 @@ export default function CashierOrdersScreen({
 
           {movements.slice(0, 4).map((movement, index) => (
             <View key={`${movement.text}-${index}`} style={styles.movementItem}>
-              <Text style={styles.movementIcon}>{movement.icon}</Text>
+              <AppIcon color={theme.amber} name={movement.icon} size={18} />
               <Text selectable style={[styles.movementCopy, { color: theme.muted }]}>
                 {movement.text}
               </Text>
@@ -255,7 +255,6 @@ export default function CashierOrdersScreen({
         </View>
       </View>
 
-      <BottomNav active="cashierOrders" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
       <DecisionModal
         decision={decision}
         isDarkMode={isDarkMode}

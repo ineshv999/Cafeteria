@@ -2,7 +2,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useState } from 'react';
 
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
+import AppIcon from '../components/AppIcon';
 import CashierTabs from '../components/CashierTabs';
 import MockStatusBar from '../components/MockStatusBar';
 import ScreenBackground from '../components/ScreenBackground';
@@ -48,7 +48,6 @@ export default function CashierOrderDetailScreen({
             theme={theme}
           />
         </View>
-        <BottomNav active="cashierOrders" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
       </ScreenBackground>
     );
   }
@@ -265,14 +264,13 @@ export default function CashierOrderDetailScreen({
             },
           ]}
         >
-          <Text style={styles.alertIcon}>{isCancelled ? '❌' : '⚠️'}</Text>
+          <AppIcon color={isCancelled ? '#ef4444' : theme.amber} name={isCancelled ? 'close-circle' : 'warning'} size={20} />
           <Text selectable style={[styles.alertText, { color: isCancelled ? '#991b1b' : theme.title }]}>
             {isCancelled ? 'Este pedido fue cancelado por caja' : 'Pendiente el tema de facturas'}
           </Text>
         </View>
       </View>
 
-      <BottomNav active="cashierOrders" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
       <DecisionModal
         decision={decision}
         isDarkMode={isDarkMode}
@@ -457,7 +455,7 @@ function TicketPreview({ isDarkMode, order, paymentMethod }) {
           </Text>
         </View>
         <View style={styles.receiptBadge}>
-          <Text style={styles.receiptBadgeText}>☕</Text>
+          <AppIcon color={theme.amber} name="cafe" size={22} />
         </View>
       </View>
 

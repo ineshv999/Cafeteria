@@ -53,3 +53,26 @@ class DetallePedido(Base):
     )
 
     producto = relationship("Producto")
+
+    promocion_aplicada = relationship(
+        "DetallePedidoPromocion",
+        back_populates="detalle",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+
+    @property
+    def id_promocion(self):
+        return (
+            self.promocion_aplicada.id_promocion
+            if self.promocion_aplicada is not None
+            else None
+        )
+
+    @property
+    def descuento(self):
+        return (
+            self.promocion_aplicada.descuento
+            if self.promocion_aplicada is not None
+            else None
+        )

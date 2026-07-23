@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import AppIcon from './AppIcon';
 
 export default function StatCard({ icon, value, label, theme, compact = false }) {
   return (
@@ -13,7 +14,7 @@ export default function StatCard({ icon, value, label, theme, compact = false })
         },
       ]}
     >
-      <Text style={[styles.statIcon, compact && styles.compactIcon]}>{icon}</Text>
+      <AppIcon color={theme.amber} name={icon} size={compact ? 17 : 20} />
       <Text selectable style={[styles.statValue, compact && styles.compactValue, { color: theme.title }]}>
         {value}
       </Text>

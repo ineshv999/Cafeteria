@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/icons.css') }}">
   <title>CoffeeAdmin - Dashboard General</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/usuarios.css') }}">
@@ -811,7 +813,7 @@
       <div class="user-profile-badge">
               <a href="{{ url_for('logout') }}" class="btn-logout">
                   <button type="button" class="btn-logout-btn">
-                      🚪 Cerrar sesión
+                      <i class="bi bi-box-arrow-right ui-icon" aria-hidden="true"></i> Cerrar sesión
                   </button>
               </a>
         <span><strong>{{ session["usuario"] }}</strong>
@@ -825,26 +827,26 @@
     <main class="content-body">
       
       <div class="page-title">
-        <h2>📋 Panel de Control - Pedidos</h2>
+        <h2><i class="bi bi-clipboard2-data ui-icon" aria-hidden="true"></i> Panel de Control - Pedidos</h2>
       </div>
 
       <section class="content-layout-row">
         
         <div class="panel-card">
-          <h3 class="panel-title">📋 Pedidos Registrados</h3>
+          <h3 class="panel-title"><i class="bi bi-clipboard2-data ui-icon" aria-hidden="true"></i> Pedidos Registrados</h3>
           <div class="table-container">
             <button class="btn-primary" type="button" onclick="toggleForm()">
-              ➕ Nuevo Pedido
+              <i class="bi bi-plus-lg ui-icon" aria-hidden="true"></i> Nuevo Pedido
             </button>
 
             <div class="user-form-card" id="formPedido">
               {% if error %}
                 <div class="alert-error">
-                  ⚠️ {{ error }}
+                  <i class="bi bi-exclamation-triangle ui-icon" aria-hidden="true"></i> {{ error }}
                 </div>
               {% endif %}
 
-              <h3>🛒 Nuevo Pedido</h3>
+              <h3><i class="bi bi-cart3 ui-icon" aria-hidden="true"></i> Nuevo Pedido</h3>
 
               <form method="POST" id="pedidoForm">
                 <div>
@@ -853,7 +855,7 @@
                 </div>
 
                 <button class="btn-primary" type="submit" style="width: 100%; justify-content: center;">
-                  ✅ Crear Pedido
+                  <i class="bi bi-check-circle ui-icon" aria-hidden="true"></i> Crear Pedido
                 </button>
               </form>
             </div>
@@ -872,19 +874,19 @@
                 {% for pedido in pedidos %}
                   <tr>
                     <td><strong>#{{ pedido.id_pedido }}</strong></td>
-                    <td><span class="badge-mesa">🪑 Mesa {{ pedido.id_mesa }}</span></td>
+                    <td><span class="badge-mesa"><i class="bi bi-grid-3x3 ui-icon" aria-hidden="true"></i> Mesa {{ pedido.id_mesa }}</span></td>
                     <td>
                       <span class="badge-estado {% if pedido.estado == 'Pendiente' %}pendiente{% elif pedido.estado == 'Preparando' %}en-proceso{% elif pedido.estado == 'Listo' %}completado{% else %}cancelado{% endif %}">
                         {% if pedido.estado == 'Pendiente' %}
                           ⏳ Pendiente
                         {% elif pedido.estado == 'Preparando' %}
-                          🔄 En Proceso
+                          <i class="bi bi-arrow-repeat ui-icon" aria-hidden="true"></i> En Proceso
                         {% elif pedido.estado == 'Listo' %}
-                          ✅ Completado
+                          <i class="bi bi-check-circle ui-icon" aria-hidden="true"></i> Completado
                         {% elif pedido.estado == 'Pagado' %}
                           $$ Pagado
                         {% else %}
-                          ❌ Cancelado
+                          <i class="bi bi-x-circle ui-icon" aria-hidden="true"></i> Cancelado
                         {% endif %}
                       </span>
                     </td>
@@ -895,10 +897,10 @@
                     </td>
                     <td>
                       <a href="{{ url_for('eliminar_pedido', id_pedido=pedido.id_pedido) }}" class="btn-action delete" onclick="return confirm('¿Eliminar pedido #{{ pedido.id_pedido }}?')">
-                        🗑️ Eliminar
+                        <i class="bi bi-trash3 ui-icon" aria-hidden="true"></i> Eliminar
                       </a>
                       <a href="{{ url_for('detalle_pedido', id_pedido=pedido.id_pedido) }}" class="btn-action view">
-                        👁️ Abrir
+                        <i class="bi bi-eye ui-icon" aria-hidden="true"></i> Abrir
                       </a>
                     </td>
                   </tr>
@@ -921,7 +923,7 @@
       form.classList.toggle('active');
       
       if (form.classList.contains('active')) {
-        btn.innerHTML = '✕ Cerrar Formulario';
+        btn.innerHTML = '<i class="bi bi-x-lg ui-icon" aria-hidden="true"></i> Cerrar Formulario';
         btn.style.background = 'linear-gradient(135deg, #EF5350, #C62828)';
         setTimeout(() => {
           form.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -929,7 +931,7 @@
           if (firstInput) firstInput.focus();
         }, 100);
       } else {
-        btn.innerHTML = '➕ Nuevo Pedido';
+        btn.innerHTML = '<i class="bi bi-plus-lg ui-icon" aria-hidden="true"></i> Nuevo Pedido';
         btn.style.background = '';
       }
     }
@@ -967,5 +969,6 @@
   </script>
 
   <script src="{{ url_for('static', filename='js/usuarios.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
 </body>
 </html>

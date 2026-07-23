@@ -1,4 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
+import BottomNav from './src/components/BottomNav';
 import { useState } from 'react';
 import { KeyboardAvoidingView, StyleSheet } from 'react-native';
 
@@ -796,9 +797,26 @@ export default function App() {
         {screen === 'notifications' && <NotificationsScreen {...sharedProps} />}
         {screen === 'profile' && <ProfileScreen {...sharedProps} />}
         {screen === 'settings' && <SettingsScreen {...sharedProps} />}
+
+        {screen !== 'login' && (
+          <BottomNav
+            active={getBottomNavActiveScreen(screen)}
+            isDarkMode={isDarkMode}
+            navigate={navigate}
+            theme={theme}
+          />
+        )}
       </KeyboardAvoidingView>
     </SessionContext.Provider>
   );
+}
+
+function getBottomNavActiveScreen(screen) {
+  if (['cashierAccounts', 'cashierPurchases'].includes(screen)) return 'cashier';
+  if (screen === 'cashierOrderDetail') return 'cashierOrders';
+  if (screen === 'kitchenMenu') return 'kitchen';
+  if (['help', 'settings'].includes(screen)) return 'profile';
+  return screen;
 }
 
 const styles = StyleSheet.create({

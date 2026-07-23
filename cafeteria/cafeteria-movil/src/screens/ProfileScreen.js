@@ -1,8 +1,8 @@
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useState } from 'react';
 
-import BottomNav from '../components/BottomNav';
 import MockStatusBar from '../components/MockStatusBar';
+import AppIcon from '../components/AppIcon';
 import ScreenBackground from '../components/ScreenBackground';
 import SectionTitle from '../components/SectionTitle';
 
@@ -50,7 +50,7 @@ export default function ProfileScreen({
 
         <View style={styles.heroRow}>
           <View style={[styles.avatar, { backgroundColor: isDarkMode ? theme.accent : theme.accentAlt, boxShadow: theme.logoShadow }]}>
-            <Text style={styles.avatarText}>☕</Text>
+            <AppIcon color="#ffffff" name="cafe" size={31} />
           </View>
           <View style={styles.heroCopy}>
             <Text selectable style={[styles.eyebrow, { color: theme.amber }]}>
@@ -78,7 +78,7 @@ export default function ProfileScreen({
             </Text>
           </View>
           <View style={styles.summaryIcon}>
-            <Text style={styles.summaryIconText}>🛡️</Text>
+            <AppIcon color={theme.amber} name="shield-checkmark" size={21} />
           </View>
         </View>
 
@@ -95,7 +95,7 @@ export default function ProfileScreen({
                 },
               ]}
             >
-              <Text style={styles.statIcon}>{stat.icon}</Text>
+              <AppIcon color={theme.amber} name={stat.icon} size={20} />
               <Text selectable style={[styles.statValue, { color: theme.title }]}>
                 {stat.value}
               </Text>
@@ -165,7 +165,6 @@ export default function ProfileScreen({
         </View>
       </View>
 
-      <BottomNav active="profile" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
 
       <ProfileEditModal
         draft={draft}
@@ -237,7 +236,7 @@ function OptionCard({ detail, icon, isDarkMode, onPress, theme, title }) {
       ]}
     >
       <View style={[styles.optionIcon, { backgroundColor: theme.softIcon }]}>
-        <Text style={styles.optionIconText}>{icon}</Text>
+        <AppIcon color={theme.amber} name={icon} size={20} />
       </View>
       <View style={styles.optionCopy}>
         <Text selectable style={[styles.optionTitle, { color: theme.title }]}>

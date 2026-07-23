@@ -46,6 +46,10 @@ Desktop.ini
 .coverage
 htmlcov/
 
+# Archivos cargados en tiempo de ejecución
+uploads/*
+!uploads/.gitkeep
+
 # Distribución
 build/
 dist/

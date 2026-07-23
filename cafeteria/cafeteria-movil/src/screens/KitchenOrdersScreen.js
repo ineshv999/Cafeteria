@@ -2,7 +2,7 @@ import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { useState } from 'react';
 
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
+import AppIcon from '../components/AppIcon';
 import EmptyState from '../components/EmptyState';
 import KitchenTabs from '../components/KitchenTabs';
 import MockStatusBar from '../components/MockStatusBar';
@@ -235,7 +235,7 @@ export default function KitchenOrdersScreen({
 
           {movements.slice(0, 5).map((movement, index) => (
             <View key={`${movement.text}-${index}`} style={styles.queueItem}>
-              <Text style={styles.queueIcon}>{movement.icon}</Text>
+              <AppIcon color={theme.amber} name={movement.icon} size={18} />
               <Text selectable style={[styles.queueCopy, { color: theme.muted }]}>
                 {movement.text}
               </Text>
@@ -244,7 +244,6 @@ export default function KitchenOrdersScreen({
         </View>
       </View>
 
-      <BottomNav active="kitchenOrders" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
 
       <OrderDetailModal
         isDarkMode={isDarkMode}

@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import AppIcon from './AppIcon';
 
 export default function SummaryCard({ icon, title, amount, subtitle, isDarkMode, theme }) {
   return (
@@ -24,7 +25,7 @@ export default function SummaryCard({ icon, title, amount, subtitle, isDarkMode,
       </View>
 
       <View style={styles.summaryIcon}>
-        <Text style={styles.summaryIconText}>{icon}</Text>
+        <AppIcon color={theme.amber} name={icon} size={20} />
       </View>
     </View>
   );

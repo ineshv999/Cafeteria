@@ -16,7 +16,8 @@ from typing import Optional
 from fastapi import HTTPException
 
 import os
-import shutil
+from pathlib import Path
+from uuid import uuid4
 
 from fastapi import (
     APIRouter,
@@ -30,6 +31,44 @@ router = APIRouter(
     prefix="/productos",
     tags=["Productos"]
 )
+
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
+IMAGE_SIGNATURES = (
+    (b"\x89PNG\r\n\x1a\n", ".png"),
+    (b"\xff\xd8\xff", ".jpg"),
+    (b"GIF87a", ".gif"),
+    (b"GIF89a", ".gif"),
+)
+
+
+def _detectar_extension_imagen(contenido: bytes) -> str | None:
+    for firma, extension in IMAGE_SIGNATURES:
+        if contenido.startswith(firma):
+            return extension
+    if (
+        len(contenido) >= 12
+        and contenido.startswith(b"RIFF")
+        and contenido[8:12] == b"WEBP"
+    ):
+        return ".webp"
+    return None
+
+
+def _guardar_imagen(imagen: UploadFile) -> str:
+    contenido = imagen.file.read(MAX_IMAGE_BYTES + 1)
+    if len(contenido) > MAX_IMAGE_BYTES:
+        raise HTTPException(status_code=413, detail="La imagen no puede superar 5 MB.")
+    extension = _detectar_extension_imagen(contenido)
+    if extension is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Solo se permiten imágenes PNG, JPEG, GIF o WebP válidas.",
+        )
+    os.makedirs("uploads", exist_ok=True)
+    ruta = Path("uploads") / f"{uuid4().hex}{extension}"
+    with ruta.open("wb") as archivo:
+        archivo.write(contenido)
+    return ruta.as_posix()
 
 
 @router.get("/", response_model=list[ProductoResponse])
@@ -57,7 +96,7 @@ def listar_productos(
 def obtener_producto(
     id_producto: int,
     usuario=Depends(
-        requiere_roles("administrador")
+        requiere_roles("administrador", "cocina")
     ),
     db: Session = Depends(get_db)
 ):
@@ -72,22 +111,16 @@ def crear_producto(
     stock: int = Form(...),
     activo: bool = Form(...),
     id_categoria: int = Form(...),
-    imagen: UploadFile = File(...),
+    imagen: UploadFile | None = File(None),
     usuario=Depends(
-        requiere_roles("administrador")
+        requiere_roles("administrador", "cocina")
     ),
     db: Session = Depends(get_db)
 ):
 
-    os.makedirs("uploads", exist_ok=True)
-
-    ruta = f"uploads/{imagen.filename}"
-
-    with open(ruta, "wb") as buffer:
-        shutil.copyfileobj(
-            imagen.file,
-            buffer
-        )
+    ruta = None
+    if imagen and imagen.filename:
+        ruta = _guardar_imagen(imagen)
 
     datos = ProductoCreate(
         nombre=nombre,
@@ -109,7 +142,7 @@ def crear_producto(
 def eliminar_producto(
     id_producto: int,
     usuario=Depends(
-        requiere_roles("administrador")
+        requiere_roles("administrador", "cocina")
     ),
     db: Session = Depends(get_db)
 ):
@@ -134,7 +167,7 @@ def actualizar_producto(
 
     imagen: UploadFile | None = File(None),
 
-    usuario=Depends(requiere_roles("administrador")),
+    usuario=Depends(requiere_roles("administrador", "cocina")),
 
     db: Session = Depends(get_db)
 
@@ -156,16 +189,7 @@ def actualizar_producto(
 
     # Si el usuario seleccionó otra imagen, reemplazarla
     if imagen and imagen.filename != "":
-
-        os.makedirs("uploads", exist_ok=True)
-
-        ruta = f"uploads/{imagen.filename}"
-
-        with open(ruta, "wb") as buffer:
-            shutil.copyfileobj(
-                imagen.file,
-                buffer
-            )
+        ruta = _guardar_imagen(imagen)
 
     datos = ProductoUpdate(
 

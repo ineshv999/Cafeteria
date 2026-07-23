@@ -1,22 +1,27 @@
-from pydantic import BaseModel
+from typing import Literal
+
+from pydantic import BaseModel, Field
+
+
+EstadoMesa = Literal["Libre", "Ocupada", "Reservada"]
 
 
 class MesaBase(BaseModel):
-    numero: int
-    capacidad: int
-    estado: str = "Libre"
+    numero: int = Field(gt=0, le=10000)
+    capacidad: int = Field(gt=0, le=100)
+    estado: EstadoMesa = "Libre"
 
 
 class MesaCreate(BaseModel):
-    numero: int
-    capacidad: int
-    estado: str
+    numero: int = Field(gt=0, le=10000)
+    capacidad: int = Field(gt=0, le=100)
+    estado: EstadoMesa = "Libre"
 
 
 class MesaUpdate(BaseModel):
-    numero: int
-    capacidad: int
-    estado: str
+    numero: int = Field(gt=0, le=10000)
+    capacidad: int = Field(gt=0, le=100)
+    estado: EstadoMesa
 
 
 class MesaResponse(MesaBase):

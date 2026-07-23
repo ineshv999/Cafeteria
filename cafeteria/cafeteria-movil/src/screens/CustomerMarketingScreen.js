@@ -2,7 +2,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useState } from 'react';
 
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
+import AppIcon from '../components/AppIcon';
 import CustomerTabs from '../components/CustomerTabs';
 import MockStatusBar from '../components/MockStatusBar';
 import ScreenBackground from '../components/ScreenBackground';
@@ -275,7 +275,7 @@ export default function CustomerMarketingScreen({
 
           {feedback.slice(0, 4).map((item, index) => (
             <View key={`${item.text}-${index}`} style={styles.feedbackItem}>
-              <Text style={styles.feedbackIcon}>{item.icon}</Text>
+              <AppIcon color={theme.amber} name={item.icon} size={18} />
               <Text selectable style={[styles.feedbackText, { color: theme.muted }]}>
                 {item.text}
               </Text>
@@ -284,7 +284,6 @@ export default function CustomerMarketingScreen({
         </View>
       </View>
 
-      <BottomNav active="customerMarketing" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
 
       <SuggestionModal
         isDarkMode={isDarkMode}
@@ -406,7 +405,7 @@ function RecommendedCard({ isDarkMode, item, onSuggest, suggestedCount, theme })
     >
       <View style={styles.recommendedTop}>
         <View style={[styles.itemIcon, { backgroundColor: theme.softIcon }]}>
-          <Text style={styles.itemIconText}>{item.icon}</Text>
+          <AppIcon color={theme.amber} name={item.icon} size={22} />
         </View>
         {suggestedCount > 0 && (
           <View style={[styles.smallCountBadge, { backgroundColor: isDarkMode ? 'rgba(245, 158, 11, 0.16)' : '#fef3c7' }]}>

@@ -44,6 +44,19 @@ def listar_mesas(
     )
 
 
+@router.get("/estadisticas")
+def estadisticas(
+    usuario=Depends(
+        requiere_roles(
+            "administrador",
+            "mesero"
+        )
+    ),
+    db: Session = Depends(get_db)
+):
+    return MesaService.estadisticas(db)
+
+
 @router.get("/{id_mesa}", response_model=MesaResponse)
 def obtener_mesa(
     id_mesa: int,
@@ -101,19 +114,3 @@ def actualizar_mesa(
         id_mesa,
         datos
     )
-
-@router.get("/estadisticas")
-def estadisticas(
-
-    usuario=Depends(
-        requiere_roles(
-            "administrador",
-            "mesero"
-        )
-    ),
-
-    db: Session = Depends(get_db)
-
-):
-
-    return MesaService.estadisticas(db)

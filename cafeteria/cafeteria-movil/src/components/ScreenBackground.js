@@ -1,6 +1,12 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
-export default function ScreenBackground({ children, isDarkMode, theme, contentStyle }) {
+export default function ScreenBackground({ children, gradientColors, isDarkMode, theme, contentStyle }) {
+  const activeColors =
+    gradientColors ||
+    theme?.degradado ||
+    (isDarkMode ? ['#1a130d', '#21170f', '#17110d'] : ['#f8e7b5', '#fff5d8', '#fffdf8']);
+
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
@@ -8,9 +14,14 @@ export default function ScreenBackground({ children, isDarkMode, theme, contentS
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[styles.screen, { backgroundColor: theme.background }, contentStyle]}
     >
-      <View style={[styles.backgroundBlock, styles.topBlock, { backgroundColor: theme.topTint }]} />
-      <View style={[styles.backgroundBlock, styles.middleBlock, { backgroundColor: theme.midTint }]} />
-      <View style={[styles.backgroundBlock, styles.bottomBlock, { backgroundColor: theme.bottomTint }]} />
+      <LinearGradient
+        colors={activeColors}
+        end={{ x: 0.5, y: 1 }}
+        locations={[0, 0.48, 1]}
+        pointerEvents="none"
+        start={{ x: 0.5, y: 0 }}
+        style={StyleSheet.absoluteFillObject}
+      />
 
       {isDarkMode && (
         <>
@@ -30,23 +41,6 @@ const styles = StyleSheet.create({
     minHeight: '100%',
     overflow: 'hidden',
     position: 'relative',
-  },
-  backgroundBlock: {
-    left: 0,
-    position: 'absolute',
-    right: 0,
-  },
-  topBlock: {
-    height: '36%',
-    top: 0,
-  },
-  middleBlock: {
-    height: '38%',
-    top: '30%',
-  },
-  bottomBlock: {
-    bottom: 0,
-    height: '42%',
   },
   ambientGlow: {
     borderRadius: 999,

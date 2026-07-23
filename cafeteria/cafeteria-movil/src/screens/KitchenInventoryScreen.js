@@ -2,7 +2,7 @@ import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { useMemo, useState } from 'react';
 
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
+import AppIcon from '../components/AppIcon';
 import EmptyState from '../components/EmptyState';
 import KitchenTabs from '../components/KitchenTabs';
 import MockStatusBar from '../components/MockStatusBar';
@@ -377,7 +377,7 @@ export default function KitchenInventoryScreen({
             },
           ]}
         >
-          <Text style={styles.searchIcon}>🔎</Text>
+          <AppIcon color={theme.muted} name="search" size={18} />
           <TextInput
             onChangeText={setQuery}
             placeholder="Buscar insumo..."
@@ -454,7 +454,7 @@ export default function KitchenInventoryScreen({
 
           {movements.map((movement, index) => (
             <View key={`${movement.text}-${index}`} style={styles.movementItem}>
-              <Text style={styles.movementIcon}>{movement.icon}</Text>
+              <AppIcon color={theme.amber} name={movement.icon} size={18} />
               <Text selectable style={[styles.movementCopy, { color: theme.muted }]}>
                 {movement.text}
               </Text>
@@ -463,7 +463,6 @@ export default function KitchenInventoryScreen({
         </View>
       </View>
 
-      <BottomNav active="kitchenInventory" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
 
       <ItemActionsSheet
         isDarkMode={isDarkMode}
@@ -565,7 +564,7 @@ function InventoryCard({ isDarkMode, item, onPress, theme }) {
     >
       <View style={styles.inventoryLeft}>
         <View style={[styles.itemIcon, { backgroundColor: theme.softIcon }]}>
-          <Text style={styles.itemIconText}>{item.icon}</Text>
+          <AppIcon color={theme.amber} name={item.icon} size={22} />
         </View>
         <View style={styles.itemCopy}>
           <Text selectable style={[styles.itemName, { color: theme.title }]}>
@@ -614,7 +613,7 @@ function QuickCard({ action, isDarkMode, onPress, theme }) {
       ]}
     >
       <View style={[styles.quickIcon, { backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.10)' : '#ffffff' }]}>
-        <Text style={styles.quickIconText}>{action.icon}</Text>
+        <AppIcon color={theme.amber} name={action.icon} size={21} />
       </View>
       <View>
         <Text selectable style={[styles.quickTitle, { color: theme.title }]}>
@@ -644,7 +643,7 @@ function PurchaseSyncCard({ isDarkMode, onApply, purchase, theme }) {
     >
       <View style={styles.purchaseLeft}>
         <View style={[styles.purchaseIcon, { backgroundColor: theme.softIcon }]}>
-          <Text style={styles.purchaseIconText}>{purchase.icon || '📦'}</Text>
+          <AppIcon color={theme.amber} name={purchase.icon || 'cube'} size={20} />
         </View>
         <View style={styles.purchaseCopy}>
           <Text selectable style={[styles.purchaseName, { color: theme.title }]}>
@@ -692,7 +691,7 @@ function ItemActionsSheet({ isDarkMode, item, onAdjust, onClose, onDelete, onEdi
           <View style={[styles.sheetGrabber, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.18)' : '#d6d3d1' }]} />
           <View style={styles.sheetHeader}>
             <View style={[styles.sheetIcon, { backgroundColor: theme.softIcon }]}>
-              <Text style={styles.sheetIconText}>{item.icon}</Text>
+              <AppIcon color={theme.amber} name={item.icon} size={22} />
             </View>
             <View style={styles.sheetTitleWrap}>
               <Text selectable style={[styles.sheetTitle, { color: theme.title }]}>
@@ -821,7 +820,7 @@ function PurchaseRequestSheet({ draft, error, isDarkMode, item, onCancel, onChan
             Se enviará a Caja como compra pendiente.
           </Text>
           <View style={[styles.requestItemBox, { backgroundColor: theme.actionSoft }]}>
-            <Text style={styles.requestIcon}>{item.icon}</Text>
+            <AppIcon color={theme.amber} name={item.icon} size={20} />
             <Text selectable style={[styles.requestText, { color: theme.title }]}>
               {item.name} · disponible {formatQuantity(item)}
             </Text>
@@ -838,7 +837,7 @@ function PurchaseRequestSheet({ draft, error, isDarkMode, item, onCancel, onChan
             style={[styles.urgentToggle, { backgroundColor: draft.urgent ? theme.warningBg : theme.actionSoft }]}
           >
             <Text style={[styles.urgentText, { color: draft.urgent ? theme.warningText : theme.amber }]}>
-              {draft.urgent ? '⚠️ Compra urgente' : 'Marcar como urgente'}
+              {draft.urgent ? 'Compra urgente' : 'Marcar como urgente'}
             </Text>
           </Pressable>
           <View style={styles.modalActions}>

@@ -28,7 +28,7 @@ def crear_usuario(
     return UsuarioService.crear(db, datos)
 
 
-@router.get("/")
+@router.get("/", response_model=list[UsuarioResponse])
 def listar_usuarios(
     nombre: Optional[str] = None,
     activo: Optional[bool] = None,
@@ -50,7 +50,7 @@ def listar_usuarios(
         limit
     )
 
-@router.get("/{id_usuario}")
+@router.get("/{id_usuario}", response_model=UsuarioResponse)
 def obtener_usuario(
     id_usuario: int,
     usuario=Depends(

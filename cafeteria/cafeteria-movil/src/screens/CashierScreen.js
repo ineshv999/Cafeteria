@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
+import AppIcon from '../components/AppIcon';
 import CashierTabs from '../components/CashierTabs';
 import MockStatusBar from '../components/MockStatusBar';
 import ModuleCard from '../components/ModuleCard';
@@ -278,7 +278,7 @@ export default function CashierScreen({
 
           {cashierMovements.map((movement) => (
             <View key={movement.text} style={styles.movementItem}>
-              <Text style={styles.movementIcon}>{movement.icon}</Text>
+              <AppIcon color={theme.amber} name={movement.icon} size={18} />
               <Text selectable style={[styles.movementCopy, { color: theme.muted }]}>
                 {movement.text}
               </Text>
@@ -287,7 +287,6 @@ export default function CashierScreen({
         </View>
       </View>
 
-      <BottomNav active="cashier" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
     </ScreenBackground>
   );
 }
@@ -437,7 +436,7 @@ function RecentPaymentsCard({ data, isDarkMode, theme }) {
       {data.map((item) => (
         <View key={item.order} style={styles.paymentRow}>
           <View style={[styles.paymentIcon, { backgroundColor: theme.softIcon }]}>
-            <Text style={styles.paymentIconText}>🧾</Text>
+            <AppIcon color={theme.amber} name="receipt" size={20} />
           </View>
           <View style={styles.paymentCopy}>
             <Text selectable style={[styles.paymentOrder, { color: theme.title }]}>
@@ -466,7 +465,7 @@ function AlertsCard({ alerts, isDarkMode, theme }) {
     >
       {alerts.map((alert) => (
         <View key={alert.text} style={styles.alertRow}>
-          <Text style={styles.alertIcon}>{alert.icon}</Text>
+          <AppIcon color={theme.amber} name={alert.icon} size={18} />
           <Text selectable style={[styles.alertText, { color: theme.title }]}>
             {alert.text}
           </Text>

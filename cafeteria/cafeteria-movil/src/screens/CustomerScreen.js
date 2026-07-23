@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
+import AppIcon from '../components/AppIcon';
 import CustomerTabs from '../components/CustomerTabs';
 import MockStatusBar from '../components/MockStatusBar';
 import ModuleCard from '../components/ModuleCard';
@@ -231,7 +231,7 @@ export default function CustomerScreen({ goBack, isDarkMode, setIsDarkMode, them
             </Text>
           </View>
           <View style={[styles.ticketIconWrap, { backgroundColor: isDarkMode ? 'rgba(245,158,11,0.14)' : '#ffffff' }]}>
-            <Text style={styles.ticketIcon}>🧾</Text>
+            <AppIcon color={theme.amber} name="receipt" size={20} />
           </View>
         </View>
 
@@ -300,7 +300,7 @@ export default function CustomerScreen({ goBack, isDarkMode, setIsDarkMode, them
 
           {customerMovements.map((movement) => (
             <View key={movement.text} style={styles.movementItem}>
-              <Text style={styles.movementIcon}>{movement.icon}</Text>
+              <AppIcon color={theme.amber} name={movement.icon} size={18} />
               <Text selectable style={[styles.movementCopy, { color: theme.muted }]}>
                 {movement.text}
               </Text>
@@ -309,7 +309,6 @@ export default function CustomerScreen({ goBack, isDarkMode, setIsDarkMode, them
         </View>
       </View>
 
-      <BottomNav active="customer" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
     </ScreenBackground>
   );
 }
@@ -359,9 +358,11 @@ function InfoCard({ amount, badge, icon, isDarkMode, subtitle, theme, title, val
             {subtitle}
           </Text>
         </View>
-        <Text selectable style={[styles.infoStrong, { color: theme.amber }]}>
-          {icon || amount}
-        </Text>
+        {icon ? (
+          <AppIcon color={theme.amber} name={icon} size={25} />
+        ) : (
+          <Text selectable style={[styles.infoStrong, { color: theme.amber }]}>{amount}</Text>
+        )}
       </View>
     </View>
   );
@@ -390,10 +391,10 @@ function HorizontalMetric({ color, icon, label, max, theme, value, valueSuffix =
   return (
     <View style={styles.horizontalMetric}>
       <View style={styles.metricHeader}>
-        <Text selectable style={[styles.metricLabel, { color: theme.title }]}>
-          {icon ? `${icon} ` : ''}
-          {label}
-        </Text>
+        <View style={styles.metricLabelRow}>
+          {icon ? <AppIcon color={theme.amber} name={icon} size={15} /> : null}
+          <Text selectable style={[styles.metricLabel, { color: theme.title }]}>{label}</Text>
+        </View>
         <Text selectable style={[styles.metricValue, { color: theme.amber }]}>
           {value}
           {valueSuffix}
@@ -407,6 +408,7 @@ function HorizontalMetric({ color, icon, label, max, theme, value, valueSuffix =
 }
 
 const styles = StyleSheet.create({
+  metricLabelRow: { alignItems: 'center', flexDirection: 'row', gap: 5 },
   screen: {
     minHeight: 1720,
     paddingBottom: 104,

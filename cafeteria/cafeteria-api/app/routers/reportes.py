@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 from io import BytesIO
 from typing import Optional
 from app.schemas.producto import ProductoResponse
+from app.schemas.reporte import ReportePedidoResponse
 
 router = APIRouter(
     prefix="/reportes",
@@ -179,7 +180,7 @@ def reporte_productos_excel(
 
     )
 
-@router.get("/pedidos")
+@router.get("/pedidos", response_model=list[ReportePedidoResponse])
 def reporte_pedidos(
 
     estado: str | None = None,
@@ -294,4 +295,3 @@ def reporte_inventario(
         stock_bajo
 
     )
-

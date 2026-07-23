@@ -37,11 +37,19 @@ class CategoriaService:
 
     @staticmethod
     def obtener(db: Session, id_categoria: int):
-        return (
+        categoria = (
             db.query(Categoria)
             .filter(Categoria.id_categoria == id_categoria)
             .first()
         )
+        if not categoria:
+            raise HTTPException(status_code=404, detail="Categoría no encontrada.")
+        categoria.total_productos = (
+            db.query(Producto)
+            .filter(Producto.id_categoria == id_categoria)
+            .count()
+        )
+        return categoria
 
     @staticmethod
     def crear(db: Session, datos):
@@ -66,6 +74,8 @@ class CategoriaService:
         db.add(categoria)
         db.commit()
         db.refresh(categoria)
+
+        categoria.total_productos = 0
 
         return categoria
     
@@ -95,6 +105,12 @@ class CategoriaService:
 
         db.commit()
         db.refresh(categoria)
+
+        categoria.total_productos = (
+            db.query(Producto)
+            .filter(Producto.id_categoria == id_categoria)
+            .count()
+        )
 
         return categoria
     

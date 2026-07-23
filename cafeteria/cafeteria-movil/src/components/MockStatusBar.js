@@ -2,6 +2,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 're
 import { useContext, useState } from 'react';
 
 import SessionContext from '../context/SessionContext';
+import AppIcon from './AppIcon';
 
 const menuItems = [
   { icon: '🏠', label: 'Dashboard general', target: 'dashboard' },
@@ -94,7 +95,7 @@ export default function MockStatusBar({ isDarkMode, menuMode = 'full', navigate,
                       },
                     ]}
                   >
-                    <Text style={styles.brandEmoji}>☕</Text>
+                    <AppIcon color="#ffffff" name="cafe" size={23} />
                   </View>
                   <View style={styles.brandCopy}>
                     <Text selectable style={[styles.brandTitle, { color: theme.title }]}>
@@ -109,7 +110,7 @@ export default function MockStatusBar({ isDarkMode, menuMode = 'full', navigate,
                 <View style={styles.menuList}>
                   {visibleDrawerMenuItems.map((item) => (
                     <Pressable key={item.label} onPress={() => goTo(item.target)} style={styles.drawerItem}>
-                      <Text style={styles.drawerIcon}>{item.icon}</Text>
+                      <AppIcon color={theme.amber} name={item.icon} size={20} />
                       <Text selectable style={[styles.drawerLabel, { color: theme.title }]}>
                         {item.label}
                       </Text>
@@ -129,9 +130,10 @@ export default function MockStatusBar({ isDarkMode, menuMode = 'full', navigate,
               ]}
             >
               <View style={styles.themeCopy}>
-                <Text selectable style={[styles.themeTitle, { color: theme.title }]}>
-                  {isDarkMode ? '🌙 Modo oscuro' : '☀️ Modo claro'}
-                </Text>
+                <View style={styles.themeTitleRow}>
+                  <AppIcon color={theme.amber} name={isDarkMode ? 'moon' : 'sunny'} size={17} />
+                  <Text selectable style={[styles.themeTitle, { color: theme.title }]}>{isDarkMode ? 'Modo oscuro' : 'Modo claro'}</Text>
+                </View>
                 <Text selectable style={[styles.themeSubtitle, { color: theme.muted }]}>
                   Cambiar apariencia de toda la app
                 </Text>
@@ -294,6 +296,11 @@ const styles = StyleSheet.create({
   themeTitle: {
     fontSize: 19,
     fontWeight: '900',
+  },
+  themeTitleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 7,
   },
   themeSubtitle: {
     fontSize: 14,

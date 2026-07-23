@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/icons.css') }}">
   <title>CoffeeAdmin - Gestión de Categorías</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/usuarios.css') }}">
@@ -1141,7 +1143,7 @@
       <div class="user-profile-badge">
               <a href="{{ url_for('logout') }}" class="btn-logout">
                   <button type="button" class="btn-logout-btn">
-                      🚪 Cerrar sesión
+                      <i class="bi bi-box-arrow-right ui-icon" aria-hidden="true"></i> Cerrar sesión
                   </button>
               </a>
         <span>
@@ -1157,7 +1159,7 @@
     <main class="content-body">
       
       <div class="page-title">
-        <h2>🏷️ Gestión de Categorías</h2>
+        <h2><i class="bi bi-tag ui-icon" aria-hidden="true"></i> Gestión de Categorías</h2>
       </div>
 
       <!-- Mensajes flash -->
@@ -1165,7 +1167,7 @@
         {% if messages %}
           {% for categoria, mensaje in messages %}
             <div class="alert alert-{{ categoria }}">
-              {% if categoria == 'success' %}✅{% elif categoria == 'error' %}⚠️{% else %}ℹ️{% endif %}
+              {% if categoria == 'success' %}<i class="bi bi-check-circle ui-icon" aria-hidden="true"></i>{% elif categoria == 'error' %}<i class="bi bi-exclamation-triangle ui-icon" aria-hidden="true"></i>{% else %}<i class="bi bi-info-circle ui-icon" aria-hidden="true"></i>{% endif %}
               {{ mensaje }}
             </div>
           {% endfor %}
@@ -1175,7 +1177,7 @@
       <!-- Tarjetas de Métricas -->
       <section class="metrics-row">
         <div class="metric-card">
-          <div class="metric-icon">📂</div>
+          <div class="metric-icon"><i class="bi bi-folder2-open ui-icon" aria-hidden="true"></i></div>
           <span>Total Categorías</span>
           <p class="metric-value">{{ categorias|length }}</p>
         </div>
@@ -1184,9 +1186,9 @@
       <!-- Panel de Categorías -->
       <section class="panel-card">
         <div class="panel-header">
-          <h3 class="panel-title">📋 Categorías Registradas</h3>
+          <h3 class="panel-title"><i class="bi bi-clipboard2-data ui-icon" aria-hidden="true"></i> Categorías Registradas</h3>
           <button class="btn-primary" type="button" onclick="toggleForm()">
-            ➕ Nueva Categoría
+            <i class="bi bi-plus-lg ui-icon" aria-hidden="true"></i> Nueva Categoría
           </button>
         </div>
 
@@ -1194,17 +1196,17 @@
         <div class="user-form-card" id="formCategoria">
           {% if error %}
             <div class="alert-error">
-              ⚠️ {{ error }}
+              <i class="bi bi-exclamation-triangle ui-icon" aria-hidden="true"></i> {{ error }}
             </div>
           {% endif %}
           
           {% if success %}
             <div class="alert-success">
-              ✅ {{ success }}
+              <i class="bi bi-check-circle ui-icon" aria-hidden="true"></i> {{ success }}
             </div>
           {% endif %}
 
-          <h3>📝 Registrar Nueva Categoría</h3>
+          <h3><i class="bi bi-pencil-square ui-icon" aria-hidden="true"></i> Registrar Nueva Categoría</h3>
 
           <form method="POST" id="categoriaForm" onsubmit="return validateForm()">
             <div class="full-width">
@@ -1227,7 +1229,7 @@
               ></textarea>
             </div>
 
-            <button type="submit">💾 Guardar Categoría</button>
+            <button type="submit"><i class="bi bi-floppy ui-icon" aria-hidden="true"></i> Guardar Categoría</button>
           </form>
         </div>
 
@@ -1268,13 +1270,13 @@
                             '{{ categoria.nombre }}',
                             '{{ categoria.descripcion or '' }}'
                           )">
-                          ✏️ Editar
+                          <i class="bi bi-pencil ui-icon" aria-hidden="true"></i> Editar
                         </button>
                         <a
                           href="{{ url_for('eliminar_categoria', id_categoria=categoria.id_categoria) }}"
                           class="btn-eliminar"
                           onclick="return confirm('¿Estás seguro de eliminar la categoría "{{ categoria.nombre }}"?')">
-                          🗑️ Eliminar
+                          <i class="bi bi-trash3 ui-icon" aria-hidden="true"></i> Eliminar
                         </a>
                       </div>
                     </td>
@@ -1284,7 +1286,7 @@
                 <tr>
                   <td colspan="4">
                     <div class="empty-state">
-                      <div class="empty-icon">📭</div>
+                      <div class="empty-icon"><i class="bi bi-inbox ui-icon" aria-hidden="true"></i></div>
                       <p>No hay categorías registradas</p>
                       <p class="empty-sub">Haz clic en "Nueva Categoría" para agregar la primera</p>
                     </div>
@@ -1302,9 +1304,9 @@
   <!-- Modal de Edición -->
   <div id="modalEditar" class="modal">
     <div class="modal-content">
-      <button class="modal-close" onclick="cerrarModal()">✕</button>
+      <button class="modal-close" onclick="cerrarModal()"><i class="bi bi-x-lg ui-icon" aria-hidden="true"></i></button>
       
-      <h2>✏️ Editar Categoría</h2>
+      <h2><i class="bi bi-pencil ui-icon" aria-hidden="true"></i> Editar Categoría</h2>
 
       <form method="POST" id="formEditar">
         <input type="hidden" name="id_categoria" id="edit_id">
@@ -1320,8 +1322,8 @@
         </div>
 
         <div class="modal-buttons">
-          <button type="submit">💾 Guardar Cambios</button>
-          <button type="button" onclick="cerrarModal()">❌ Cancelar</button>
+          <button type="submit"><i class="bi bi-floppy ui-icon" aria-hidden="true"></i> Guardar Cambios</button>
+          <button type="button" onclick="cerrarModal()"><i class="bi bi-x-circle ui-icon" aria-hidden="true"></i> Cancelar</button>
         </div>
       </form>
     </div>
@@ -1336,7 +1338,7 @@
       form.classList.toggle('active');
       
       if (form.classList.contains('active')) {
-        btn.innerHTML = '✕ Cerrar Formulario';
+        btn.innerHTML = '<i class="bi bi-x-lg ui-icon" aria-hidden="true"></i> Cerrar Formulario';
         btn.style.background = 'linear-gradient(135deg, #EF5350, #C62828)';
         setTimeout(() => {
           form.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1344,7 +1346,7 @@
           if (firstInput) firstInput.focus();
         }, 100);
       } else {
-        btn.innerHTML = '➕ Nueva Categoría';
+        btn.innerHTML = '<i class="bi bi-plus-lg ui-icon" aria-hidden="true"></i> Nueva Categoría';
         btn.style.background = '';
       }
     }
@@ -1454,5 +1456,6 @@
   </script>
 
   <script src="{{ url_for('static', filename='js/usuarios.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
 </body>
 </html>

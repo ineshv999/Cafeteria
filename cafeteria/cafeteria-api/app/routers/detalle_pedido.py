@@ -33,7 +33,9 @@ def agregar_producto(
 ):
     return DetallePedidoService.crear(
         db,
-        datos
+        datos,
+        usuario_id=usuario["id"],
+        puede_gestionar_todos=usuario["rol"] == "administrador",
     )
 
 @router.get(
@@ -52,7 +54,9 @@ def obtener_detalle_pedido(
 ):
     return DetallePedidoService.listar_por_pedido(
         db,
-        id_pedido
+        id_pedido,
+        usuario_id=usuario["id"],
+        puede_gestionar_todos=usuario["rol"] == "administrador",
     )
 
 @router.delete("/{id_detalle}")
@@ -69,7 +73,9 @@ def eliminar_producto(
 
     pedido = DetallePedidoService.eliminar(
         db,
-        id_detalle
+        id_detalle,
+        usuario_id=usuario["id"],
+        puede_gestionar_todos=usuario["rol"] == "administrador",
     )
 
     return {

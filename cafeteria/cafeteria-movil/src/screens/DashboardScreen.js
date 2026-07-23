@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import AppHeader from '../components/AppHeader';
-import BottomNav from '../components/BottomNav';
+import AppIcon from '../components/AppIcon';
 import MockStatusBar from '../components/MockStatusBar';
 import ModuleCard from '../components/ModuleCard';
 import ScreenBackground from '../components/ScreenBackground';
@@ -280,7 +280,7 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
                   },
                 ]}
               >
-                <Text style={styles.stockIcon}>{item.icon}</Text>
+                <AppIcon color={theme.amber} name={item.icon} size={20} />
                 <View style={styles.stockCopy}>
                   <Text selectable style={[styles.stockTitle, { color: theme.title }]}>
                     {item.label}
@@ -351,7 +351,7 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
                   },
                 ]}
               >
-                <Text style={styles.modulePerfIcon}>{module.icon}</Text>
+                <AppIcon color={theme.amber} name={module.icon} size={20} />
                 <Text selectable style={[styles.modulePerfTitle, { color: theme.title }]}>
                   {module.label}
                 </Text>
@@ -387,12 +387,11 @@ export default function DashboardScreen({ currentRole, isDarkMode, setIsDarkMode
             </Text>
           </View>
           <View style={[styles.ticketIconWrap, { backgroundColor: isDarkMode ? 'rgba(245,158,11,0.14)' : '#ffffff' }]}>
-            <Text style={styles.ticketIcon}>🧾</Text>
+            <AppIcon color={theme.amber} name="receipt" size={20} />
           </View>
         </View>
       </View>
 
-      <BottomNav active="dashboard" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
     </ScreenBackground>
   );
 }
@@ -422,10 +421,10 @@ function HorizontalMetric({ color, icon, label, max, money = false, theme, value
   return (
     <View style={styles.horizontalMetric}>
       <View style={styles.metricHeader}>
-        <Text selectable style={[styles.metricLabel, { color: theme.title }]}>
-          {icon ? `${icon} ` : ''}
-          {label}
-        </Text>
+        <View style={styles.metricLabelRow}>
+          {icon ? <AppIcon color={theme.amber} name={icon} size={15} /> : null}
+          <Text selectable style={[styles.metricLabel, { color: theme.title }]}>{label}</Text>
+        </View>
         <Text selectable style={[styles.metricValue, { color: theme.amber }]}>
           {displayValue}
         </Text>
@@ -438,6 +437,7 @@ function HorizontalMetric({ color, icon, label, max, money = false, theme, value
 }
 
 const styles = StyleSheet.create({
+  metricLabelRow: { alignItems: 'center', flexDirection: 'row', gap: 5 },
   screen: {
     minHeight: 1820,
     paddingBottom: 104,

@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/icons.css') }}">
   <title>CoffeeAdmin - Detalle del Pedido</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -719,44 +721,44 @@
         <span class="separator">›</span>
         <span style="color: var(--text-primary); font-weight: 500;">Pedido #{{ pedido.id_pedido }}</span>
       </div>
-      <h2>📋 Detalle del Pedido #{{ pedido.id_pedido }}</h2>
+      <h2><i class="bi bi-clipboard2-data ui-icon" aria-hidden="true"></i> Detalle del Pedido #{{ pedido.id_pedido }}</h2>
     </div>
 
     <!-- Grid de información -->
     <div class="order-info-grid">
       <div class="order-info-card">
-        <span class="label">🪑 Mesa</span>
+        <span class="label"><i class="bi bi-grid-3x3 ui-icon" aria-hidden="true"></i> Mesa</span>
         <div class="value">
           <span class="badge-mesa">Mesa {{ pedido.id_mesa }}</span>
         </div>
       </div>
 
       <div class="order-info-card">
-        <span class="label">📊 Estado</span>
+        <span class="label"><i class="bi bi-bar-chart ui-icon" aria-hidden="true"></i> Estado</span>
         <div class="value">
           <span class="badge-estado {% if pedido.estado == 'Pendiente' %}pendiente{% elif pedido.estado == 'Preparando' %}preparando{% elif pedido.estado == 'Listo' %}listo{% else %}pagado{% endif %}">
             {% if pedido.estado == 'Pendiente' %}
               ⏳ Pendiente
             {% elif pedido.estado == 'Preparando' %}
-              🔄 Preparando
+              Preparando
             {% elif pedido.estado == 'Listo' %}
-              ✅ Listo
+              Listo
             {% else %}
-              💳 Pagado
+              Pagado
             {% endif %}
           </span>
         </div>
       </div>
 
       <div class="order-info-card">
-        <span class="label">💰 Total</span>
+        <span class="label"><i class="bi bi-cash-stack ui-icon" aria-hidden="true"></i> Total</span>
         <div class="value">
           <span class="total-amount">${{ "%.2f"|format(pedido.total|float) }}</span>
         </div>
       </div>
 
       <div class="order-info-card">
-        <span class="label">📦 Productos</span>
+        <span class="label"><i class="bi bi-box-seam ui-icon" aria-hidden="true"></i> Productos</span>
         <div class="value">
           {{ detalle|length }} productos
         </div>
@@ -765,10 +767,10 @@
 
     <!-- Panel de acciones -->
     <div class="action-panel">
-      <h3>⚙️ Acciones del Pedido</h3>
+      <h3><i class="bi bi-gear ui-icon" aria-hidden="true"></i> Acciones del Pedido</h3>
 
       {% if error %}
-        <div class="alert-error">⚠️ {{ error }}</div>
+        <div class="alert-error"><i class="bi bi-exclamation-triangle ui-icon" aria-hidden="true"></i> {{ error }}</div>
       {% endif %}
 
       <form method="POST">
@@ -777,14 +779,14 @@
             <label>Actualizar Estado</label>
             <select name="estado">
               <option value="Pendiente" {% if pedido.estado=="Pendiente" %}selected{% endif %}>⏳ Pendiente</option>
-              <option value="Preparando" {% if pedido.estado=="Preparando" %}selected{% endif %}>🔄 Preparando</option>
-              <option value="Listo" {% if pedido.estado=="Listo" %}selected{% endif %}>✅ Listo</option>
-              <option value="Pagado" {% if pedido.estado=="Pagado" %}selected{% endif %}>💳 Pagado</option>
+              <option value="Preparando" {% if pedido.estado=="Preparando" %}selected{% endif %}>Preparando</option>
+              <option value="Listo" {% if pedido.estado=="Listo" %}selected{% endif %}>Listo</option>
+              <option value="Pagado" {% if pedido.estado=="Pagado" %}selected{% endif %}>Pagado</option>
             </select>
           </div>
           <div class="form-group" style="flex: 0 0 auto;">
             <input type="hidden" name="accion" value="estado">
-            <button class="btn-primary" type="submit">🔄 Actualizar Estado</button>
+            <button class="btn-primary" type="submit"><i class="bi bi-arrow-repeat ui-icon" aria-hidden="true"></i> Actualizar Estado</button>
           </div>
         </div>
       </form>
@@ -792,7 +794,7 @@
 
     <!-- Panel para agregar producto -->
     <div class="action-panel">
-      <h3>➕ Agregar Producto</h3>
+      <h3><i class="bi bi-plus-lg ui-icon" aria-hidden="true"></i> Agregar Producto</h3>
 
       <form method="POST">
         <div class="form-row">
@@ -812,7 +814,7 @@
           </div>
           <div class="form-group" style="flex: 0 0 auto;">
             <input type="hidden" name="accion" value="producto">
-            <button class="btn-primary btn-success" type="submit">➕ Agregar</button>
+            <button class="btn-primary btn-success" type="submit"><i class="bi bi-plus-lg ui-icon" aria-hidden="true"></i> Agregar</button>
           </div>
         </div>
       </form>
@@ -821,7 +823,7 @@
     <!-- Tabla de productos -->
     <div class="table-container">
       <div class="table-header">
-        <h3>📋 Productos del Pedido</h3>
+        <h3><i class="bi bi-clipboard2-data ui-icon" aria-hidden="true"></i> Productos del Pedido</h3>
         <span class="badge-count">{{ detalle|length }} items</span>
       </div>
 
@@ -848,7 +850,7 @@
                     <a href="{{ url_for('eliminar_detalle', id_detalle=d.id_detalle, id_pedido=pedido.id_pedido) }}" 
                        class="btn-action delete" 
                        onclick="return confirm('¿Eliminar el producto {{ d.producto }}?')">
-                      🗑️ Eliminar
+                      <i class="bi bi-trash3 ui-icon" aria-hidden="true"></i> Eliminar
                     </a>
                   </td>
                 </tr>
@@ -857,7 +859,7 @@
               <tr>
                 <td colspan="5">
                   <div class="empty-state">
-                    <div class="empty-icon">📭</div>
+                    <div class="empty-icon"><i class="bi bi-inbox ui-icon" aria-hidden="true"></i></div>
                     <p>No hay productos en este pedido</p>
                     <p class="empty-sub">Agrega productos usando el formulario de arriba</p>
                   </div>
@@ -899,5 +901,6 @@
     });
   </script>
 
+  <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
 </body>
 </html>

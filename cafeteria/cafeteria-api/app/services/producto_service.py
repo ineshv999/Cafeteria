@@ -48,11 +48,14 @@ class ProductoService:
 
     @staticmethod
     def obtener(db: Session, id_producto: int):
-        return (
+        producto = (
             db.query(Producto)
             .filter(Producto.id_producto == id_producto)
             .first()
         )
+        if not producto:
+            raise HTTPException(status_code=404, detail="Producto no encontrado.")
+        return producto
 
     @staticmethod
     def crear(db: Session, datos):
@@ -81,9 +84,9 @@ class ProductoService:
             id_producto
         )
 
-        if producto:
-            db.delete(producto)
-            db.commit()
+        producto.activo = False
+        db.commit()
+        db.refresh(producto)
 
         return producto
     
@@ -101,12 +104,6 @@ class ProductoService:
             )
             .first()
         )
-
-        if not producto:
-            raise HTTPException(
-                status_code=404,
-                detail="Producto no encontrado."
-            )
 
         producto.nombre = datos.nombre
         producto.descripcion = datos.descripcion

@@ -1,8 +1,8 @@
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useState } from 'react';
 
-import BottomNav from '../components/BottomNav';
 import MockStatusBar from '../components/MockStatusBar';
+import AppIcon from '../components/AppIcon';
 import ScreenBackground from '../components/ScreenBackground';
 import SectionTitle from '../components/SectionTitle';
 
@@ -71,7 +71,7 @@ export default function HelpScreen({ goBack, isDarkMode, navigate, setIsDarkMode
             </Text>
           </View>
           <View style={[styles.headerIcon, { backgroundColor: isDarkMode ? theme.accent : theme.accentAlt, boxShadow: theme.logoShadow }]}>
-            <Text style={styles.headerIconText}>❓</Text>
+            <AppIcon color={theme.amber} name="help-circle" size={24} />
           </View>
         </View>
 
@@ -88,7 +88,7 @@ export default function HelpScreen({ goBack, isDarkMode, navigate, setIsDarkMode
             </Text>
           </View>
           <View style={styles.summaryIcon}>
-            <Text style={styles.summaryIconText}>💬</Text>
+            <AppIcon color={theme.amber} name="chatbubble" size={21} />
           </View>
         </View>
 
@@ -109,7 +109,7 @@ export default function HelpScreen({ goBack, isDarkMode, navigate, setIsDarkMode
 
         <View style={[styles.contactCard, { backgroundColor: theme.surface, borderColor: theme.surfaceBorder, boxShadow: theme.cardShadow }]}>
           <View style={[styles.contactIcon, { backgroundColor: theme.softIcon }]}>
-            <Text style={styles.contactIconText}>☕</Text>
+            <AppIcon color={theme.amber} name="cafe" size={21} />
           </View>
           <View style={styles.contactCopy}>
             <Text selectable style={[styles.contactTitle, { color: theme.title }]}>
@@ -137,7 +137,7 @@ export default function HelpScreen({ goBack, isDarkMode, navigate, setIsDarkMode
               ]}
             >
               <View style={[styles.guideIcon, { backgroundColor: theme.softIcon }]}>
-                <Text style={styles.guideIconText}>{guide.icon}</Text>
+                <AppIcon color={theme.amber} name={guide.icon} size={21} />
               </View>
               <Text selectable style={[styles.guideTitle, { color: theme.title }]}>
                 {guide.title}
@@ -203,7 +203,6 @@ export default function HelpScreen({ goBack, isDarkMode, navigate, setIsDarkMode
         </View>
       </View>
 
-      <BottomNav active="profile" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
 
       <TicketModal
         isDarkMode={isDarkMode}

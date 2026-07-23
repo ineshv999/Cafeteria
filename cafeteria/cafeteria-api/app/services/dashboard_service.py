@@ -15,9 +15,9 @@ class DashboardService:
 
         ventas = db.query(
             func.sum(Pedido.total)
-        ).scalar() or 0
+        ).filter(Pedido.estado == "Pagado").scalar() or 0
 
-        pedidos = db.query(Pedido).count()
+        pedidos = db.query(Pedido).filter(Pedido.estado != "Cancelado").count()
 
         usuarios = db.query(Usuario).count()
 

@@ -22,7 +22,7 @@ router = APIRouter(
 @router.get("/", response_model=list[CategoriaResponse])
 def listar_categorias(
     usuario=Depends(
-        requiere_roles("administrador")
+        requiere_roles("administrador", "cocina")
     ),
     db: Session = Depends(get_db)
 ):
@@ -33,7 +33,7 @@ def listar_categorias(
 def obtener_categoria(
     id_categoria: int,
     usuario=Depends(
-        requiere_roles("administrador")
+        requiere_roles("administrador", "cocina")
     ),
     db: Session = Depends(get_db)
 ):
