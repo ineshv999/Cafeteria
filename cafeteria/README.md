@@ -21,6 +21,22 @@ Para crear datos de desarrollo, define `SEED_MESERO_PASSWORD`, `SEED_COCINA_PASS
 .venv/bin/python scripts/seed_mobile_demo.py
 ```
 
+## 3. Credenciales
+
+Credenciales de acceso web y móvil (misma API):
+
+| Rol | Correo | Contraseña |
+| --- | --- | --- |
+| Mesero | `mesero@cafeteria.local` | `Mesero123!` |
+| Cocina | `cocina@cafeteria.local` | `Cocina123!` |
+| Caja | `caja@cafeteria.local` | `Caja123!` |
+| Administrador | `admin@cafeteria.local` | `Admin123!` |
+
+La tarjeta imprimible de credenciales (entregable del Tercer Parcial) está en
+[`docs/credenciales/tarjeta_credenciales.pdf`](docs/credenciales/tarjeta_credenciales.pdf)
+y se regenera con
+`.venv/bin/python scripts/generar_tarjeta_credenciales.py`.
+
 ## 2. Aplicación móvil
 
 ```bash

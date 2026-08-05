@@ -32,22 +32,26 @@ desarrollo sin guardarlas en Git:
 
 ```bash
 cd cafeteria-api
-export SEED_MESERO_PASSWORD='cambia-este-valor'
-export SEED_COCINA_PASSWORD='cambia-este-valor'
-export SEED_CAJA_PASSWORD='cambia-este-valor'
-export SEED_ADMIN_PASSWORD='cambia-este-valor'
+export SEED_MESERO_PASSWORD='Mesero123!'
+export SEED_COCINA_PASSWORD='Cocina123!'
+export SEED_CAJA_PASSWORD='Caja123!'
+export SEED_ADMIN_PASSWORD='Admin123!'
 .venv/bin/alembic upgrade head
 .venv/bin/python scripts/seed_mobile_demo.py
 ```
 
 El script crea o actualiza estos usuarios con las contraseñas proporcionadas:
 
-| Rol | Email | Variable de contraseña |
+| Rol | Email | Contraseña |
 | --- | --- | --- |
-| Mesero | `mesero@cafeteria.local` | `SEED_MESERO_PASSWORD` |
-| Cocina | `cocina@cafeteria.local` | `SEED_COCINA_PASSWORD` |
-| Caja | `caja@cafeteria.local` | `SEED_CAJA_PASSWORD` |
-| Administrador | `admin@cafeteria.local` | `SEED_ADMIN_PASSWORD` |
+| Mesero | `mesero@cafeteria.local` | `Mesero123!` |
+| Cocina | `cocina@cafeteria.local` | `Cocina123!` |
+| Caja | `caja@cafeteria.local` | `Caja123!` |
+| Administrador | `admin@cafeteria.local` | `Admin123!` |
+
+La tarjeta de credenciales imprimible (entregable del Tercer Parcial) está en
+`docs/credenciales/tarjeta_credenciales.pdf` y se regenera con
+`.venv/bin/python scripts/generar_tarjeta_credenciales.py`.
 
 Variables demo:
 
