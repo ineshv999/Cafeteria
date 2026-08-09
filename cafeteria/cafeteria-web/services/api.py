@@ -22,9 +22,6 @@ class ApiService:
                 }
             )
 
-            print("STATUS:", response.status_code)
-            print("RESPUESTA:", response.text)
-
             return response
 
         except requests.exceptions.ConnectionError:
@@ -70,9 +67,6 @@ class ApiService:
                 }
 
             )
-
-            print(response.status_code)
-            print(response.text)
 
             return response
 
@@ -454,9 +448,6 @@ class ApiService:
             }
 
         )
-
-        print(response.status_code)
-        print(response.text)
 
         if response.status_code == 401:
 

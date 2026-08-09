@@ -4,6 +4,7 @@ from decimal import Decimal
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.database import transaccion
 from app.models.mesa import Mesa
 from app.models.notificacion import Notificacion
 from app.models.pedido import Pedido
@@ -44,7 +45,7 @@ class CajaService:
     def cobrar(db: Session, id_pedido: int, datos, usuario_id: int):
         metodo_pago = getattr(datos.metodo_pago, "value", datos.metodo_pago)
 
-        with db.begin():
+        with transaccion(db):
             pedido = (
                 db.query(Pedido)
                 .filter(Pedido.id_pedido == id_pedido)

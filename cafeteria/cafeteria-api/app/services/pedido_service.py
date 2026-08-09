@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload, selectinload
 
+from app.database import transaccion
 from app.models.detalle_pedido import DetallePedido
 from app.models.detalle_pedido_promocion import DetallePedidoPromocion
 from app.models.mesa import Mesa
@@ -82,7 +83,7 @@ class PedidoService:
 
     @staticmethod
     def crear(db: Session, datos, usuario_id: int):
-        with db.begin():
+        with transaccion(db):
             mesa = (
                 db.query(Mesa)
                 .filter(Mesa.id_mesa == datos.id_mesa)
@@ -124,7 +125,7 @@ class PedidoService:
             if item.id_promocion is not None
         }
 
-        with db.begin():
+        with transaccion(db):
             mesa = (
                 db.query(Mesa)
                 .filter(Mesa.id_mesa == datos.id_mesa)
@@ -342,7 +343,7 @@ class PedidoService:
                 detail="Utiliza el endpoint de Caja para registrar el pago.",
             )
 
-        with db.begin():
+        with transaccion(db):
             pedido = (
                 db.query(Pedido)
                 .filter(Pedido.id_pedido == id_pedido)
@@ -469,7 +470,7 @@ class PedidoService:
                 detail="La nota de demora es obligatoria.",
             )
 
-        with db.begin():
+        with transaccion(db):
             pedido = (
                 db.query(Pedido)
                 .filter(Pedido.id_pedido == id_pedido)
@@ -537,7 +538,7 @@ class PedidoService:
         usuario_id: int | None = None,
         puede_gestionar_todos: bool = False,
     ):
-        with db.begin():
+        with transaccion(db):
             pedido = (
                 db.query(Pedido)
                 .filter(Pedido.id_pedido == id_pedido)

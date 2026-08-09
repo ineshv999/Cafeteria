@@ -48,17 +48,38 @@ ROLE_PRESENTATION = {
 def index():
 
     if "token" in session:
-        return redirect(url_for("dashboard"))
+        return redirect(inicio_por_rol())
 
     return render_template("login.html")
+
+
+def inicio_por_rol():
+    """Página de inicio según el rol del usuario en sesión."""
+    rol = session.get("rol")
+    if rol == "administrador":
+        return url_for("dashboard")
+    if rol == "cocina":
+        return url_for("panel_cocina")
+    if rol == "caja":
+        return url_for("panel_caja")
+    return url_for("panel_mesas")
+
+
+def requiere_rol(*roles):
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            if session.get("rol") not in roles:
+                return redirect(url_for("index"))
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
 
 
 @app.route("/login", methods=["POST"])
 def login():
     if "token" in session:
-        return redirect(url_for("dashboard"))
-
-    print("FORM:", request.form)
+        return redirect(inicio_por_rol())
 
     username = request.form.get("username")
     if username is None:
@@ -83,9 +104,6 @@ def login():
             error="No se pudo conectar con la API."
         )
 
-    print("STATUS:", respuesta.status_code)
-    print("RESPUESTA:", respuesta.text)
-
     if respuesta.status_code != 200:
         return render_template(
             "login.html",
@@ -98,7 +116,7 @@ def login():
     session["usuario"] = datos["usuario"]
     session["rol"] = datos["rol"]
 
-    return redirect(url_for("dashboard"))
+    return redirect(inicio_por_rol())
 
 def login_required(f):
     @wraps(f)
@@ -110,6 +128,27 @@ def login_required(f):
         return f(*args, **kwargs)
 
     return decorated
+
+
+@app.route("/cocina")
+@login_required
+@requiere_rol("administrador", "cocina")
+def panel_cocina():
+    return render_template("cocina.html")
+
+
+@app.route("/caja")
+@login_required
+@requiere_rol("administrador", "caja")
+def panel_caja():
+    return render_template("caja.html")
+
+
+@app.route("/mesas")
+@login_required
+@requiere_rol("administrador", "mesero", "cocina", "caja")
+def panel_mesas():
+    return render_template("mesas.html")
 
 
 def obtener_mensaje_api(respuesta, mensaje_predeterminado):
@@ -172,8 +211,7 @@ def obtener_catalogo_roles(token):
 @login_required
 def dashboard():
     if session.get("rol") != "administrador":
-        session.clear()
-        return redirect(url_for("index"))
+        return redirect(inicio_por_rol())
 
     estadisticas = ApiService.obtener_dashboard(
         session["token"]
@@ -628,19 +666,23 @@ def pedidos():
 
     if request.method == "POST":
 
-        datos = {
-            "id_mesa": int(request.form.get("id_mesa"))
-        }
-
-        respuesta = ApiService.crear_pedido(
-            session["token"],
-            datos
-        )
-
-        if respuesta.status_code != 200:
-            error = respuesta.text
+        id_mesa_raw = request.form.get("id_mesa", "").strip()
+        if not id_mesa_raw.isdigit():
+            error = "El número de mesa debe ser un valor numérico válido."
         else:
-            return redirect(url_for("pedidos"))
+            datos = {
+                "id_mesa": int(id_mesa_raw)
+            }
+
+            respuesta = ApiService.crear_pedido(
+                session["token"],
+                datos
+            )
+
+            if respuesta.status_code != 200:
+                error = respuesta.text
+            else:
+                return redirect(url_for("pedidos"))
 
     pedidos = ApiService.obtener_pedidos(
         session["token"]
@@ -725,8 +767,6 @@ def reporte_productos():
         stock_minimo
 
     )
-
-    print(productos)
 
     categorias = ApiService.obtener_categorias(
         session["token"]

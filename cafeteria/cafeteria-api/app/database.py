@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -21,3 +23,18 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+@contextmanager
+def transaccion(db):
+    """Confirma o revierte los cambios sobre la sesión.
+
+    Compatible con sesiones que ya iniciaron una transacción (por ejemplo,
+    después de que el dependency de autenticación consulte el usuario).
+    """
+    try:
+        yield
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
