@@ -38,6 +38,12 @@
           }
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "ddb0797d-54ba-494a-994a-19dbd97358ab"
+      }
+    },
+    "owner": "fernandobe1312"
   }
 }
