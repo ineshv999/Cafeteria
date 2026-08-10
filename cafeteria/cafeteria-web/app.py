@@ -288,21 +288,6 @@ def dashboard():
         pedidos_dashboard=pedidos_dashboard
     )
 
-@app.route("/estadisticas")
-def estadisticas():
-
-    if "token" not in session:
-        return redirect(url_for("index"))
-
-    estadisticas = ApiService.dashboard(
-        session["token"]
-    )
-
-    return render_template(
-        "estadisticas.html",
-        estadisticas=estadisticas
-    )
-
 @app.route("/usuarios", methods=["GET", "POST"])
 @login_required
 def usuarios():
@@ -658,10 +643,200 @@ def eliminar_categoria(id_categoria):
 
     return redirect(url_for("categorias"))
 
+@app.route("/gastos", methods=["GET", "POST"])
+@login_required
+@requiere_rol("administrador")
+def gastos():
+
+    error = None
+
+    if request.method == "POST":
+
+        monto = request.form.get("monto")
+        categoria = request.form.get("categoria", "").strip()
+        descripcion = request.form.get("descripcion", "").strip()
+        metodo_pago = request.form.get("metodo_pago", "").strip()
+        fecha = request.form.get("fecha", "").strip()
+
+        if categoria == "__otro__":
+            categoria = request.form.get("categoria_nueva", "").strip()
+
+        try:
+            monto_decimal = float(monto)
+        except (TypeError, ValueError):
+            monto_decimal = 0
+
+        if monto_decimal <= 0:
+            error = "El monto debe ser mayor a 0."
+        elif len(categoria) < 2:
+            error = "La categoría debe tener al menos 2 caracteres."
+        elif len(descripcion) < 3:
+            error = "La descripción debe tener al menos 3 caracteres."
+
+        if error is None:
+
+            datos = {
+                "monto": round(monto_decimal, 2),
+                "categoria": categoria,
+                "descripcion": descripcion
+            }
+
+            if metodo_pago:
+                datos["metodo_pago"] = metodo_pago
+
+            if fecha:
+                datos["fecha"] = f"{fecha}T12:00:00"
+
+            respuesta = ApiService.crear_gasto(
+                session["token"],
+                datos
+            )
+
+            if respuesta is not None and respuesta.status_code == 201:
+
+                flash("Gasto registrado correctamente.", "success")
+
+                return redirect(url_for("gastos"))
+
+            error = obtener_mensaje_api(
+                respuesta,
+                "No se pudo registrar el gasto."
+            )
+
+    categoria_filtro = request.args.get("categoria", "").strip()
+
+    gastos = ApiService.obtener_gastos(
+        session["token"],
+        categoria=categoria_filtro
+    )
+
+    gastos_todos = ApiService.obtener_gastos(
+        session["token"]
+    )
+
+    todas_categorias = sorted({
+        gasto["categoria"]
+        for gasto in gastos_todos
+    })
+
+    total_gastos = sum(
+        float(gasto["monto"])
+        for gasto in gastos
+    )
+
+    return render_template(
+
+        "gastos.html",
+
+        gastos=gastos,
+
+        total_gastos=total_gastos,
+
+        categorias_distintas=len(todas_categorias),
+        metodos_distintos=len({
+            gasto.get("metodo_pago")
+            for gasto in gastos
+            if gasto.get("metodo_pago")
+        }),
+
+        todas_categorias=todas_categorias,
+
+        categoria_filtro=categoria_filtro,
+
+        usuario=session["usuario"],
+
+        rol=session["rol"],
+
+        error=error
+
+    )
+
+@app.route("/gastos/editar/<int:id_gasto>", methods=["POST"])
+@login_required
+@requiere_rol("administrador")
+def editar_gasto(id_gasto):
+
+    monto = request.form.get("monto")
+    categoria = request.form.get("categoria", "").strip()
+    descripcion = request.form.get("descripcion", "").strip()
+    metodo_pago = request.form.get("metodo_pago", "").strip()
+    fecha = request.form.get("fecha", "").strip()
+
+    if categoria == "__otro__":
+        categoria = request.form.get("categoria_nueva", "").strip()
+
+    try:
+        monto_decimal = float(monto)
+    except (TypeError, ValueError):
+        monto_decimal = 0
+
+    if monto_decimal <= 0:
+        flash("El monto debe ser mayor a 0.", "danger")
+        return redirect(url_for("gastos"))
+
+    datos = {
+        "monto": round(monto_decimal, 2),
+        "categoria": categoria,
+        "descripcion": descripcion
+    }
+
+    if metodo_pago:
+        datos["metodo_pago"] = metodo_pago
+
+    if fecha:
+        datos["fecha"] = f"{fecha}T12:00:00"
+
+    respuesta = ApiService.actualizar_gasto(
+        session["token"],
+        id_gasto,
+        datos
+    )
+
+    if respuesta is not None and respuesta.status_code == 200:
+
+        flash("Gasto actualizado correctamente.", "success")
+
+    else:
+
+        flash(
+            obtener_mensaje_api(
+                respuesta,
+                "No se pudo actualizar el gasto."
+            ),
+            "danger"
+        )
+
+    return redirect(url_for("gastos"))
+
+@app.route("/gastos/eliminar/<int:id_gasto>")
+@login_required
+@requiere_rol("administrador")
+def eliminar_gasto(id_gasto):
+
+    respuesta = ApiService.eliminar_gasto(
+        session["token"],
+        id_gasto
+    )
+
+    if respuesta is not None and respuesta.status_code == 200:
+
+        flash("Gasto eliminado correctamente.", "success")
+
+    else:
+
+        flash(
+            obtener_mensaje_api(
+                respuesta,
+                "No se pudo eliminar el gasto."
+            ),
+            "danger"
+        )
+
+    return redirect(url_for("gastos"))
+
 @app.route("/pedidos", methods=["GET", "POST"])
 @login_required
 def pedidos():
-
     error = None
 
     if request.method == "POST":

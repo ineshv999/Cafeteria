@@ -769,3 +769,71 @@ class ApiService:
             return []
 
         return response.json()
+
+    @staticmethod
+    def obtener_gastos(token, categoria=None):
+
+        params = {}
+
+        if categoria:
+            params["categoria"] = categoria
+
+        response = requests.get(
+
+            f"{Config.API_URL}/gastos/",
+
+            params=params,
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+
+        if response.status_code != 200:
+            return []
+
+        return response.json()
+
+    @staticmethod
+    def crear_gasto(token, datos):
+
+        return requests.post(
+
+            f"{Config.API_URL}/gastos/",
+
+            json=datos,
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+
+    @staticmethod
+    def actualizar_gasto(token, id_gasto, datos):
+
+        return requests.put(
+
+            f"{Config.API_URL}/gastos/{id_gasto}",
+
+            json=datos,
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
+
+    @staticmethod
+    def eliminar_gasto(token, id_gasto):
+
+        return requests.delete(
+
+            f"{Config.API_URL}/gastos/{id_gasto}",
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            }
+
+        )
