@@ -18,6 +18,7 @@ import KitchenMenuScreen from './src/screens/KitchenMenuScreen';
 import KitchenOrdersScreen from './src/screens/KitchenOrdersScreen';
 import KitchenScreen from './src/screens/KitchenScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import ServerConfigScreen from './src/screens/ServerConfigScreen';
 import HelpScreen from './src/screens/HelpScreen';
 import ActivityScreen from './src/screens/ActivityScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
@@ -384,6 +385,7 @@ const allRoleScreens = [
   'login',
   'notifications',
   'profile',
+  'serverConfig',
   'settings',
 ];
 
@@ -398,7 +400,7 @@ const roleOptions = [
     defaultScreen: 'dashboard',
     moduleTargets: ['customer'],
     drawerTargets: ['dashboard', 'customer', 'notifications', 'activity', 'profile', 'settings', 'help'],
-    allowedScreens: ['dashboard', 'customer', 'customerMarketing', 'customerOrder', 'customerOrders', 'notifications', 'activity', 'profile', 'settings', 'help', 'login'],
+    allowedScreens: ['dashboard', 'customer', 'customerMarketing', 'customerOrder', 'customerOrders', 'notifications', 'activity', 'profile', 'settings', 'help', 'login', 'serverConfig'],
   },
   {
     id: 'cashier',
@@ -410,7 +412,7 @@ const roleOptions = [
     defaultScreen: 'dashboard',
     moduleTargets: ['cashier'],
     drawerTargets: ['dashboard', 'cashier', 'notifications', 'activity', 'profile', 'settings', 'help'],
-    allowedScreens: ['dashboard', 'cashier', 'cashierAccounts', 'cashierOrderDetail', 'cashierOrders', 'cashierPurchases', 'notifications', 'activity', 'profile', 'settings', 'help', 'login'],
+    allowedScreens: ['dashboard', 'cashier', 'cashierAccounts', 'cashierOrderDetail', 'cashierOrders', 'cashierPurchases', 'notifications', 'activity', 'profile', 'settings', 'help', 'login', 'serverConfig'],
   },
   {
     id: 'kitchen',
@@ -422,7 +424,7 @@ const roleOptions = [
     defaultScreen: 'dashboard',
     moduleTargets: ['kitchen', 'kitchenInventory'],
     drawerTargets: ['dashboard', 'kitchen', 'notifications', 'activity', 'profile', 'settings', 'help'],
-    allowedScreens: ['dashboard', 'kitchen', 'kitchenInventory', 'kitchenMenu', 'kitchenOrders', 'notifications', 'activity', 'profile', 'settings', 'help', 'login'],
+    allowedScreens: ['dashboard', 'kitchen', 'kitchenInventory', 'kitchenMenu', 'kitchenOrders', 'notifications', 'activity', 'profile', 'settings', 'help', 'login', 'serverConfig'],
   },
   {
     id: 'admin',
@@ -788,9 +790,11 @@ function CoffeeAdminApp() {
   useEffect(() => {
     if (isBootstrapping) return;
     if (!isAuthenticated) {
-      setHistory([]);
-      setScreen('login');
-      clearDomainState();
+      if (screen !== 'serverConfig') {
+        setHistory([]);
+        setScreen('login');
+        clearDomainState();
+      }
     } else if (screen === 'login' && !isLoginLoading) {
       setScreen((roleMap[sessionRoleId] || roleMap.admin).defaultScreen);
     }
@@ -1492,6 +1496,7 @@ function CoffeeAdminApp() {
         <StatusBar hidden style={theme.statusBar} />
 
         {screen === 'login' && <LoginScreen {...sharedProps} />}
+        {screen === 'serverConfig' && <ServerConfigScreen {...sharedProps} />}
         {screen === 'dashboard' && <DashboardScreen {...sharedProps} />}
         {screen === 'activity' && <ActivityScreen {...sharedProps} />}
         {screen === 'cashier' && <CashierScreen {...sharedProps} />}
@@ -1512,7 +1517,7 @@ function CoffeeAdminApp() {
         {screen === 'profile' && <ProfileScreen {...sharedProps} />}
         {screen === 'settings' && <SettingsScreen {...sharedProps} />}
 
-        {screen !== 'login' && (
+        {!['login', 'serverConfig'].includes(screen) && (
           <BottomNav
             active={getBottomNavActiveScreen(screen)}
             currentRoleId={currentRoleId}

@@ -1,4 +1,4 @@
-import { environment, resolveApiUrl } from '../config/environment';
+import { environment, loadApiUrl, resolveApiUrl } from '../config/environment';
 import sessionStorage from '../storage/sessionStorage';
 import { ApiError, createNetworkError, createResponseError } from './errors';
 
@@ -80,6 +80,7 @@ export async function request(path, options = {}) {
   let url;
 
   try {
+    await loadApiUrl();
     url = buildUrl(path, options.query);
   } catch (error) {
     throw new ApiError(error.message, {

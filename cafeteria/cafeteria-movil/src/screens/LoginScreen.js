@@ -57,6 +57,28 @@ export default function LoginScreen({
           theme={theme}
         />
 
+        <View style={styles.settingsRow}>
+          <Pressable
+            accessibilityLabel="Configurar servidor"
+            accessibilityRole="button"
+            onPress={() => navigate?.('serverConfig')}
+            style={({ pressed }) => [
+              styles.settingsButton,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.surfaceBorder,
+                boxShadow: theme.cardShadow,
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+          >
+            <AppIcon color={theme.amber} name="⚙️" size={20} />
+            <Text selectable style={[styles.settingsText, { color: theme.muted }]}>
+              Servidor
+            </Text>
+          </Pressable>
+        </View>
+
         <View style={styles.card}>
           <View
             style={[
@@ -229,8 +251,26 @@ const styles = StyleSheet.create({
   card: {
     alignSelf: 'center',
     maxWidth: 440,
-    paddingTop: 44,
+    paddingTop: 22,
     width: '100%',
+  },
+  settingsRow: {
+    alignItems: 'flex-end',
+    paddingTop: 14,
+  },
+  settingsButton: {
+    alignItems: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 7,
+    minHeight: 42,
+    paddingHorizontal: 13,
+  },
+  settingsText: {
+    fontSize: 12,
+    fontWeight: '800',
   },
   logo: {
     alignItems: 'center',
