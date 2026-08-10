@@ -99,6 +99,7 @@ export default function CustomerOrderScreen({
   const orderProducts = menuProducts.length ? menuProducts : draftProducts;
   const observations = customerDraft?.observations || '';
   const [decision, setDecision] = useState(null);
+  const [submitError, setSubmitError] = useState('');
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const productCount = orderProducts.reduce((total, product) => total + product.quantity, 0);
@@ -150,7 +151,7 @@ export default function CustomerOrderScreen({
     }));
   };
 
-  const handleDecisionConfirm = () => {
+  const handleDecisionConfirm = async () => {
     if (decision === 'confirm') {
       const orderedProducts = orderProducts.filter((product) => product.quantity > 0);
       const productSummary = orderedProducts
@@ -170,6 +171,7 @@ export default function CustomerOrderScreen({
         cashierStatus: 'pending',
         paymentMethod: null,
         productItems: orderedProducts.map((product) => ({
+          menuId: product.menuId,
           name: product.name,
           price: product.price,
           quantity: product.quantity,
@@ -184,8 +186,13 @@ export default function CustomerOrderScreen({
         notes: observations.trim() || 'Sin observaciones.',
       };
 
-      if (addCustomerOrder) {
-        addCustomerOrder(newOrder);
+      try {
+        setSubmitError('');
+        await addCustomerOrder?.(newOrder);
+      } catch (error) {
+        setSubmitError(error.message || 'No se pudo guardar el pedido.');
+        setDecision(null);
+        return;
       }
 
       resetCustomerDraft();
@@ -222,6 +229,7 @@ export default function CustomerOrderScreen({
         />
 
         <CustomerTabs active="customerOrder" isDarkMode={isDarkMode} navigate={navigate} theme={theme} />
+        {!!submitError && <Text selectable style={{ color: '#dc2626', marginBottom: 12, textAlign: 'center' }}>{submitError}</Text>}
 
         <SummaryCard
           title="Nuevo pedido"

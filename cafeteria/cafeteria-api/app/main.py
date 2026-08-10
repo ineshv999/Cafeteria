@@ -46,3 +46,8 @@ def inicio():
     return {
         "mensaje": "API Cafetería funcionando"
     }
+
+
+@app.get("/health", tags=["health"])
+def health():
+    return {"status": "ok"}

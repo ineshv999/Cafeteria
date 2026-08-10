@@ -24,6 +24,7 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import SessionContext from './src/context/SessionContext';
 import { themes } from './src/theme/themes';
+import { api, login } from './src/services/api';
 
 const initialCustomerOrders = [
   {
@@ -424,6 +425,35 @@ const roleOptions = [
 
 const roleMap = roleOptions.reduce((roles, role) => ({ ...roles, [role.id]: role }), {});
 
+const apiRoleMap = { administrador: 'admin', admin: 'admin', mesero: 'waiter', caja: 'cashier', cajero: 'cashier', cocina: 'kitchen' };
+const normalizeRole = (role) => apiRoleMap[String(role || '').toLowerCase()] || 'waiter';
+const statusTypeFor = (status) => {
+  const value = String(status || '').toLowerCase();
+  if (value.includes('prepar')) return 'kitchen';
+  if (value === 'listo') return 'ready';
+  if (value === 'pagado') return 'delivered';
+  if (value.includes('cancel')) return 'cancelled';
+  return 'pending';
+};
+const mapOrder = (order) => ({
+  id: `Pedido #${order.id_pedido}`, apiId: order.id_pedido, table: `Mesa ${order.id_mesa}`,
+  detail: `Mesa ${order.id_mesa}`, status: order.estado, statusType: statusTypeFor(order.estado),
+  kitchenStage: statusTypeFor(order.estado) === 'kitchen' ? 'preparing' : statusTypeFor(order.estado) === 'ready' ? 'ready' : 'queue',
+  cashierStatus: order.estado === 'Pagado' ? 'paid' : 'pending',
+  stepsDone: order.estado === 'Pagado' ? 4 : order.estado === 'Listo' ? 3 : order.estado === 'Pendiente' ? 1 : 2,
+  amount: `$${Number(order.total || 0).toFixed(2)}`, total: Number(order.total || 0),
+  notes: 'Sin observaciones.', products: 'Consulta el detalle del pedido',
+});
+const mapProduct = (product) => ({
+  id: product.id_producto, menuId: product.id_producto, name: product.nombre,
+  description: product.descripcion || '', price: Number(product.precio), available: product.activo,
+  category: `Categoría ${product.id_categoria}`, icon: '☕', quantity: 0,
+});
+const mapIngredient = (item) => ({
+  id: item.id_ingrediente, name: item.nombre, quantity: Number(item.stock),
+  minimum: Number(item.stock_minimo), unit: item.unidad_medida, active: item.activo,
+});
+
 const initialAppSettings = {
   autoSync: true,
   cashierConfirmations: true,
@@ -528,18 +558,49 @@ export default function App() {
     ].slice(0, 80));
   };
 
-  const loginAsRole = (roleId) => {
-    const nextRole = roleMap[roleId] || roleMap.admin;
+  const syncRoleData = async (roleId) => {
+    const requests = [];
+    if (roleId === 'admin' || roleId === 'waiter') {
+      requests.push(api.get('/pedidos/').then((items) => setCustomerOrders(items.map(mapOrder))));
+      requests.push(api.get('/productos/?activo=true').then((items) => {
+        const products = items.map(mapProduct);
+        setKitchenMenuItems(products);
+        setCustomerDraft((draft) => ({ ...draft, products }));
+      }));
+    }
+    if (roleId === 'admin' || roleId === 'kitchen') {
+      requests.push(api.get('/cocina/pedidos').then((items) => setCustomerOrders(items.map(mapOrder))));
+      requests.push(api.get('/cocina/menu/productos').then((items) => setKitchenMenuItems(items.map(mapProduct))));
+      requests.push(api.get('/cocina/suministros').then((items) => setKitchenInventory(items.map(mapIngredient))));
+    }
+    if (roleId === 'admin' || roleId === 'cashier') {
+      requests.push(api.get('/caja/pedidos').then((items) => setCustomerOrders(items.map(mapOrder))));
+      requests.push(api.get('/caja/gastos').then((items) => setCashierExpenses(items.map((item) => ({
+        id: item.id_gasto, description: item.concepto, category: item.categoria,
+        amount: Number(item.monto), notes: item.descripcion,
+      })))));
+      requests.push(api.get('/caja/compras').then((items) => setCashierPurchases(items.map((item) => ({
+        id: item.id_compra, name: item.proveedor, amount: Number(item.total),
+        status: 'Registrada', type: 'paid',
+      })))));
+    }
+    await Promise.all(requests);
+  };
+
+  const loginAsRole = async (username, password) => {
+    const session = await login(username, password);
+    const nextRole = roleMap[normalizeRole(session.rol)] || roleMap.waiter;
 
     setCurrentRoleId(nextRole.id);
     setUserProfile((currentProfile) => ({
       ...currentProfile,
-      email: nextRole.email,
-      name: nextRole.name,
+      email: username,
+      name: session.usuario,
       role: nextRole.label,
     }));
     setHistory([]);
     setScreen(nextRole.defaultScreen);
+    await syncRoleData(nextRole.id);
     recordEvent({
       detail: `${nextRole.name} inició sesión como ${nextRole.label}.`,
       icon: nextRole.icon,
@@ -550,8 +611,21 @@ export default function App() {
     });
   };
 
-  const addCustomerOrder = (order) => {
-    setCustomerOrders((currentOrders) => [order, ...currentOrders]);
+  const addCustomerOrder = async (order) => {
+    const idMesa = Number(String(order.table || '').match(/\d+/)?.[0]);
+    if (!idMesa) throw new Error('Selecciona una mesa válida.');
+    const created = await api.post('/pedidos/', { id_mesa: idMesa });
+    for (const product of order.productItems || []) {
+      if (product.menuId || product.id) {
+        await api.post('/detalle-pedido/', {
+          id_pedido: created.id_pedido,
+          id_producto: product.menuId || product.id,
+          cantidad: product.quantity,
+        });
+      }
+    }
+    const savedOrder = mapOrder(created);
+    setCustomerOrders((currentOrders) => [savedOrder, ...currentOrders]);
     recordEvent({
       detail: `${order.id} levantado para ${order.table || 'mesa'} por ${order.amount}.`,
       icon: '🧾',
@@ -562,9 +636,23 @@ export default function App() {
     });
   };
 
-  const updateCustomerOrder = (orderId, updater) => {
+  const updateCustomerOrder = async (orderId, updater) => {
+    const current = customerOrders.find((order) => order.id === orderId);
+    if (!current?.apiId) return;
+    const updated = updater(current);
+    let saved;
+    if (updated.statusType === 'kitchen') {
+      saved = await api.put(`/cocina/pedidos/${current.apiId}/preparar`);
+    } else if (updated.statusType === 'ready') {
+      saved = await api.put(`/cocina/pedidos/${current.apiId}/listo`);
+    } else if (updated.cashierStatus === 'paid') {
+      saved = await api.put(`/caja/pedidos/${current.apiId}/cobrar`);
+    } else {
+      return;
+    }
+    const normalized = mapOrder(saved);
     setCustomerOrders((currentOrders) =>
-      currentOrders.map((order) => (order.id === orderId ? updater(order) : order)),
+      currentOrders.map((order) => (order.id === orderId ? { ...order, ...updated, ...normalized } : order)),
     );
   };
 
