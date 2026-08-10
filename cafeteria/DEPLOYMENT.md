@@ -9,8 +9,13 @@ Los servicios de producción se construyen desde la rama `main` de
 - Web: https://cafeteria-web-zu30.onrender.com
 
 `render.yaml` documenta y permite recrear ambos servicios. `DATABASE_URL` debe
-guardarse como secreto en Render y nunca incorporarse al repositorio. La API
-ejecuta las migraciones Alembic antes de iniciar.
+guardarse como secreto en Render y nunca incorporarse al repositorio.
+
+La base Neon actual ya contiene tablas pero no tiene un baseline completo en
+`alembic_version`. Por seguridad, el arranque no ejecuta migraciones
+automáticamente: primero debe reconciliarse el baseline de Alembic con el
+esquema existente. No se debe ejecutar `alembic upgrade head` sobre producción
+hasta completar esa revisión.
 
 ## Android con EAS
 
