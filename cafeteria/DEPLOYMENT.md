@@ -26,8 +26,8 @@ La dirección pública de la API se configura una sola vez mediante
 reemplazar el valor. Para EAS, crea la variable en el proyecto:
 
 ```bash
-eas env:create --name EXPO_PUBLIC_API_URL --value https://<api>.onrender.com --environment preview --visibility plaintext
-eas env:create --name EXPO_PUBLIC_API_URL --value https://<api>.onrender.com --environment production --visibility plaintext
+eas env:create --name EXPO_PUBLIC_API_URL --value https://cafeteria-api-tqv4.onrender.com --environment preview --visibility plaintext
+eas env:create --name EXPO_PUBLIC_API_URL --value https://cafeteria-api-tqv4.onrender.com --environment production --visibility plaintext
 ```
 
 Después de iniciar sesión con Expo y vincular el proyecto (`eas init`):
