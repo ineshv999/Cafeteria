@@ -117,12 +117,14 @@ def health(db: Session = Depends(get_db)):
         ) from exc
 
     faltantes = missing_runtime_tables(db.get_bind())
-    if faltantes:
+    drift = runtime_schema_drift(db.get_bind())
+    if faltantes or drift:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
                 "mensaje": "El esquema operativo está incompleto.",
                 "tablas_faltantes": faltantes,
+                "columnas_faltantes": drift,
             },
         )
 
