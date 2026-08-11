@@ -144,11 +144,12 @@ def schema_status(
     muestras = {}
     inspector = inspect(bind)
     drift = runtime_schema_drift(bind)
-    for table_name in sorted(set(inspect(bind).get_table_names()) & REQUIRED_RUNTIME_TABLES):
+    diagnostic_tables = REQUIRED_RUNTIME_TABLES | {"ingrediente"}
+    for table_name in sorted(set(inspect(bind).get_table_names()) & diagnostic_tables):
         conteos[table_name] = db.execute(
             text(f'SELECT COUNT(*) FROM "{table_name}"')
         ).scalar_one()
-        if table_name in drift:
+        if table_name in drift or table_name == "ingrediente":
             columnas_actuales[table_name] = [
                 column["name"] for column in inspector.get_columns(table_name)
             ]
