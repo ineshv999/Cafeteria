@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -6,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.config import CORS_ORIGINS
 from app.database import get_db
+from app.schema_runtime import ensure_runtime_schema, missing_runtime_tables
 from app.routers import usuarios
 
 import app.models
@@ -33,9 +36,16 @@ from pathlib import Path
 
 from fastapi.responses import FileResponse
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    ensure_runtime_schema()
+    yield
+
+
 app = FastAPI(
     title="CoffeeAdmin API",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -100,7 +110,18 @@ def health(db: Session = Depends(get_db)):
             detail="La base de datos no está disponible.",
         ) from exc
 
+    faltantes = missing_runtime_tables(db.get_bind())
+    if faltantes:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "mensaje": "El esquema operativo está incompleto.",
+                "tablas_faltantes": faltantes,
+            },
+        )
+
     return {
         "status": "ok",
         "database": "ok",
+        "schema": "ok",
     }

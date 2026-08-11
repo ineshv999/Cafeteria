@@ -25,6 +25,7 @@ from app.services.caja_service import CajaService
 from app.services.mesa_service import MesaService
 from app.services.pedido_service import PedidoService
 from app.schemas.mesa import MesaCreate, MesaUpdate
+from app.schema_runtime import ensure_runtime_schema, missing_runtime_tables
 
 
 class BackendCoreTest(unittest.TestCase):
@@ -230,6 +231,11 @@ class BackendCoreTest(unittest.TestCase):
                 )
             self.assertEqual(contexto.exception.status_code, 409)
             self.assertEqual(db.get(Mesa, self.id_mesa).estado, "Ocupada")
+
+    def test_esquema_operativo_se_puede_preparar_idempotentemente(self):
+        ensure_runtime_schema(self.engine)
+        ensure_runtime_schema(self.engine)
+        self.assertEqual(missing_runtime_tables(self.engine), [])
 
     def test_transiciones_y_doble_cobro(self):
         id_pedido = self.crear_pedido()
