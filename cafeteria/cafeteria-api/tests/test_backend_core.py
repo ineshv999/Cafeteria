@@ -22,7 +22,9 @@ from app.schemas.auth import AuthMeUpdate
 from app.schemas.usuario import UsuarioResponse
 from app.services.auth_service import AuthService
 from app.services.caja_service import CajaService
+from app.services.mesa_service import MesaService
 from app.services.pedido_service import PedidoService
+from app.schemas.mesa import MesaCreate, MesaUpdate
 
 
 class BackendCoreTest(unittest.TestCase):
@@ -203,6 +205,31 @@ class BackendCoreTest(unittest.TestCase):
             self.assertEqual(db.query(Pedido).count(), 0)
             self.assertEqual(db.get(Producto, self.id_producto).stock, 5)
             self.assertEqual(db.get(Mesa, self.id_mesa).estado, "Libre")
+
+    def test_mesas_se_ordenan_y_no_permiten_numeros_repetidos(self):
+        with Session(self.engine) as db:
+            MesaService.crear(db, MesaCreate(numero=10, capacidad=2))
+            MesaService.crear(db, MesaCreate(numero=2, capacidad=6))
+            self.assertEqual(
+                [mesa.numero for mesa in MesaService.listar(db)],
+                [1, 2, 10],
+            )
+            with self.assertRaises(HTTPException) as contexto:
+                MesaService.crear(db, MesaCreate(numero=2, capacidad=4))
+            self.assertEqual(contexto.exception.status_code, 400)
+
+    def test_mesa_con_pedido_activo_no_puede_liberarse(self):
+        self.crear_pedido(cantidad=1)
+
+        with Session(self.engine) as db:
+            with self.assertRaises(HTTPException) as contexto:
+                MesaService.actualizar(
+                    db,
+                    self.id_mesa,
+                    MesaUpdate(numero=1, capacidad=4, estado="Libre"),
+                )
+            self.assertEqual(contexto.exception.status_code, 409)
+            self.assertEqual(db.get(Mesa, self.id_mesa).estado, "Ocupada")
 
     def test_transiciones_y_doble_cobro(self):
         id_pedido = self.crear_pedido()

@@ -857,7 +857,13 @@
               <form method="POST" id="pedidoForm">
                 <div>
                   <label>Mesa <span style="color: var(--danger);">*</span></label>
-                  <input type="number" name="id_mesa" placeholder="Ej: 1" min="1" required>
+                  <select name="id_mesa" required>
+                    <option value="">Selecciona una mesa libre</option>
+                    {% for mesa in mesas %}
+                      <option value="{{ mesa.id_mesa }}">Mesa {{ mesa.numero }} · {{ mesa.capacidad }} personas</option>
+                    {% endfor %}
+                  </select>
+                  {% if not mesas %}<small style="color: var(--danger);">No hay mesas libres disponibles.</small>{% endif %}
                 </div>
 
                 <button class="btn-primary" type="submit" style="width: 100%; justify-content: center;">
@@ -880,7 +886,7 @@
                 {% for pedido in pedidos %}
                   <tr>
                     <td><strong>#{{ pedido.id_pedido }}</strong></td>
-                    <td><span class="badge-mesa"><i class="bi bi-grid-3x3 ui-icon" aria-hidden="true"></i> Mesa {{ pedido.id_mesa }}</span></td>
+                    <td><span class="badge-mesa"><i class="bi bi-grid-3x3 ui-icon" aria-hidden="true"></i> Mesa {{ pedido.mesa.numero if pedido.mesa else pedido.id_mesa }}</span></td>
                     <td>
                       <span class="badge-estado {% if pedido.estado == 'Pendiente' %}pendiente{% elif pedido.estado == 'Preparando' %}en-proceso{% elif pedido.estado == 'Listo' %}completado{% else %}cancelado{% endif %}">
                         {% if pedido.estado == 'Pendiente' %}
@@ -964,11 +970,11 @@
 
     // Validar que el campo mesa no esté vacío
     document.getElementById('pedidoForm')?.addEventListener('submit', function(e) {
-      const mesa = this.querySelector('input[name="id_mesa"]');
-      if (!mesa.value.trim() || parseInt(mesa.value) < 1) {
+      const mesa = this.querySelector('[name="id_mesa"]');
+      if (!mesa.value || parseInt(mesa.value) < 1) {
         e.preventDefault();
         mesa.classList.add('error');
-        alert('Por favor, ingresa un número de mesa válido');
+        alert('Selecciona una mesa libre');
         return false;
       }
     });

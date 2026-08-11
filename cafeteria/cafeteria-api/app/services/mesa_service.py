@@ -30,6 +30,7 @@ class MesaService:
 
         return (
             consulta
+            .order_by(Mesa.numero.asc())
             .offset(skip)
             .limit(limit)
             .all()

@@ -24,6 +24,17 @@ from services.api import ApiService
 app = Flask(__name__)
 app.config.from_object(Config)
 
+
+@app.template_filter("media_url")
+def media_url(path):
+    """Resuelve archivos servidos por la API sin depender de localhost."""
+    if not path:
+        return ""
+    path = str(path)
+    if path.startswith(("http://", "https://", "data:")):
+        return path
+    return f"{Config.API_URL.rstrip('/')}/{path.lstrip('/')}"
+
 ROLE_PRESENTATION = {
     "administrador": {
         "etiqueta": "Administrador",
@@ -134,21 +145,141 @@ def login_required(f):
 @login_required
 @requiere_rol("administrador", "cocina")
 def panel_cocina():
-    return render_template("cocina.html")
+    return render_template(
+        "cocina.html",
+        pedidos=ApiService.obtener_pedidos_cocina(session["token"]),
+        usuario=session["usuario"],
+        rol=session["rol"]
+    )
+
+
+@app.route("/cocina/pedidos/<int:id_pedido>/<accion>", methods=["POST"])
+@login_required
+@requiere_rol("administrador", "cocina")
+def actualizar_pedido_cocina(id_pedido, accion):
+    if accion not in ("preparar", "listo"):
+        flash("Acción de cocina no válida.", "danger")
+        return redirect(url_for("panel_cocina"))
+    respuesta = ApiService.actualizar_estado_cocina(
+        session["token"], id_pedido, accion
+    )
+    if respuesta is not None and respuesta.status_code == 200:
+        flash("Estado del pedido actualizado.", "success")
+    else:
+        flash(obtener_mensaje_api(respuesta, "No se pudo actualizar el pedido."), "danger")
+    return redirect(url_for("panel_cocina"))
+
+
+@app.route("/cocina/pedidos/<int:id_pedido>/demora", methods=["POST"])
+@login_required
+@requiere_rol("administrador", "cocina")
+def demora_pedido_cocina(id_pedido):
+    respuesta = ApiService.reportar_demora_cocina(
+        session["token"], id_pedido, request.form.get("nota", "").strip()
+    )
+    if respuesta is not None and respuesta.status_code == 200:
+        flash("Demora reportada.", "success")
+    else:
+        flash(obtener_mensaje_api(respuesta, "No se pudo reportar la demora."), "danger")
+    return redirect(url_for("panel_cocina"))
 
 
 @app.route("/caja")
 @login_required
 @requiere_rol("administrador", "caja")
 def panel_caja():
-    return render_template("caja.html")
+    return render_template(
+        "caja.html",
+        pedidos=ApiService.obtener_pedidos_caja(session["token"]),
+        usuario=session["usuario"],
+        rol=session["rol"]
+    )
 
 
-@app.route("/mesas")
+@app.route("/caja/pedidos/<int:id_pedido>/cobrar", methods=["POST"])
 @login_required
-@requiere_rol("administrador", "mesero", "cocina", "caja")
+@requiere_rol("administrador", "caja")
+def cobrar_pedido_caja(id_pedido):
+    metodo = request.form.get("metodo_pago", "")
+    datos = {"metodo_pago": metodo}
+    monto = request.form.get("monto_recibido", "").strip()
+    referencia = request.form.get("referencia_pago", "").strip()
+    if monto:
+        datos["monto_recibido"] = monto
+    if referencia:
+        datos["referencia_pago"] = referencia
+    respuesta = ApiService.cobrar_pedido_caja(session["token"], id_pedido, datos)
+    if respuesta is not None and respuesta.status_code == 200:
+        flash("Pago registrado y mesa liberada.", "success")
+    else:
+        flash(obtener_mensaje_api(respuesta, "No se pudo registrar el pago."), "danger")
+    return redirect(url_for("panel_caja"))
+
+
+@app.route("/mesas", methods=["GET", "POST"])
+@login_required
+@requiere_rol("administrador", "mesero")
 def panel_mesas():
-    return render_template("mesas.html")
+    if request.method == "POST":
+        if session.get("rol") != "administrador":
+            flash("Solo el administrador puede agregar mesas.", "danger")
+            return redirect(url_for("panel_mesas"))
+
+        datos = {
+            "numero": request.form.get("numero", type=int),
+            "capacidad": request.form.get("capacidad", type=int),
+            "estado": request.form.get("estado", "Libre")
+        }
+        respuesta = ApiService.crear_mesa(session["token"], datos)
+        if respuesta is not None and respuesta.status_code == 200:
+            flash("Mesa agregada correctamente.", "success")
+        else:
+            flash(obtener_mensaje_api(respuesta, "No se pudo agregar la mesa."), "danger")
+        return redirect(url_for("panel_mesas"))
+
+    mesas = ApiService.obtener_mesas(session["token"])
+    estadisticas = {
+        "total": len(mesas),
+        "libres": sum(mesa.get("estado") == "Libre" for mesa in mesas),
+        "ocupadas": sum(mesa.get("estado") == "Ocupada" for mesa in mesas),
+        "reservadas": sum(mesa.get("estado") == "Reservada" for mesa in mesas)
+    }
+    return render_template(
+        "mesas.html",
+        mesas=mesas,
+        estadisticas=estadisticas,
+        usuario=session["usuario"],
+        rol=session["rol"]
+    )
+
+
+@app.route("/mesas/<int:id_mesa>/editar", methods=["POST"])
+@login_required
+@requiere_rol("administrador")
+def editar_mesa(id_mesa):
+    datos = {
+        "numero": request.form.get("numero", type=int),
+        "capacidad": request.form.get("capacidad", type=int),
+        "estado": request.form.get("estado", "Libre")
+    }
+    respuesta = ApiService.actualizar_mesa(session["token"], id_mesa, datos)
+    if respuesta is not None and respuesta.status_code == 200:
+        flash("Mesa actualizada correctamente.", "success")
+    else:
+        flash(obtener_mensaje_api(respuesta, "No se pudo actualizar la mesa."), "danger")
+    return redirect(url_for("panel_mesas"))
+
+
+@app.route("/mesas/<int:id_mesa>/eliminar", methods=["POST"])
+@login_required
+@requiere_rol("administrador")
+def eliminar_mesa(id_mesa):
+    respuesta = ApiService.eliminar_mesa(session["token"], id_mesa)
+    if respuesta is not None and respuesta.status_code == 200:
+        flash("Mesa eliminada correctamente.", "success")
+    else:
+        flash(obtener_mensaje_api(respuesta, "No se pudo eliminar la mesa."), "danger")
+    return redirect(url_for("panel_mesas"))
 
 
 def obtener_mensaje_api(respuesta, mensaje_predeterminado):
@@ -836,6 +967,7 @@ def eliminar_gasto(id_gasto):
 
 @app.route("/pedidos", methods=["GET", "POST"])
 @login_required
+@requiere_rol("administrador", "mesero")
 def pedidos():
     error = None
 
@@ -854,18 +986,23 @@ def pedidos():
                 datos
             )
 
-            if respuesta.status_code != 200:
-                error = respuesta.text
+            if respuesta is None or respuesta.status_code != 200:
+                error = obtener_mensaje_api(respuesta, "No se pudo crear el pedido.")
             else:
                 return redirect(url_for("pedidos"))
 
     pedidos = ApiService.obtener_pedidos(
         session["token"]
     )
+    mesas = [
+        mesa for mesa in ApiService.obtener_mesas(session["token"])
+        if mesa.get("estado") == "Libre"
+    ]
 
     return render_template(
         "pedidos.html",
         pedidos=pedidos,
+        mesas=mesas,
         usuario=session["usuario"],
         rol=session["rol"],
         error=error

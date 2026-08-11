@@ -678,7 +678,7 @@
           <div class="image-section">
             <span class="image-label"><i class="bi bi-image ui-icon" aria-hidden="true"></i> Imagen del Producto</span>
 
-            <img src="http://127.0.0.1:8000/{{ producto.imagen }}" width="200" height="200" id="preview" class="image-preview" alt="{{ producto.nombre }}">
+            <img src="{{ producto.imagen|media_url }}" width="200" height="200" id="preview" class="image-preview" alt="{{ producto.nombre }}">
 
             <div class="file-input-wrapper">
               <input type="file" name="imagen" id="imagen" accept="image/*">

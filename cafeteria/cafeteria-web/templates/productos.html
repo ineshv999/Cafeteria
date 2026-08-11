@@ -1117,7 +1117,7 @@ Limpiar
                     <td>{{ producto.categoria.nombre if producto.categoria else 'Sin categoría' }}</td>
                     <td>
                       {% if producto.imagen %}
-                        <img src="http://127.0.0.1:8000/{{ producto.imagen }}" alt="{{ producto.nombre }}">
+                        <img src="{{ producto.imagen|media_url }}" alt="{{ producto.nombre }}">
                       {% else %}
                         <span style="color: var(--text-muted);">Sin imagen</span>
                       {% endif %}

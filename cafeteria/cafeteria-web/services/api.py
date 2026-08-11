@@ -346,24 +346,114 @@ class ApiService:
     @staticmethod
     def obtener_mesas(token):
 
-        response = requests.get(
-
-            f"{Config.API_URL}/mesas/",
-
-            headers={
-
-                "Authorization":
-                f"Bearer {token}"
-
-            }
-
-        )
+        try:
+            response = requests.get(
+                f"{Config.API_URL}/mesas/",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=15
+            )
+        except requests.exceptions.RequestException:
+            return []
 
         if response.status_code != 200:
 
             return []
 
         return response.json()
+
+    @staticmethod
+    def crear_mesa(token, datos):
+        try:
+            return requests.post(
+                f"{Config.API_URL}/mesas/",
+                json=datos,
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=15
+            )
+        except requests.exceptions.RequestException:
+            return None
+
+    @staticmethod
+    def actualizar_mesa(token, id_mesa, datos):
+        try:
+            return requests.put(
+                f"{Config.API_URL}/mesas/{id_mesa}",
+                json=datos,
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=15
+            )
+        except requests.exceptions.RequestException:
+            return None
+
+    @staticmethod
+    def eliminar_mesa(token, id_mesa):
+        try:
+            return requests.delete(
+                f"{Config.API_URL}/mesas/{id_mesa}",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=15
+            )
+        except requests.exceptions.RequestException:
+            return None
+
+    @staticmethod
+    def obtener_pedidos_cocina(token):
+        try:
+            response = requests.get(
+                f"{Config.API_URL}/cocina/pedidos",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=15
+            )
+            return response.json() if response.status_code == 200 else []
+        except requests.exceptions.RequestException:
+            return []
+
+    @staticmethod
+    def actualizar_estado_cocina(token, id_pedido, accion):
+        try:
+            return requests.put(
+                f"{Config.API_URL}/cocina/pedidos/{id_pedido}/{accion}",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=15
+            )
+        except requests.exceptions.RequestException:
+            return None
+
+    @staticmethod
+    def reportar_demora_cocina(token, id_pedido, nota):
+        try:
+            return requests.post(
+                f"{Config.API_URL}/cocina/pedidos/{id_pedido}/demora",
+                json={"nota": nota},
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=15
+            )
+        except requests.exceptions.RequestException:
+            return None
+
+    @staticmethod
+    def obtener_pedidos_caja(token):
+        try:
+            response = requests.get(
+                f"{Config.API_URL}/caja/pedidos",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=15
+            )
+            return response.json() if response.status_code == 200 else []
+        except requests.exceptions.RequestException:
+            return []
+
+    @staticmethod
+    def cobrar_pedido_caja(token, id_pedido, datos):
+        try:
+            return requests.post(
+                f"{Config.API_URL}/caja/pedidos/{id_pedido}/cobrar",
+                json=datos,
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=15
+            )
+        except requests.exceptions.RequestException:
+            return None
     
     @staticmethod
     def obtener_estadisticas_mesas(token):
