@@ -1,7 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
 import BottomNav from './src/components/BottomNav';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, KeyboardAvoidingView, StyleSheet } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import CashierAccountsScreen from './src/screens/CashierAccountsScreen';
 import CashierOrderDetailScreen from './src/screens/CashierOrderDetailScreen';
@@ -1492,7 +1493,8 @@ function CoffeeAdminApp() {
   };
 
   return (
-    <KeyboardAvoidingView style={[styles.app, { backgroundColor: theme.background }]} behavior="padding">
+    <SafeAreaProvider>
+      <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={[styles.app, { backgroundColor: theme.background }]}>
         <StatusBar hidden style={theme.statusBar} />
 
         {screen === 'login' && <LoginScreen {...sharedProps} />}
@@ -1526,7 +1528,8 @@ function CoffeeAdminApp() {
             theme={theme}
           />
         )}
-    </KeyboardAvoidingView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 

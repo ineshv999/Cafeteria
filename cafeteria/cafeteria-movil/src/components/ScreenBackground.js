@@ -10,6 +10,7 @@ export default function ScreenBackground({ children, gradientColors, isDarkMode,
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
+      keyboardDismissMode="interactive"
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[styles.screen, { backgroundColor: theme.background }, contentStyle]}

@@ -1,4 +1,5 @@
-import { Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import Modal from '../components/AdaptiveModal';
 import { useState } from 'react';
 
 import AppHeader from '../components/AppHeader';

@@ -1,8 +1,9 @@
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useContext, useState } from 'react';
 
 import SessionContext from '../context/SessionContext';
 import AppIcon from './AppIcon';
+import Modal from './AdaptiveModal';
 
 const menuItems = [
   { icon: '🏠', label: 'Dashboard general', target: 'dashboard' },

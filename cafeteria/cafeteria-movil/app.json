@@ -17,6 +17,7 @@
     },
     "android": {
       "package": "com.defgem.cafeinable",
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/CAFEINABLE-icon.png",
         "backgroundColor": "#ffffff"

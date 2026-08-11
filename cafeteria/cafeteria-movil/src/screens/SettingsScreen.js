@@ -1,4 +1,5 @@
-import { Modal, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import Modal from '../components/AdaptiveModal';
 import { useState } from 'react';
 
 import MockStatusBar from '../components/MockStatusBar';
