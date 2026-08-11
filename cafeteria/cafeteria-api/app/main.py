@@ -140,12 +140,29 @@ def schema_status(
 ):
     bind = db.get_bind()
     conteos = {}
+    columnas_actuales = {}
+    muestras = {}
+    inspector = inspect(bind)
+    drift = runtime_schema_drift(bind)
     for table_name in sorted(set(inspect(bind).get_table_names()) & REQUIRED_RUNTIME_TABLES):
         conteos[table_name] = db.execute(
             text(f'SELECT COUNT(*) FROM "{table_name}"')
         ).scalar_one()
+        if table_name in drift:
+            columnas_actuales[table_name] = [
+                column["name"] for column in inspector.get_columns(table_name)
+            ]
+            rows = db.execute(
+                text(f'SELECT * FROM "{table_name}" LIMIT 3')
+            ).mappings()
+            muestras[table_name] = [
+                {key: str(value) if value is not None else None for key, value in row.items()}
+                for row in rows
+            ]
     return {
         "faltantes": missing_runtime_tables(bind),
-        "columnas_faltantes": runtime_schema_drift(bind),
+        "columnas_faltantes": drift,
+        "columnas_actuales": columnas_actuales,
+        "muestras": muestras,
         "conteos": conteos,
     }
