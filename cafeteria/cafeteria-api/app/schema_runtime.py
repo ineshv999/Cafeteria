@@ -25,6 +25,19 @@ def missing_runtime_tables(bind=engine) -> list[str]:
     return sorted(REQUIRED_RUNTIME_TABLES - existentes)
 
 
+def runtime_schema_drift(bind=engine) -> dict[str, list[str]]:
+    inspector = inspect(bind)
+    existentes = set(inspector.get_table_names())
+    drift = {}
+    for table_name in sorted(REQUIRED_RUNTIME_TABLES & existentes):
+        expected = set(Base.metadata.tables[table_name].columns.keys())
+        actual = {column["name"] for column in inspector.get_columns(table_name)}
+        missing = sorted(expected - actual)
+        if missing:
+            drift[table_name] = missing
+    return drift
+
+
 def ensure_runtime_schema(bind=engine) -> None:
     """Crea extensiones operativas faltantes sin alterar las tablas heredadas."""
     Base.metadata.create_all(bind=bind, checkfirst=True)

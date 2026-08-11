@@ -2,13 +2,19 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.config import CORS_ORIGINS
 from app.database import get_db
-from app.schema_runtime import ensure_runtime_schema, missing_runtime_tables
+from app.schema_runtime import (
+    ensure_runtime_schema,
+    missing_runtime_tables,
+    REQUIRED_RUNTIME_TABLES,
+    runtime_schema_drift,
+)
+from app.auth.permissions import requiere_roles
 from app.routers import usuarios
 
 import app.models
@@ -124,4 +130,22 @@ def health(db: Session = Depends(get_db)):
         "status": "ok",
         "database": "ok",
         "schema": "ok",
+    }
+
+
+@app.get("/sistema/schema", tags=["Sistema"])
+def schema_status(
+    usuario=Depends(requiere_roles("administrador")),
+    db: Session = Depends(get_db),
+):
+    bind = db.get_bind()
+    conteos = {}
+    for table_name in sorted(set(inspect(bind).get_table_names()) & REQUIRED_RUNTIME_TABLES):
+        conteos[table_name] = db.execute(
+            text(f'SELECT COUNT(*) FROM "{table_name}"')
+        ).scalar_one()
+    return {
+        "faltantes": missing_runtime_tables(bind),
+        "columnas_faltantes": runtime_schema_drift(bind),
+        "conteos": conteos,
     }
