@@ -87,10 +87,13 @@ def requiere_rol(*roles):
     return decorator
 
 
-@app.route("/login", methods=["POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if "token" in session:
         return redirect(inicio_por_rol())
+
+    if request.method == "GET":
+        return render_template("login.html")
 
     username = request.form.get("username")
     if username is None:
